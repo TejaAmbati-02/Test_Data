@@ -62,6 +62,21 @@ class Pipeline:
         upload_json = self._make_upload_json() if self._config.upload_enabled else None
         upload_image = self._make_upload_image() if self._config.upload_enabled else None
 
+        # Image embeddings for the nested images.image_vector kNN field are only
+        # needed when indexing. One embedder is shared by the image step (which
+        # embeds each SKU's downloaded images) and the indexer (which embeds the
+        # text content), so a single OCI client is reused. The image step runs to
+        # completion before indexing, so their embed calls never overlap.
+        embedder = None
+        embed_image = None
+        if self._config.index_enabled:
+            from .embeddings import OCIEmbedder
+
+            embedder = OCIEmbedder()
+
+            async def embed_image(images: list[tuple[bytes, str]]) -> list[list[float]]:
+                return await embedder.embed_images(images)
+
         # Local disk writes are opt-in (SAVE_LOCAL). When off, nothing is written
         # to out_products/out_prices/out_transformed/out_images — data streams
         # straight to storage/index, so a full disk can't break the run.
@@ -84,6 +99,7 @@ class Pipeline:
                 write_json=write_json,
                 upload_json=upload_json,
                 upload_image=upload_image,
+                embed_image=embed_image,
                 write_images=save_local,
                 write_image_content_local=save_local and self._config.image_content_local,
             )
@@ -126,7 +142,7 @@ class Pipeline:
             # Imported lazily so the package imports without OCI/OpenSearch installed.
             from .search_index import OpenSearchIndexer
 
-            indexer = OpenSearchIndexer()
+            indexer = OpenSearchIndexer(embedder=embedder)
             try:
                 index_summary = await indexer.index_rows(transformed)
                 logger.info(

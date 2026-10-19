@@ -1,0 +1,60 @@
+{
+  "rootCategoryName": "Communities, Offices & Others",
+  "rootCategoryKey": "buyer-default-communities-offices-and-others",
+  "rootCategorySlug": "buyer-default-communities-offices-and-others",
+  "rootCategoryOrderHint": 0.0003,
+  "subCategoryName": "Stationary Items",
+  "subCategoryKey": "buyer-default-communities-offices-and-others-office-supplies-106000",
+  "subCategorySlug": "buyer-default-communities-offices-and-others-office-supplies-106000",
+  "subCategoryDescription": "Stationary Items",
+  "productKey": "ao-100015",
+  "productName_en": "Paper Clip, Jumbo, Pack of 100",
+  "productName_de": "Paper Clip, Jumbo, Pack of 100",
+  "productDescription_en": "Jumbo paper clips, pack of 100, designed for general office use. Provides a simple and reliable solution for organizing, securing, and managing documents and loose papers. Standard-quality construction makes them suitable for everyday filing, paperwork, and administrative tasks.",
+  "productDescription_de": null,
+  "productSlug": "paper-clip-jumbo-pack-of-100-100015",
+  "productGroup": "\"116000\"",
+  "materialType": "9CAT",
+  "customerId": "ARAMCO",
+  "customerMaterialNumber": "ARAMCO-Material-Number",
+  "chemicalHazardBulletin": "CHB-OFFC-001",
+  "hazardHealth": {
+    "code": "H0",
+    "value": "\"0\""
+  },
+  "hazardFlame": {
+    "code": "F0",
+    "value": "\"0\""
+  },
+  "hazardReactive": {
+    "code": "R0",
+    "value": "\"0\""
+  },
+  "sku": "ao-100015_2",
+  "variantId": 2,
+  "variantKey": "ao-100015_2",
+  "manufacturerNumber": null,
+  "productManufacturerNumber": null,
+  "erpMaterialNumber": null,
+  "imageUrl": "https://assets.dev.b2x.b2bx.mindcurv.io/images/products/chemistry/ao/ao-100015.png",
+  "imageUrls": [
+    "https://assets.dev.b2x.b2bx.mindcurv.io/images/products/chemistry/ao/ao-100015.png"
+  ],
+  "availableQuantity": 100,
+  "restockableInDays": 2,
+  "inStockAnyChannel": true,
+  "totalAvailableQuantity": 142,
+  "currencyType": "SAR",
+  "price": 8.5,
+  "lowestContractedPrice": 8.5,
+  "sellerName_en": "Wholesale Warehouse",
+  "sellerName_de": "Wholesale Lager",
+  "contractIds": [
+    "9901007196"
+  ],
+  "leadTimeDays": 3,
+  "unitOfMeasure": "SAR",
+  "moq": null,
+  "content": "rootCategoryName:Communities, Offices & Others | rootCategoryKey:buyer-default-communities-offices-and-others | rootCategorySlug:buyer-default-communities-offices-and-others | rootCategoryOrderHint:0.0003 | subCategoryName:Stationary Items | subCategoryKey:buyer-default-communities-offices-and-others-office-supplies-106000 | subCategorySlug:buyer-default-communities-offices-and-others-office-supplies-106000 | subCategoryDescription:Stationary Items | productKey:ao-100015 | productName_en:Paper Clip, Jumbo, Pack of 100 | productName_de:Paper Clip, Jumbo, Pack of 100 | productDescription_en:Jumbo paper clips, pack of 100, designed for general office use. Provides a simple and reliable solution for organizing, securing, and managing documents and loose papers. Standard-quality construction makes them suitable for everyday filing, paperwork, and administrative tasks. | productSlug:paper-clip-jumbo-pack-of-100-100015 | productGroup:\"116000\" | materialType:9CAT | customerId:ARAMCO | customerMaterialNumber:ARAMCO-Material-Number | chemicalHazardBulletin:CHB-OFFC-001 | hazardHealth:H0, \"0\" | hazardFlame:F0, \"0\" | hazardReactive:R0, \"0\" | sku:ao-100015_2 | variantId:2 | variantKey:ao-100015_2 | imageUrl:https://assets.dev.b2x.b2bx.mindcurv.io/images/products/chemistry/ao/ao-100015.png | imageUrls:https://assets.dev.b2x.b2bx.mindcurv.io/images/products/chemistry/ao/ao-100015.png | availableQuantity:100 | restockableInDays:2 | inStockAnyChannel:True | totalAvailableQuantity:142 | currencyType:SAR | price:8.5 | lowestContractedPrice:8.5 | sellerName_en:Wholesale Warehouse | sellerName_de:Wholesale Lager | contractIds:9901007196 | leadTimeDays:3 | unitOfMeasure:SAR",
+  "image_content": []
+}

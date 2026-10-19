@@ -20,6 +20,7 @@ config file and are never logged.
 from __future__ import annotations
 
 import asyncio
+import base64
 import os
 import oci
 from dataclasses import dataclass, field
@@ -28,6 +29,9 @@ from .logging_service import logger
 
 # Cohere embed on OCI accepts at most 96 inputs per request.
 _MAX_BATCH = 96
+# Images are far larger than text, so embed them in small batches to keep each
+# request well under the payload limit.
+_MAX_IMAGE_BATCH = 8
 
 
 @dataclass
@@ -200,3 +204,81 @@ class OCIEmbedder:
         """Embed a single search query string and return its vector."""
         vectors = await self.embed([text], input_type="SEARCH_QUERY")
         return vectors[0] if vectors else []
+
+    def _embed_images_batch_sync(self, data_uris: list[str]) -> list[list[float]]:
+        """Embed one batch of images (as base64 data URIs) with a blocking call.
+
+        Uses the multimodal ``embed_contents`` path of OCI's ``embed_text`` API
+        with ``input_type=IMAGE``. The model is the same Cohere ``embed-v4.0``
+        used for text, so image and text vectors share one space and are
+        directly comparable for cross-modal (text-query → image) search.
+
+        Args:
+            data_uris: Base64 data URIs, e.g. ``data:image/png;base64,<...>``.
+
+        Returns:
+            One embedding vector per image, in input order.
+        """
+        client = self._client_sync()
+        contents = [
+            oci.generative_ai_inference.models.EmbedImageContent(
+                image_url=oci.generative_ai_inference.models.ImageUrl(url=uri)
+            )
+            for uri in data_uris
+        ]
+        details = oci.generative_ai_inference.models.EmbedTextDetails(
+            embed_contents=contents,
+            serving_mode=oci.generative_ai_inference.models.OnDemandServingMode(
+                serving_type="ON_DEMAND",
+                model_id=self._config.model_id,
+            ),
+            compartment_id=self._config.compartment_id,
+            input_type="IMAGE",
+            embedding_types=["float"],
+            output_dimensions=self._config.dimension,
+            is_echo=False,
+        )
+        response = client.embed_text(details)
+        return self._extract_vectors(response.data)
+
+    async def embed_images(self, images: list[tuple[bytes, str]]) -> list[list[float]]:
+        """Embed raw image bytes into vectors, batching and awaiting off-thread.
+
+        Each image is base64-encoded into a ``data:<mime>;base64,<...>`` URI and
+        sent through the multimodal embed path. Vectors come back in the same
+        space as :meth:`embed`, so they can be indexed into the nested
+        ``images.image_vector`` kNN field and searched cross-modally.
+
+        Args:
+            images: A list of ``(raw_bytes, mime_type)`` tuples. ``mime_type``
+                may be empty, in which case ``image/png`` is assumed.
+
+        Returns:
+            One embedding vector per image, in the same order as ``images``.
+            Returns an empty list when ``images`` is empty.
+        """
+        if not images:
+            return []
+
+        data_uris = [
+            f"data:{mime or 'image/png'};base64,{base64.b64encode(data).decode('ascii')}"
+            for data, mime in images
+        ]
+
+        batch_size = min(self._batch_size, _MAX_IMAGE_BATCH)
+        vectors: list[list[float]] = []
+        total_batches = (len(data_uris) + batch_size - 1) // batch_size
+        for batch_num, start in enumerate(range(0, len(data_uris), batch_size), start=1):
+            batch = data_uris[start:start + batch_size]
+            logger.info(
+                f"Embedding image batch {batch_num}/{total_batches} ({len(batch)} image(s))",
+                extra={"function_name": "OCIEmbedder.embed_images", "input_data": {"batch": batch_num, "size": len(batch)}},
+            )
+            batch_vectors = await asyncio.to_thread(self._embed_images_batch_sync, batch)
+            vectors.extend(batch_vectors)
+
+        logger.info(
+            f"Embedded {len(vectors)} image(s) in {total_batches} batch(es)",
+            extra={"function_name": "OCIEmbedder.embed_images", "status": "success", "input_data": {"count": len(vectors)}},
+        )
+        return vectors

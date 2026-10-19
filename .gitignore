@@ -10,7 +10,6 @@ wheels/
 .venv
 out_prices
 out_products
-out_transformed
 out_images
 .DS_Store
 *.log

@@ -44,13 +44,14 @@ class OpenSearchConfig:
     index_name: str = field(default_factory=lambda: os.environ.get("OPENSEARCH_INDEX", "asmo-search-api-index"))
     vector_field: str = field(default_factory=lambda: os.environ.get("OPENSEARCH_VECTOR_FIELD", "content_vector"))
     vector_dim: int = field(default_factory=lambda: int(os.environ.get("OPENSEARCH_VECTOR_DIM", "1536")))
+    image_vector_dim: int = field(default_factory=lambda: int(os.environ.get("OPENSEARCH_IMAGE_VECTOR_DIM", "1536")))
     timeout: int = field(default_factory=lambda: int(os.environ.get("OPENSEARCH_TIMEOUT", "30")))
     verify_certs: bool = field(default_factory=lambda: os.environ.get("OPENSEARCH_VERIFY_CERTS", "false").lower() == "true")
     bulk_chunk_size: int = field(default_factory=lambda: int(os.environ.get("OPENSEARCH_BULK_CHUNK", "500")))
     recreate_index: bool = field(default_factory=lambda: os.environ.get("OPENSEARCH_RECREATE_INDEX", "false").lower() == "true")
 
 
-def build_index_body(vector_field: str, dim: int) -> dict:
+def build_index_body(vector_field: str, dim: int, image_dim: int | None = None) -> dict:
     """Build the index settings + mapping body for the search index.
 
     Enables kNN with an HNSW (Lucene, cosine) index on ``vector_field`` and maps
@@ -59,13 +60,24 @@ def build_index_body(vector_field: str, dim: int) -> dict:
     language-specific analyzers; identifiers use keyword (with a searchable text
     sub-field); hazard ratings are nested objects.
 
+    Image vectors live in a ``nested`` ``images`` array — one entry per image
+    (``image_id``, ``image_url``, ``image_vector``) — so a SKU with several
+    images is still a single parent document, and a kNN query over
+    ``images.image_vector`` (with ``score_mode: max``) ranks each SKU by its
+    best-matching image. This keeps text and image retrieval in one index.
+
     Args:
         vector_field: Name of the kNN vector field (e.g. ``content_vector``).
-        dim: Dimension of the embedding vectors (1536 for Cohere embed-v4.0).
+        dim: Dimension of the content embedding vectors (1536 for Cohere
+            embed-v4.0).
+        image_dim: Dimension of each ``images.image_vector`` embedding; defaults
+            to ``dim`` (same model/space as the text vectors, so image and text
+            embeddings are directly comparable).
 
     Returns:
         A dict suitable for passing as the ``body`` of ``indices.create``.
     """
+    image_dim = image_dim or dim
 
     def text_field(analyzer: str = "standard") -> dict:
         return {
@@ -82,6 +94,18 @@ def build_index_body(vector_field: str, dim: int) -> dict:
 
     def numeric_field(num_type: str) -> dict:
         return {"type": num_type}
+
+    def knn_vector(dimension: int) -> dict:
+        return {
+            "type": "knn_vector",
+            "dimension": dimension,
+            "method": {
+                "name": "hnsw",
+                "space_type": "cosinesimil",
+                "engine": "lucene",
+                "parameters": {"ef_construction": 128, "m": 24},
+            },
+        }
 
     def hazard_object() -> dict:
         return {
@@ -102,68 +126,73 @@ def build_index_body(vector_field: str, dim: int) -> dict:
             "_source": {"enabled": True},
             "properties": {
                 "content": text_field(),
-                vector_field: {
-                    "type": "knn_vector",
-                    "dimension": dim,
-                    "method": {
-                        "name": "hnsw",
-                        "space_type": "cosinesimil",
-                        "engine": "lucene",
-                        "parameters": {"ef_construction": 128, "m": 24},
-                    },
-                },
+                vector_field: knn_vector(dim),
 
                 # --- Category ---
-                "rootCategoryName":       text_field(),
-                "rootCategoryKey":        keyword_field(),
-                "rootCategorySlug":       keyword_field(),
-                "rootCategoryOrderHint":  numeric_field("float"),
-                "subCategoryName":        text_field(),
-                "subCategoryKey":         keyword_field(),
-                "subCategorySlug":        keyword_field(),
-                "subCategoryDescription": text_field(),
+                "category_name":       text_field(),
+                "category_key":        keyword_field(),
+                "category_slug":       keyword_field(),
+                "category_order_hint":  numeric_field("float"),
+                "sub_category_name":        text_field(),
+                "sub_category_key":         keyword_field(),
+                "sub_category_slug":        keyword_field(),
+                "sub_category_description": text_field(),
 
                 # --- Product ---
-                "productKey":             keyword_field(),
-                "productName_en":         text_field("english"),
-                "productName_de":         text_field("german"),
-                "productDescription_en":  text_field("english"),
-                "productDescription_de":  text_field("german"),
-                "productSlug":            keyword_field(),
-                "productGroup":           keyword_field(),
-                "materialType":           keyword_field(),
-                "customerId":             keyword_field(),
-                "customerMaterialNumber": keyword_field(),
+                "product_key":             keyword_field(),
+                "product_name_en":         text_field("english"),
+                "product_name_de":         text_field("german"),
+                "product_description_en":  text_field("english"),
+                "product_description_de":  text_field("german"),
+                "product_slug":            keyword_field(),
+                "product_group":           keyword_field(),
+                "material_type":           keyword_field(),
+                "customer_id":             keyword_field(),
+                "customer_material_number": keyword_field(),
 
                 # --- Hazard ---
-                "chemicalHazardBulletin": keyword_field(),
-                "hazardHealth":           hazard_object(),
-                "hazardFlame":            hazard_object(),
-                "hazardReactive":         hazard_object(),
+                "chemical_hazard_bulletin": keyword_field(),
+                "hazard_health":           hazard_object(),
+                "hazard_flame":            hazard_object(),
+                "hazard_reactive":         hazard_object(),
 
                 # --- Variant identifiers ---
                 "sku":                       keyword_field(),
-                "variantId":                 numeric_field("integer"),
-                "variantKey":                keyword_field(),
-                "manufacturerNumber":        keyword_field(),
-                "productManufacturerNumber": keyword_field(),
-                "erpMaterialNumber":         keyword_field(),
-                "imageUrl":                  keyword_field(),
-                "imageUrls":                 keyword_field(),
+                "variant_id":                 numeric_field("integer"),
+                "variant_key":                keyword_field(),
+                "manufacturer_number":        keyword_field(),
+                "product_manufacturer_number": keyword_field(),
+                "erp_material_number":         keyword_field(),
+                "image_url":                  keyword_field(),
+                "image_urls":                 keyword_field(),
+
+                # --- Image embeddings (nested: one entry per image, max ~3) ---
+                # A kNN query over images.image_vector with score_mode=max ranks
+                # each parent SKU by its single best-matching image; inner_hits
+                # returns which image matched. image_url here is stored for
+                # retrieval only (index:false -> not searchable/filterable).
+                "images": {
+                    "type": "nested",
+                    "properties": {
+                        "image_id":     {"type": "keyword"},
+                        "image_url":    {"type": "keyword", "index": False},
+                        "image_vector": knn_vector(image_dim),
+                    },
+                },
 
                 # --- Availability ---
-                "availableQuantity":      numeric_field("integer"),
-                "restockableInDays":      numeric_field("integer"),
-                "inStockAnyChannel":      {"type": "boolean"},
-                "totalAvailableQuantity": numeric_field("integer"),
+                "available_quantity":      numeric_field("integer"),
+                "restockable_in_days":      numeric_field("integer"),
+                "in_stock_any_channel":      {"type": "boolean"},
+                "total_available_quantity": numeric_field("integer"),
 
                 # --- Pricing / commercial (added so every transformed field is mapped) ---
-                "currencyType":          keyword_field(),
+                "currency_type":          keyword_field(),
                 "price":                 numeric_field("float"),
-                "lowestContractedPrice": numeric_field("float"),
-                "sellerName_en":         text_field("english"),
-                "sellerName_de":         text_field("german"),
-                "contractIds":           keyword_field(),
+                "lowest_contracted_price": numeric_field("float"),
+                "seller_name_en":         text_field("english"),
+                "seller_name_de":         text_field("german"),
+                "contract_ids":           keyword_field(),
                 "leadTimeDays":          numeric_field("integer"),
                 "unitOfMeasure":         keyword_field(),
                 "moq":                   numeric_field("integer"),
@@ -214,6 +243,33 @@ class OpenSearchIndexer:
                        "input_data": {"host": self._config.host, "port": self._config.port, "index": self._config.index_name}},
             )
         return self._client
+
+    @property
+    def config(self) -> OpenSearchConfig:
+        """The resolved OpenSearch configuration (host, index name, dims, …)."""
+        return self._config
+
+    async def ping(self) -> bool:
+        """Return True if the OpenSearch cluster is reachable, False otherwise.
+
+        Used by standalone tools to fail fast with a clear message before
+        attempting to create an index or bulk-index, rather than surfacing a
+        low-level connection error mid-run.
+        """
+        client = self._connect()
+        try:
+            return bool(await client.ping())
+        except Exception as exc:
+            logger.error(
+                f"OpenSearch ping failed for https://{self._config.host}:{self._config.port}: {exc}",
+                extra={"function_name": "OpenSearchIndexer.ping", "status": "error", "error_details": str(exc)},
+            )
+            return False
+
+    async def index_exists(self) -> bool:
+        """Return True if the configured index already exists on the cluster."""
+        client = self._connect()
+        return bool(await client.indices.exists(index=self._config.index_name))
 
     async def _existing_vector_dim(self) -> int | None:
         """Return the mapped dimension of the vector field on the live index.
@@ -289,7 +345,7 @@ class OpenSearchIndexer:
             )
             return False
 
-        body = build_index_body(self._config.vector_field, self._config.vector_dim)
+        body = build_index_body(self._config.vector_field, self._config.vector_dim, self._config.image_vector_dim)
         response = await client.indices.create(index=self._config.index_name, body=body)
         logger.info(
             f"Index '{self._config.index_name}' created at dim={self._config.vector_dim} — acknowledged={response.get('acknowledged')}",

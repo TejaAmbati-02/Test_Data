@@ -1,0 +1,60 @@
+{
+  "rootCategoryName": "Communities, Offices & Others",
+  "rootCategoryKey": "buyer-default-communities-offices-and-others",
+  "rootCategorySlug": "buyer-default-communities-offices-and-others",
+  "rootCategoryOrderHint": 0.0003,
+  "subCategoryName": "Stationary Items",
+  "subCategoryKey": "buyer-default-communities-offices-and-others-office-supplies-106000",
+  "subCategorySlug": "buyer-default-communities-offices-and-others-office-supplies-106000",
+  "subCategoryDescription": "Stationary Items",
+  "productKey": "ao-100016",
+  "productName_en": "Rubber Band, Assorted Sizes, 100g Box",
+  "productName_de": "Rubber Band, Assorted Sizes, 100g Box",
+  "productDescription_en": "The Chrome Steel Tube – Stock Series 50×3 is a high‑quality precision tube designed for demanding mechanical and hydraulic applications. Manufactured from chrome‑alloy steel, this tube offers excellent strength, wear resistance, and dimensional stability, making it suitable for both standard stock use and further machining.\n\nWith an outer diameter of 50 mm and a wall thickness of 3 mm, the tube provides an optimal balance between mechanical performance and weight. The chrome steel composition ensures reliable operation under high pressure, repeated load cycles, and challenging industrial environments.\n\nThis stock series tube is commonly used in mechanical engineering, hydraulic systems, construction equipment, and general industrial applications, where consistent material quality and tight tolerances are required. Supplied in standard stock lengths, it enables fast availability and efficient integration into production or maintenance workflows.\n\nKey benefits\n\nHigh mechanical strength and durability\nGood wear and fatigue resistance\nSuitable for hydraulic and mechanical use\nConsistent stock quality for repeatable performance\nIdeal for machining and further processing",
+  "productDescription_de": "Rubber Band, Assorted Sizes, 100g Box, For General Office Use, Standard Quality, Community Office Supplies Stock",
+  "productSlug": "rubber-band-assorted-sizes-100g-box-100016",
+  "productGroup": "\"116000\"",
+  "materialType": "9CAT",
+  "customerId": "ARAMCO",
+  "customerMaterialNumber": "ARAMCO-Material-Number",
+  "chemicalHazardBulletin": "CHB-OFFC-001",
+  "hazardHealth": {
+    "code": "H0",
+    "value": "\"0\""
+  },
+  "hazardFlame": {
+    "code": "F0",
+    "value": "\"0\""
+  },
+  "hazardReactive": {
+    "code": "R0",
+    "value": "\"0\""
+  },
+  "sku": "ao-100016_2",
+  "variantId": 2,
+  "variantKey": "ao-100016_2",
+  "manufacturerNumber": null,
+  "productManufacturerNumber": null,
+  "erpMaterialNumber": null,
+  "imageUrl": "https://assets.dev.b2x.b2bx.mindcurv.io/images/products/chemistry/ao/ao-100016.png",
+  "imageUrls": [
+    "https://assets.dev.b2x.b2bx.mindcurv.io/images/products/chemistry/ao/ao-100016.png"
+  ],
+  "availableQuantity": 50,
+  "restockableInDays": 3,
+  "inStockAnyChannel": true,
+  "totalAvailableQuantity": 250,
+  "currencyType": "SAR",
+  "price": 6.5,
+  "lowestContractedPrice": 6.5,
+  "sellerName_en": "Wholesale Warehouse",
+  "sellerName_de": "Wholesale Lager",
+  "contractIds": [
+    "9901007196"
+  ],
+  "leadTimeDays": 3,
+  "unitOfMeasure": "SAR",
+  "moq": null,
+  "content": "rootCategoryName:Communities, Offices & Others | rootCategoryKey:buyer-default-communities-offices-and-others | rootCategorySlug:buyer-default-communities-offices-and-others | rootCategoryOrderHint:0.0003 | subCategoryName:Stationary Items | subCategoryKey:buyer-default-communities-offices-and-others-office-supplies-106000 | subCategorySlug:buyer-default-communities-offices-and-others-office-supplies-106000 | subCategoryDescription:Stationary Items | productKey:ao-100016 | productName_en:Rubber Band, Assorted Sizes, 100g Box | productName_de:Rubber Band, Assorted Sizes, 100g Box | productDescription_en:The Chrome Steel Tube – Stock Series 50×3 is a high‑quality precision tube designed for demanding mechanical and hydraulic applications. Manufactured from chrome‑alloy steel, this tube offers excellent strength, wear resistance, and dimensional stability, making it suitable for both standard stock use and further machining.\n\nWith an outer diameter of 50 mm and a wall thickness of 3 mm, the tube provides an optimal balance between mechanical performance and weight. The chrome steel composition ensures reliable operation under high pressure, repeated load cycles, and challenging industrial environments.\n\nThis stock series tube is commonly used in mechanical engineering, hydraulic systems, construction equipment, and general industrial applications, where consistent material quality and tight tolerances are required. Supplied in standard stock lengths, it enables fast availability and efficient integration into production or maintenance workflows.\n\nKey benefits\n\nHigh mechanical strength and durability\nGood wear and fatigue resistance\nSuitable for hydraulic and mechanical use\nConsistent stock quality for repeatable performance\nIdeal for machining and further processing | productDescription_de:Rubber Band, Assorted Sizes, 100g Box, For General Office Use, Standard Quality, Community Office Supplies Stock | productSlug:rubber-band-assorted-sizes-100g-box-100016 | productGroup:\"116000\" | materialType:9CAT | customerId:ARAMCO | customerMaterialNumber:ARAMCO-Material-Number | chemicalHazardBulletin:CHB-OFFC-001 | hazardHealth:H0, \"0\" | hazardFlame:F0, \"0\" | hazardReactive:R0, \"0\" | sku:ao-100016_2 | variantId:2 | variantKey:ao-100016_2 | imageUrl:https://assets.dev.b2x.b2bx.mindcurv.io/images/products/chemistry/ao/ao-100016.png | imageUrls:https://assets.dev.b2x.b2bx.mindcurv.io/images/products/chemistry/ao/ao-100016.png | availableQuantity:50 | restockableInDays:3 | inStockAnyChannel:True | totalAvailableQuantity:250 | currencyType:SAR | price:6.5 | lowestContractedPrice:6.5 | sellerName_en:Wholesale Warehouse | sellerName_de:Wholesale Lager | contractIds:9901007196 | leadTimeDays:3 | unitOfMeasure:SAR",
+  "image_content": []
+}

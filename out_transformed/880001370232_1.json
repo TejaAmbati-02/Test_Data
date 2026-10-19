@@ -1,0 +1,59 @@
+{
+  "rootCategoryName": "Instrumentation & IT",
+  "rootCategoryKey": "buyer-default-instrumentation-and-it",
+  "rootCategorySlug": "buyer-default-instrumentation-and-it",
+  "rootCategoryOrderHint": 0.02,
+  "subCategoryName": "LAN and Cable Distribution",
+  "subCategoryKey": "buyer-default-instrumentation-and-it-communications-078000",
+  "subCategorySlug": "buyer-default-instrumentation-and-it-communications-078000",
+  "subCategoryDescription": "LAN and Cable Distribution",
+  "productKey": "a-880000629770",
+  "productName_en": "HPE X242 40G QSFP",
+  "productName_de": "HPE X242 40G QSFP",
+  "productDescription_en": "HPE X242 40G QSFP+ to QSFP+ 1m DAC Cable",
+  "productDescription_de": "HPE X242 40G QSFP+ to QSFP+ 1m DAC Cable",
+  "productSlug": "buyer-default-instrumentation-and-it-communications-078000-a-880000629770",
+  "productGroup": "OFFICE-SUPPLIES",
+  "materialType": "9COM",
+  "customerId": "COM00003",
+  "customerMaterialNumber": "\"9700000001\"",
+  "chemicalHazardBulletin": "",
+  "hazardHealth": {
+    "code": "",
+    "value": ""
+  },
+  "hazardFlame": {
+    "code": "",
+    "value": ""
+  },
+  "hazardReactive": {
+    "code": "",
+    "value": ""
+  },
+  "sku": "880001370232_1",
+  "variantId": 2,
+  "variantKey": "880001370232_1",
+  "manufacturerNumber": "JH234A",
+  "productManufacturerNumber": null,
+  "erpMaterialNumber": null,
+  "imageUrl": null,
+  "imageUrls": null,
+  "availableQuantity": null,
+  "restockableInDays": null,
+  "inStockAnyChannel": true,
+  "totalAvailableQuantity": 100,
+  "currencyType": "SAR",
+  "price": 100.0,
+  "lowestContractedPrice": 100.0,
+  "sellerName_en": "Wholesale Warehouse",
+  "sellerName_de": "Wholesale Lager",
+  "contractIds": [
+    "4990027170",
+    "4990027170"
+  ],
+  "leadTimeDays": 3,
+  "unitOfMeasure": "SAR",
+  "moq": null,
+  "content": "rootCategoryName:Instrumentation & IT | rootCategoryKey:buyer-default-instrumentation-and-it | rootCategorySlug:buyer-default-instrumentation-and-it | rootCategoryOrderHint:0.02 | subCategoryName:LAN and Cable Distribution | subCategoryKey:buyer-default-instrumentation-and-it-communications-078000 | subCategorySlug:buyer-default-instrumentation-and-it-communications-078000 | subCategoryDescription:LAN and Cable Distribution | productKey:a-880000629770 | productName_en:HPE X242 40G QSFP | productName_de:HPE X242 40G QSFP | productDescription_en:HPE X242 40G QSFP+ to QSFP+ 1m DAC Cable | productDescription_de:HPE X242 40G QSFP+ to QSFP+ 1m DAC Cable | productSlug:buyer-default-instrumentation-and-it-communications-078000-a-880000629770 | productGroup:OFFICE-SUPPLIES | materialType:9COM | customerId:COM00003 | customerMaterialNumber:\"9700000001\" | sku:880001370232_1 | variantId:2 | variantKey:880001370232_1 | manufacturerNumber:JH234A | inStockAnyChannel:True | totalAvailableQuantity:100 | currencyType:SAR | price:100.0 | lowestContractedPrice:100.0 | sellerName_en:Wholesale Warehouse | sellerName_de:Wholesale Lager | contractIds:4990027170, 4990027170 | leadTimeDays:3 | unitOfMeasure:SAR",
+  "image_content": []
+}

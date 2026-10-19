@@ -1,0 +1,59 @@
+{
+  "rootCategoryName": "Instrumentation & IT",
+  "rootCategoryKey": "buyer-default-instrumentation-and-it",
+  "rootCategorySlug": "buyer-default-instrumentation-and-it",
+  "rootCategoryOrderHint": 0.02,
+  "subCategoryName": "LAN and Cable Distribution",
+  "subCategoryKey": "buyer-default-instrumentation-and-it-communications-078000",
+  "subCategorySlug": "buyer-default-instrumentation-and-it-communications-078000",
+  "subCategoryDescription": "LAN and Cable Distribution",
+  "productKey": "a-880000629780",
+  "productName_en": "5406R 16SFP+ v3 zl2 Swch",
+  "productName_de": "5406R 16SFP+ v3 zl2 Swch",
+  "productDescription_en": "Aruba 5406R 16SFP+ v3 zl2 Swch",
+  "productDescription_de": "Aruba 5406R 16SFP+ v3 zl2 Swch",
+  "productSlug": "buyer-default-instrumentation-and-it-communications-078000-a-880000629780",
+  "productGroup": "OFFICE-SUPPLIES",
+  "materialType": "9COM",
+  "customerId": "COM00013",
+  "customerMaterialNumber": "\"9700000001\"",
+  "chemicalHazardBulletin": "",
+  "hazardHealth": {
+    "code": "",
+    "value": ""
+  },
+  "hazardFlame": {
+    "code": "",
+    "value": ""
+  },
+  "hazardReactive": {
+    "code": "",
+    "value": ""
+  },
+  "sku": "880005072552_1",
+  "variantId": 2,
+  "variantKey": "880005072552_1",
+  "manufacturerNumber": "JL095A",
+  "productManufacturerNumber": null,
+  "erpMaterialNumber": null,
+  "imageUrl": null,
+  "imageUrls": null,
+  "availableQuantity": null,
+  "restockableInDays": null,
+  "inStockAnyChannel": true,
+  "totalAvailableQuantity": 0,
+  "currencyType": "SAR",
+  "price": 100.0,
+  "lowestContractedPrice": 100.0,
+  "sellerName_en": "Wholesale Warehouse",
+  "sellerName_de": "Wholesale Lager",
+  "contractIds": [
+    "4990027170",
+    "4990027170"
+  ],
+  "leadTimeDays": 3,
+  "unitOfMeasure": "SAR",
+  "moq": null,
+  "content": "rootCategoryName:Instrumentation & IT | rootCategoryKey:buyer-default-instrumentation-and-it | rootCategorySlug:buyer-default-instrumentation-and-it | rootCategoryOrderHint:0.02 | subCategoryName:LAN and Cable Distribution | subCategoryKey:buyer-default-instrumentation-and-it-communications-078000 | subCategorySlug:buyer-default-instrumentation-and-it-communications-078000 | subCategoryDescription:LAN and Cable Distribution | productKey:a-880000629780 | productName_en:5406R 16SFP+ v3 zl2 Swch | productName_de:5406R 16SFP+ v3 zl2 Swch | productDescription_en:Aruba 5406R 16SFP+ v3 zl2 Swch | productDescription_de:Aruba 5406R 16SFP+ v3 zl2 Swch | productSlug:buyer-default-instrumentation-and-it-communications-078000-a-880000629780 | productGroup:OFFICE-SUPPLIES | materialType:9COM | customerId:COM00013 | customerMaterialNumber:\"9700000001\" | sku:880005072552_1 | variantId:2 | variantKey:880005072552_1 | manufacturerNumber:JL095A | inStockAnyChannel:True | totalAvailableQuantity:0 | currencyType:SAR | price:100.0 | lowestContractedPrice:100.0 | sellerName_en:Wholesale Warehouse | sellerName_de:Wholesale Lager | contractIds:4990027170, 4990027170 | leadTimeDays:3 | unitOfMeasure:SAR",
+  "image_content": []
+}

@@ -1,0 +1,60 @@
+{
+  "rootCategoryName": "Communities, Offices & Others",
+  "rootCategoryKey": "buyer-default-communities-offices-and-others",
+  "rootCategorySlug": "buyer-default-communities-offices-and-others",
+  "rootCategoryOrderHint": 0.0003,
+  "subCategoryName": "Stationary Items",
+  "subCategoryKey": "buyer-default-communities-offices-and-others-office-supplies-106000",
+  "subCategorySlug": "buyer-default-communities-offices-and-others-office-supplies-106000",
+  "subCategoryDescription": "Stationary Items",
+  "productKey": "ao-100027",
+  "productName_en": "7X50 A211 ACULON BINO NIKON",
+  "productName_de": "Clipboard, A4, Wood, Standard",
+  "productDescription_en": "7X50 A211 ACULON BINO NIKON",
+  "productDescription_de": "Clipboard, A4, Wood, Standard, For General Office Use, Standard Quality, Community Office Supplies Stock",
+  "productSlug": "clipboard-a4-wood-standard-100027",
+  "productGroup": "\"116000\"",
+  "materialType": "9CAT",
+  "customerId": "ARAMCO",
+  "customerMaterialNumber": "ARAMCO-Material-Number",
+  "chemicalHazardBulletin": "CHB-OFFC-001",
+  "hazardHealth": {
+    "code": "H0",
+    "value": "\"0\""
+  },
+  "hazardFlame": {
+    "code": "F0",
+    "value": "\"0\""
+  },
+  "hazardReactive": {
+    "code": "R0",
+    "value": "\"0\""
+  },
+  "sku": "ao-100027_2",
+  "variantId": 2,
+  "variantKey": "ao-100027_2",
+  "manufacturerNumber": null,
+  "productManufacturerNumber": null,
+  "erpMaterialNumber": null,
+  "imageUrl": "https://assets.dev.b2x.b2bx.mindcurv.io/images/products/chemistry/ao/ao-100027.png",
+  "imageUrls": [
+    "https://assets.dev.b2x.b2bx.mindcurv.io/images/products/chemistry/ao/ao-100027.png"
+  ],
+  "availableQuantity": 100,
+  "restockableInDays": 2,
+  "inStockAnyChannel": true,
+  "totalAvailableQuantity": 242,
+  "currencyType": "SAR",
+  "price": 18.5,
+  "lowestContractedPrice": 18.5,
+  "sellerName_en": "Wholesale Warehouse",
+  "sellerName_de": "Wholesale Lager",
+  "contractIds": [
+    "9901007196"
+  ],
+  "leadTimeDays": 3,
+  "unitOfMeasure": "SAR",
+  "moq": null,
+  "content": "rootCategoryName:Communities, Offices & Others | rootCategoryKey:buyer-default-communities-offices-and-others | rootCategorySlug:buyer-default-communities-offices-and-others | rootCategoryOrderHint:0.0003 | subCategoryName:Stationary Items | subCategoryKey:buyer-default-communities-offices-and-others-office-supplies-106000 | subCategorySlug:buyer-default-communities-offices-and-others-office-supplies-106000 | subCategoryDescription:Stationary Items | productKey:ao-100027 | productName_en:7X50 A211 ACULON BINO NIKON | productName_de:Clipboard, A4, Wood, Standard | productDescription_en:7X50 A211 ACULON BINO NIKON | productDescription_de:Clipboard, A4, Wood, Standard, For General Office Use, Standard Quality, Community Office Supplies Stock | productSlug:clipboard-a4-wood-standard-100027 | productGroup:\"116000\" | materialType:9CAT | customerId:ARAMCO | customerMaterialNumber:ARAMCO-Material-Number | chemicalHazardBulletin:CHB-OFFC-001 | hazardHealth:H0, \"0\" | hazardFlame:F0, \"0\" | hazardReactive:R0, \"0\" | sku:ao-100027_2 | variantId:2 | variantKey:ao-100027_2 | imageUrl:https://assets.dev.b2x.b2bx.mindcurv.io/images/products/chemistry/ao/ao-100027.png | imageUrls:https://assets.dev.b2x.b2bx.mindcurv.io/images/products/chemistry/ao/ao-100027.png | availableQuantity:100 | restockableInDays:2 | inStockAnyChannel:True | totalAvailableQuantity:242 | currencyType:SAR | price:18.5 | lowestContractedPrice:18.5 | sellerName_en:Wholesale Warehouse | sellerName_de:Wholesale Lager | contractIds:9901007196 | leadTimeDays:3 | unitOfMeasure:SAR",
+  "image_content": []
+}

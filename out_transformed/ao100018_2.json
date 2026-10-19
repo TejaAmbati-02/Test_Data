@@ -1,0 +1,60 @@
+{
+  "rootCategoryName": "Communities, Offices & Others",
+  "rootCategoryKey": "buyer-default-communities-offices-and-others",
+  "rootCategorySlug": "buyer-default-communities-offices-and-others",
+  "rootCategoryOrderHint": 0.0003,
+  "subCategoryName": "Stationary Items",
+  "subCategoryKey": "buyer-default-communities-offices-and-others-office-supplies-106000",
+  "subCategorySlug": "buyer-default-communities-offices-and-others-office-supplies-106000",
+  "subCategoryDescription": "Stationary Items",
+  "productKey": "ao-100018",
+  "productName_en": "Charger, Battery, (Uk PIN), 2100MAH, AA",
+  "productName_de": "Notebook Ledger, 200 Pages, Hardcover",
+  "productDescription_en": "Charger, Battery, (Uk PIN), 2100MAH, AA, 620-E+4",
+  "productDescription_de": "Notebook Ledger, 200 Pages, Hardcover, For General Office Use, Standard Quality, Community Office Supplies Stock",
+  "productSlug": "notebook-ledger-200-pages-hardcover-100018",
+  "productGroup": "\"116000\"",
+  "materialType": "9CAT",
+  "customerId": "ARAMCO",
+  "customerMaterialNumber": "ARAMCO-Material-Number",
+  "chemicalHazardBulletin": "CHB-OFFC-001",
+  "hazardHealth": {
+    "code": "H0",
+    "value": "\"0\""
+  },
+  "hazardFlame": {
+    "code": "F0",
+    "value": "\"0\""
+  },
+  "hazardReactive": {
+    "code": "R0",
+    "value": "\"0\""
+  },
+  "sku": "ao-100018_2",
+  "variantId": 2,
+  "variantKey": "ao-100018_2",
+  "manufacturerNumber": null,
+  "productManufacturerNumber": null,
+  "erpMaterialNumber": null,
+  "imageUrl": "https://assets.dev.b2x.b2bx.mindcurv.io/images/products/chemistry/ao/ao-100018.png",
+  "imageUrls": [
+    "https://assets.dev.b2x.b2bx.mindcurv.io/images/products/chemistry/ao/ao-100018.png"
+  ],
+  "availableQuantity": 100,
+  "restockableInDays": 3,
+  "inStockAnyChannel": true,
+  "totalAvailableQuantity": 142,
+  "currencyType": "SAR",
+  "price": 54.0,
+  "lowestContractedPrice": 54.0,
+  "sellerName_en": "Wholesale Warehouse",
+  "sellerName_de": "Wholesale Lager",
+  "contractIds": [
+    "9901007196"
+  ],
+  "leadTimeDays": 3,
+  "unitOfMeasure": "SAR",
+  "moq": null,
+  "content": "rootCategoryName:Communities, Offices & Others | rootCategoryKey:buyer-default-communities-offices-and-others | rootCategorySlug:buyer-default-communities-offices-and-others | rootCategoryOrderHint:0.0003 | subCategoryName:Stationary Items | subCategoryKey:buyer-default-communities-offices-and-others-office-supplies-106000 | subCategorySlug:buyer-default-communities-offices-and-others-office-supplies-106000 | subCategoryDescription:Stationary Items | productKey:ao-100018 | productName_en:Charger, Battery, (Uk PIN), 2100MAH, AA | productName_de:Notebook Ledger, 200 Pages, Hardcover | productDescription_en:Charger, Battery, (Uk PIN), 2100MAH, AA, 620-E+4 | productDescription_de:Notebook Ledger, 200 Pages, Hardcover, For General Office Use, Standard Quality, Community Office Supplies Stock | productSlug:notebook-ledger-200-pages-hardcover-100018 | productGroup:\"116000\" | materialType:9CAT | customerId:ARAMCO | customerMaterialNumber:ARAMCO-Material-Number | chemicalHazardBulletin:CHB-OFFC-001 | hazardHealth:H0, \"0\" | hazardFlame:F0, \"0\" | hazardReactive:R0, \"0\" | sku:ao-100018_2 | variantId:2 | variantKey:ao-100018_2 | imageUrl:https://assets.dev.b2x.b2bx.mindcurv.io/images/products/chemistry/ao/ao-100018.png | imageUrls:https://assets.dev.b2x.b2bx.mindcurv.io/images/products/chemistry/ao/ao-100018.png | availableQuantity:100 | restockableInDays:3 | inStockAnyChannel:True | totalAvailableQuantity:142 | currencyType:SAR | price:54.0 | lowestContractedPrice:54.0 | sellerName_en:Wholesale Warehouse | sellerName_de:Wholesale Lager | contractIds:9901007196 | leadTimeDays:3 | unitOfMeasure:SAR",
+  "image_content": []
+}
