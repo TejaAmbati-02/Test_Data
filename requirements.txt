@@ -1,0 +1,6 @@
+aiohttp
+aioboto3
+python-dotenv
+truststore
+oci
+opensearch-py[async]

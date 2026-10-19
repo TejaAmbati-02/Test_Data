@@ -1,0 +1,96 @@
+{
+  "limit": 20,
+  "offset": 0,
+  "count": 2,
+  "total": 2,
+  "results": [
+    {
+      "id": "18c8f848-1b9d-4915-a029-38073b09ef2e",
+      "version": 5,
+      "versionModifiedAt": "2026-09-25T18:57:41.991Z",
+      "lastMessageSequenceNumber": 1,
+      "createdAt": "2026-09-25T18:37:12.167Z",
+      "lastModifiedAt": "2026-09-25T18:57:41.991Z",
+      "lastModifiedBy": {
+        "isPlatformClient": true
+      },
+      "createdBy": {
+        "isPlatformClient": true
+      },
+      "sku": "a-880000629787",
+      "value": {
+        "type": "centPrecision",
+        "currencyCode": "SAR",
+        "centAmount": 5500,
+        "fractionDigits": 2
+      },
+      "key": "a-880000629787-contract",
+      "customerGroup": {
+        "typeId": "customer-group",
+        "id": "5ed5940e-29fe-4102-a748-ca66eef795a3"
+      },
+      "channel": {
+        "typeId": "channel",
+        "id": "7f67afea-9853-43b5-bc5b-69904e4e2a6f"
+      },
+      "custom": {
+        "type": {
+          "typeId": "type",
+          "id": "8b2d5e47-0111-44a1-97c7-5120acb2c585"
+        },
+        "fields": {
+          "scope": "CONTRACTED",
+          "leadTimeDays": 3,
+          "supplierId": "Aruba",
+          "priceUnit": "EA",
+          "incoterms": "AMC",
+          "paymentTerms": "NT 30",
+          "contractId": "4990027170"
+        }
+      },
+      "active": true
+    },
+    {
+      "id": "07d2dcf7-137e-4d0d-933f-0a10108b5a0e",
+      "version": 2,
+      "versionModifiedAt": "2026-09-25T18:57:42.156Z",
+      "lastMessageSequenceNumber": 1,
+      "createdAt": "2026-09-25T18:37:12.182Z",
+      "lastModifiedAt": "2026-09-25T18:57:42.156Z",
+      "lastModifiedBy": {
+        "isPlatformClient": true
+      },
+      "createdBy": {
+        "isPlatformClient": true
+      },
+      "sku": "a-880000629787",
+      "value": {
+        "type": "centPrecision",
+        "currencyCode": "SAR",
+        "centAmount": 12000,
+        "fractionDigits": 2
+      },
+      "key": "a-880000629787",
+      "channel": {
+        "typeId": "channel",
+        "id": "7f67afea-9853-43b5-bc5b-69904e4e2a6f"
+      },
+      "custom": {
+        "type": {
+          "typeId": "type",
+          "id": "8b2d5e47-0111-44a1-97c7-5120acb2c585"
+        },
+        "fields": {
+          "scope": "CONTRACTED",
+          "leadTimeDays": 3,
+          "supplierId": "Aruba",
+          "priceUnit": "EA",
+          "incoterms": "AMC",
+          "paymentTerms": "NT 30",
+          "contractId": "4990027170"
+        }
+      },
+      "active": true
+    }
+  ]
+}
