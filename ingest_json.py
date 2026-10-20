@@ -174,8 +174,15 @@ def load_transformed(folder: Path, pattern: str, require_content: bool, limit: i
     return rows
 
 
-def _sniff_mime(data: bytes) -> str:
-    """Best-effort image MIME type from magic bytes (png fallback)."""
+def _supported_image_mime(data: bytes) -> str | None:
+    """Return the MIME type if the bytes are an OCI-supported image, else None.
+
+    OCI's multimodal embed only accepts PNG, JPEG, WebP and GIF. Anything else
+    — BMP/TIFF/SVG, or a non-image payload such as an HTML error page a server
+    returned with a 200 status — is detected by magic bytes and returned as
+    ``None`` so the caller can skip it instead of sending it (which 400s the
+    whole embed request).
+    """
     if data[:8].startswith(b"\x89PNG"):
         return "image/png"
     if data[:3] == b"\xff\xd8\xff":
@@ -184,9 +191,53 @@ def _sniff_mime(data: bytes) -> str:
         return "image/gif"
     if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
         return "image/webp"
-    if data[:2] == b"BM":
-        return "image/bmp"
-    return "image/png"
+    return None
+
+
+async def _embed_images_resilient(embedder: OCIEmbedder, images: list[tuple[bytes, str]]) -> tuple[list[list[float] | None], int]:
+    """Embed images tolerantly: a single bad image never fails the whole set.
+
+    Images are embedded in small batches; if a batch is rejected (e.g. OCI 400
+    on one corrupt/unsupported image that slipped past the magic-byte check),
+    that batch is retried one image at a time so the good images still get
+    vectors and only the bad ones are dropped.
+
+    Args:
+        embedder: The OCI embedder.
+        images: ``(bytes, mime)`` tuples to embed.
+
+    Returns:
+        ``(vectors, failed)`` — ``vectors[i]`` is the embedding for ``images[i]``
+        or ``None`` when that image could not be embedded; ``failed`` counts the
+        ``None`` entries.
+    """
+    chunk = embedder.image_batch
+    vectors: list[list[float] | None] = [None] * len(images)
+    failed = 0
+    for start in range(0, len(images), chunk):
+        batch = images[start:start + chunk]
+        try:
+            vecs = await embedder.embed_images(batch)
+            for j, vec in enumerate(vecs):
+                vectors[start + j] = vec
+        except Exception as exc:
+            logger.warning(
+                f"Image embed batch of {len(batch)} failed ({exc}); retrying per-image",
+                extra={"function_name": "_embed_images_resilient", "status": "error", "error_details": str(exc)},
+            )
+            for j, img in enumerate(batch):
+                try:
+                    one = await embedder.embed_images([img])
+                    vectors[start + j] = one[0] if one else None
+                    if not one:
+                        failed += 1
+                except Exception as exc2:
+                    failed += 1
+                    logger.warning(
+                        f"Skipping unembeddable image: {exc2}",
+                        extra={"function_name": "_embed_images_resilient", "status": "error", "error_details": str(exc2)},
+                    )
+    return vectors, failed
 
 
 async def attach_image_embeddings(rows: dict[str, dict], embedder: OCIEmbedder, enabled: bool) -> dict:
@@ -217,6 +268,7 @@ async def attach_image_embeddings(rows: dict[str, dict], embedder: OCIEmbedder, 
     # (sku, bytes, mime, image_id, url) for every image awaiting a vector.
     work: list[tuple[str, bytes, str, str, str | None]] = []
     decode_failed = 0
+    unsupported = 0
     rows_with_content = 0
 
     if enabled:
@@ -234,19 +286,35 @@ async def attach_image_embeddings(rows: dict[str, dict], embedder: OCIEmbedder, 
                 except (binascii.Error, ValueError):
                     decode_failed += 1
                     continue
+                mime = _supported_image_mime(data)
+                if mime is None:
+                    # Not PNG/JPEG/WebP/GIF (e.g. BMP/TIFF/SVG or a non-image
+                    # error body). OCI would 400 on it, so skip it entirely.
+                    unsupported += 1
+                    logger.warning(
+                        f"Skipping unsupported image format for sku={sku!r} (image {i})",
+                        extra={"request_id": sku, "function_name": "attach_image_embeddings",
+                               "input_data": {"sku": sku, "index": i, "head": data[:8].hex()}},
+                    )
+                    continue
                 url = urls[i] if i < len(urls) else None
                 image_id = ImageDownloader._filename_for(sku, url, i) if url else f"{sku.replace('-', '')}_{i}"
-                work.append((sku, data, _sniff_mime(data), image_id, url))
+                work.append((sku, data, mime, image_id, url))
 
     images_embedded = 0
+    embed_failed = 0
     if work:
         logger.info(
-            f"Embedding {len(work)} image(s) from image_content across {rows_with_content} row(s)",
+            f"Embedding {len(work)} supported image(s) from image_content across {rows_with_content} row(s)",
             extra={"function_name": "attach_image_embeddings", "input_data": {"images": len(work), "rows": rows_with_content}},
         )
-        vectors = await embedder.embed_images([(data, mime) for _sku, data, mime, _id, _url in work])
+        vectors, embed_failed = await _embed_images_resilient(
+            embedder, [(data, mime) for _sku, data, mime, _id, _url in work]
+        )
         images_by_sku: dict[str, list[dict]] = {}
         for (sku, _data, _mime, image_id, url), vector in zip(work, vectors):
+            if vector is None:  # dropped by the resilient embedder — skip it
+                continue
             images_by_sku.setdefault(sku, []).append(
                 {"image_id": image_id, "image_url": url, "image_vector": vector}
             )
@@ -259,16 +327,18 @@ async def attach_image_embeddings(rows: dict[str, dict], embedder: OCIEmbedder, 
         row.pop("image_content", None)
 
     logger.info(
-        f"Image embedding done — {images_embedded} vector(s) from {rows_with_content} row(s)"
-        + (f", {decode_failed} base64 decode failure(s)" if decode_failed else "")
+        f"Image embedding done — {images_embedded} vector(s) from {rows_with_content} row(s); "
+        f"{unsupported} unsupported, {decode_failed} decode failure(s), {embed_failed} embed failure(s)"
         + ("" if enabled else " (disabled — image_content stripped, not embedded)"),
         extra={
             "function_name": "attach_image_embeddings",
             "status": "success",
-            "input_data": {"rows_with_content": rows_with_content, "images_embedded": images_embedded, "decode_failed": decode_failed},
+            "input_data": {"rows_with_content": rows_with_content, "images_embedded": images_embedded,
+                           "unsupported": unsupported, "decode_failed": decode_failed, "embed_failed": embed_failed},
         },
     )
-    return {"rows_with_content": rows_with_content, "images_embedded": images_embedded, "decode_failed": decode_failed}
+    return {"rows_with_content": rows_with_content, "images_embedded": images_embedded,
+            "unsupported": unsupported, "decode_failed": decode_failed, "embed_failed": embed_failed}
 
 
 async def run(args: argparse.Namespace) -> int:

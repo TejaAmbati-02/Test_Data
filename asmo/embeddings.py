@@ -29,9 +29,6 @@ from .logging_service import logger
 
 # Cohere embed on OCI accepts at most 96 inputs per request.
 _MAX_BATCH = 96
-# Images are far larger than text, so embed them in small batches to keep each
-# request well under the payload limit.
-_MAX_IMAGE_BATCH = 8
 
 
 @dataclass
@@ -58,6 +55,11 @@ class OCIEmbedderConfig:
     compartment_id: str = field(default_factory=lambda: os.environ["OCI_COMPARTMENT_ID"])
     model_id: str = field(default_factory=lambda: os.environ.get("OCI_EMBED_MODEL_ID", "cohere.embed-v4.0"))
     dimension: int = field(default_factory=lambda: int(os.environ.get("OCI_EMBED_DIM", "1536")))
+    # Images per embed request. Kept small by default because images are large
+    # as base64 (~0.5 MB each) and a request has a payload-size limit — 8 images
+    # is ~3-4 MB. Raise via OCI_EMBED_IMAGE_BATCH, but OCI still caps inputs at
+    # 96 per request and oversized batches will be rejected (413/400).
+    image_batch: int = field(default_factory=lambda: int(os.environ.get("OCI_EMBED_IMAGE_BATCH", "8")))
 
     @property
     def endpoint(self) -> str:
@@ -85,6 +87,11 @@ class OCIEmbedder:
         self._config = config or OCIEmbedderConfig()
         self._batch_size = max(1, min(batch_size, _MAX_BATCH))
         self._client = None
+
+    @property
+    def image_batch(self) -> int:
+        """Images per embed request — configured value, capped at the OCI limit."""
+        return max(1, min(self._config.image_batch, _MAX_BATCH))
 
     def _client_sync(self):
         """Build (once) and return the synchronous OCI GenAI inference client.
@@ -265,7 +272,7 @@ class OCIEmbedder:
             for data, mime in images
         ]
 
-        batch_size = min(self._batch_size, _MAX_IMAGE_BATCH)
+        batch_size = self.image_batch
         vectors: list[list[float]] = []
         total_batches = (len(data_uris) + batch_size - 1) // batch_size
         for batch_num, start in enumerate(range(0, len(data_uris), batch_size), start=1):
