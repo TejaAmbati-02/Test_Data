@@ -56,7 +56,6 @@ truststore.inject_into_ssl()
 load_dotenv(override=True)
 
 from asmo.embeddings import OCIEmbedder  # noqa: E402
-from asmo.images import ImageDownloader  # noqa: E402
 from asmo.logging_service import setup_logging, logger  # noqa: E402
 from asmo.search_index import OpenSearchIndexer  # noqa: E402
 
@@ -247,7 +246,7 @@ async def attach_image_embeddings(rows: dict[str, dict], embedder: OCIEmbedder, 
     by a local pipeline run with ``IMAGE_CONTENT_LOCAL=true``) and does not
     already have pre-computed ``images`` vectors, every image is decoded and
     embedded via OCI multimodal ``embed-v4.0``. The resulting vectors are
-    attached as a nested ``images`` list — ``{image_id, image_url,
+    attached as a nested ``images`` list — ``{image_url, image_base64,
     image_vector}`` — pairing each image with the matching entry in
     ``image_urls`` by position.
 
@@ -265,7 +264,7 @@ async def attach_image_embeddings(rows: dict[str, dict], embedder: OCIEmbedder, 
         A summary dict with ``rows_with_content``, ``images_embedded`` and
         ``decode_failed`` counts.
     """
-    # (sku, bytes, mime, image_id, url) for every image awaiting a vector.
+    # (sku, bytes, mime, base64, url) for every image awaiting a vector.
     work: list[tuple[str, bytes, str, str, str | None]] = []
     decode_failed = 0
     unsupported = 0
@@ -279,7 +278,7 @@ async def attach_image_embeddings(rows: dict[str, dict], embedder: OCIEmbedder, 
             if not b64_list:
                 continue
             rows_with_content += 1
-            urls = row.get("image_urls") or ([row["image_url"]] if row.get("image_url") else [])
+            urls = row.get("image_urls") or []
             for i, b64 in enumerate(b64_list):
                 try:
                     data = base64.b64decode(b64, validate=True)
@@ -298,8 +297,7 @@ async def attach_image_embeddings(rows: dict[str, dict], embedder: OCIEmbedder, 
                     )
                     continue
                 url = urls[i] if i < len(urls) else None
-                image_id = ImageDownloader._filename_for(sku, url, i) if url else f"{sku.replace('-', '')}_{i}"
-                work.append((sku, data, mime, image_id, url))
+                work.append((sku, data, mime, b64, url))
 
     images_embedded = 0
     embed_failed = 0
@@ -312,11 +310,11 @@ async def attach_image_embeddings(rows: dict[str, dict], embedder: OCIEmbedder, 
             embedder, [(data, mime) for _sku, data, mime, _id, _url in work]
         )
         images_by_sku: dict[str, list[dict]] = {}
-        for (sku, _data, _mime, image_id, url), vector in zip(work, vectors):
+        for (sku, _data, _mime, b64, url), vector in zip(work, vectors):
             if vector is None:  # dropped by the resilient embedder — skip it
                 continue
             images_by_sku.setdefault(sku, []).append(
-                {"image_id": image_id, "image_url": url, "image_vector": vector}
+                {"image_url": url, "image_base64": b64, "image_vector": vector}
             )
             images_embedded += 1
         for sku, imgs in images_by_sku.items():

@@ -61,7 +61,7 @@ def build_index_body(vector_field: str, dim: int, image_dim: int | None = None) 
     sub-field); hazard ratings are nested objects.
 
     Image vectors live in a ``nested`` ``images`` array — one entry per image
-    (``image_id``, ``image_url``, ``image_vector``) — so a SKU with several
+    (``image_url``, ``image_base64``, ``image_vector``) — so a SKU with several
     images is still a single parent document, and a kNN query over
     ``images.image_vector`` (with ``score_mode: max``) ranks each SKU by its
     best-matching image. This keeps text and image retrieval in one index.
@@ -163,19 +163,21 @@ def build_index_body(vector_field: str, dim: int, image_dim: int | None = None) 
                 "manufacturer_number":        keyword_field(),
                 "product_manufacturer_number": keyword_field(),
                 "erp_material_number":         keyword_field(),
-                "image_url":                  keyword_field(),
                 "image_urls":                 keyword_field(),
 
-                # --- Image embeddings (nested: one entry per image, max ~3) ---
+                # --- Image embeddings (nested: one entry per image) ---
+                # Each entry stores the image itself as base64 (image_base64),
+                # its source URL, and the embedding of that image (image_vector).
                 # A kNN query over images.image_vector with score_mode=max ranks
                 # each parent SKU by its single best-matching image; inner_hits
-                # returns which image matched. image_url here is stored for
-                # retrieval only (index:false -> not searchable/filterable).
+                # returns which image matched. image_base64 uses the `binary`
+                # type (stored in _source, never indexed/searched); image_url is
+                # index:false (retrieval only, not searchable/filterable).
                 "images": {
                     "type": "nested",
                     "properties": {
-                        "image_id":     {"type": "keyword"},
                         "image_url":    {"type": "keyword", "index": False},
+                        "image_base64": {"type": "binary"},
                         "image_vector": knn_vector(image_dim),
                     },
                 },

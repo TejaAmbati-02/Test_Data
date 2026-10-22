@@ -251,7 +251,6 @@ async def _parse_variant(
             "manufacturer_number": await _attr(v_attrs, "manufacturerNumber"),
             "product_manufacturer_number": await _attr(v_attrs, "productManufacturerNumber"),
             "erp_material_number": await _attr(v_attrs, "ownInventoryManagedProduct"),
-            "image_url": image_urls[0] if image_urls else None,
             "image_urls": image_urls or None,
             "available_quantity": avail.get("availableQuantity"),
             "restockable_in_days": avail.get("restockableInDays"),

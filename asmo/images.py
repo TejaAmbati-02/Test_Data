@@ -138,7 +138,7 @@ class ImageDownloader:
             embed_image: Optional async callback ``(list[(bytes, mime)]) ->
                 list[vector]`` that embeds a SKU's downloaded images. When given,
                 each row gains a nested ``images`` list of
-                ``{image_id, image_url, image_vector}`` (one entry per
+                ``{image_url, image_base64, image_vector}`` (one entry per
                 successfully embedded image) for kNN indexing. When ``None``, no
                 image vectors are produced.
             write_images: Whether each downloaded image is saved to the local
@@ -161,7 +161,7 @@ class ImageDownloader:
         if write_images:
             self._output_dir.mkdir(parents=True, exist_ok=True)
 
-        with_url = sum(1 for row in transformed.values() if row.get("image_url"))
+        with_url = sum(1 for row in transformed.values() if row.get("image_urls"))
         without_url = len(transformed) - with_url
         uploading = upload_json is not None or upload_image is not None
         logger.info(
@@ -230,14 +230,14 @@ class ImageDownloader:
 
                 When ``embed_image`` is configured, every successfully downloaded
                 image is embedded (one batched call per SKU) and returned as a
-                nested ``images`` list of ``{image_id, image_url, image_vector}``
+                nested ``images`` list of ``{image_url, image_base64, image_vector}``
                 for the caller to attach to the transformed row for kNN indexing.
 
                 Returns:
                     ``(base64_list, images_nested)`` — the per-image base64 blobs
                     and the nested image/vector dicts (either may be empty).
                 """
-                urls = row.get("image_urls") or ([row["image_url"]] if row.get("image_url") else [])
+                urls = row.get("image_urls") or []
                 if max_images is not None:
                     urls = urls[:max_images]
                 if not urls:
@@ -310,8 +310,12 @@ class ImageDownloader:
                                    "error_details": str(exc), "input_data": {"sku": sku, "images": len(downloaded)}},
                         )
                         vectors = []
-                    for (filename, url, _data, _mime), vector in zip(downloaded, vectors):
-                        images_nested.append({"image_id": filename, "image_url": url, "image_vector": vector})
+                    for (_filename, url, data, _mime), vector in zip(downloaded, vectors):
+                        images_nested.append({
+                            "image_url": url,
+                            "image_base64": base64.b64encode(data).decode("ascii"),
+                            "image_vector": vector,
+                        })
                         counters["images_embedded"] += 1
 
                 return b64, images_nested
