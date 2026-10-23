@@ -176,7 +176,7 @@ def build_index_body(vector_field: str, dim: int) -> dict:
                 # --- Master-variant / SKU ---
                 "sku_key":       keyword_field(),
                 "sku_id":        keyword_field(),
-                "sku_image_url": keyword_field(),
+                # All image URLs for the SKU; the primary image is image_urls[0].
                 "image_urls":    keyword_field(),
 
                 # --- Material numbers ---
@@ -195,22 +195,12 @@ def build_index_body(vector_field: str, dim: int) -> dict:
                 # text search.
                 "images": {"type": "object", "enabled": False},
 
-                # --- Seller / price (from the selected standalone price) ---
-                "seller_id":               keyword_field(),
-                "seller_name":             text_field("english"),
-                "price":                   numeric_field("float"),
-                "currency_type":           keyword_field(),
-                "lead_time":               numeric_field("integer"),
-                "moq":                     numeric_field("integer"),  # Minimum Order Quantity
-                "unit_type":               keyword_field(),
-                "temporary_unavailable":   {"type": "boolean"},
-                "is_blocked_for_deletion": keyword_field(),
-
-                # --- Seller objects ---
-                # ``seller``  = primary (cheapest) seller, grouped (mirrors flat fields).
-                # ``sellers`` = every usable seller offer for the SKU (nested, so each
-                #               offer's fields stay paired and independently queryable).
-                "seller":  {"type": "object", "properties": seller_properties()},
+                # --- Sellers ---
+                # Every usable seller offer for the SKU (nested, so each offer's
+                # fields stay paired and independently queryable). All seller/price
+                # data lives here — seller_id, seller_name, supplier_id, contract_id,
+                # price, currency_type, lead_time, moq, unit_type, temporary_unavailable
+                # and is_blocked_for_deletion. Read sellers[0] for the primary (cheapest).
                 "sellers": {"type": "nested", "properties": seller_properties()},
             },
         },

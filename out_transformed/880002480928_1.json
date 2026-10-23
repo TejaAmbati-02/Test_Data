@@ -20,32 +20,9 @@
   "purchase_agreements": null,
   "sku_key": "880002480928_1",
   "sku_id": "880002480928_1",
-  "sku_image_url": null,
   "image_urls": null,
   "asmo_material_number": null,
   "aramco_material_number": "JL001A",
-  "seller_id": "3a7b23e0-0047-4d63-88a9-cd05d1006a39",
-  "seller_name": "Wholesale Warehouse",
-  "price": 100.0,
-  "currency_type": "SAR",
-  "lead_time": 3,
-  "moq": null,
-  "unit_type": "EA",
-  "temporary_unavailable": null,
-  "is_blocked_for_deletion": null,
-  "seller": {
-    "seller_id": "3a7b23e0-0047-4d63-88a9-cd05d1006a39",
-    "seller_name": "Wholesale Warehouse",
-    "supplier_id": "Aruba",
-    "contract_id": "4990027170",
-    "price": 100.0,
-    "currency_type": "SAR",
-    "lead_time": 3,
-    "moq": null,
-    "unit_type": "EA",
-    "temporary_unavailable": null,
-    "is_blocked_for_deletion": null
-  },
   "sellers": [
     {
       "seller_id": "3a7b23e0-0047-4d63-88a9-cd05d1006a39",
@@ -74,6 +51,6 @@
       "is_blocked_for_deletion": null
     }
   ],
-  "content": "product_id:51ab4fe6-241f-4680-ae93-56c1d24fd8db | product_title:5412R 92GT PoE+/4SFP+ v3 zl2 Swch | product_description:The HPE Aruba 5412R zl2 Switch is an enterprise-grade modular Layer 3 managed switch designed for scalable, secure, and high-performance network environments. With 92 Gigabit PoE+ ports and 4 SFP+ uplink ports, it is engineered for large-scale campus and enterprise deployments requiring robust throughput and seamless power delivery for devices such as access points, VoIP phones, and IoT endpoints. \n\nBuilt on a powerful ProVision ASIC, the switch features a high-speed 2 Tbps crossbar switching fabric with ultra-low 2.1μs latency, and supports a comprehensive Layer 2 and 3 feature set — including OSPF, IPv6, IPv4 BGP, Dynamic Segmentation, robust QoS, and policy-based routing — all without additional software licensing. \n\nHPE Smart Rate multi-gigabit ports deliver high-speed bandwidth and PoE+ power, while scalable line rate 40GbE supports wireless traffic aggregation. The switch is software-defined networking ready, with REST API and OpenFlow support for programmable, automated network operations. \n\nIntegration with HPE Aruba's management ecosystem — including Aruba Central (cloud-based), AirWave, and ClearPass — enables simplified administration, zero-trust security enforcement, and analytics-driven operations. \n\nKey Features\n\n- VSF stacking, hitless failover, and Fast Software Upgrade for always-on operations\n- Dynamic Segmentation for role-based wired/wireless policy enforcement\n- MACsec encryption support (via v3 expansion modules)\n- OpenFlow 1.0/1.3 for SDN applications\n- Automatic PoE priority and VLAN configuration for Aruba access points\n- 64,000-entry MAC address table | category_name:Instrumentation & IT | category_id:938869fc-bc69-4c1f-bc2d-ef37b479629f | category_slug:buyer-default-instrumentation-and-it | category_description:Instrumentation & IT | category_key:buyer-default-instrumentation-and-it | sub_category_name:Communications | sub_category_id:cd43821c-9213-4a52-ad96-7af05f52a02d | sub_category_slug:buyer-default-instrumentation-and-it-communications | sub_category_description:Communications | sub_category_key:buyer-default-instrumentation-and-it-communications | product_type_name:LAN and Cable Distribution | product_type_id:754032b4-6866-49ae-9a6b-1d5a43de6d26 | product_type_slug:buyer-default-instrumentation-and-it-communications-078000 | product_type_description:LAN and Cable Distribution | product_type_key:buyer-default-instrumentation-and-it-communications-078000 | sku_key:880002480928_1 | sku_id:880002480928_1 | aramco_material_number:JL001A | seller_id:3a7b23e0-0047-4d63-88a9-cd05d1006a39 | seller_name:Wholesale Warehouse | price:100.0 | currency_type:SAR | lead_time:3 | unit_type:EA",
+  "content": "product_id:51ab4fe6-241f-4680-ae93-56c1d24fd8db | product_title:5412R 92GT PoE+/4SFP+ v3 zl2 Swch | product_description:The HPE Aruba 5412R zl2 Switch is an enterprise-grade modular Layer 3 managed switch designed for scalable, secure, and high-performance network environments. With 92 Gigabit PoE+ ports and 4 SFP+ uplink ports, it is engineered for large-scale campus and enterprise deployments requiring robust throughput and seamless power delivery for devices such as access points, VoIP phones, and IoT endpoints. \n\nBuilt on a powerful ProVision ASIC, the switch features a high-speed 2 Tbps crossbar switching fabric with ultra-low 2.1μs latency, and supports a comprehensive Layer 2 and 3 feature set — including OSPF, IPv6, IPv4 BGP, Dynamic Segmentation, robust QoS, and policy-based routing — all without additional software licensing. \n\nHPE Smart Rate multi-gigabit ports deliver high-speed bandwidth and PoE+ power, while scalable line rate 40GbE supports wireless traffic aggregation. The switch is software-defined networking ready, with REST API and OpenFlow support for programmable, automated network operations. \n\nIntegration with HPE Aruba's management ecosystem — including Aruba Central (cloud-based), AirWave, and ClearPass — enables simplified administration, zero-trust security enforcement, and analytics-driven operations. \n\nKey Features\n\n- VSF stacking, hitless failover, and Fast Software Upgrade for always-on operations\n- Dynamic Segmentation for role-based wired/wireless policy enforcement\n- MACsec encryption support (via v3 expansion modules)\n- OpenFlow 1.0/1.3 for SDN applications\n- Automatic PoE priority and VLAN configuration for Aruba access points\n- 64,000-entry MAC address table | category_name:Instrumentation & IT | category_id:938869fc-bc69-4c1f-bc2d-ef37b479629f | category_slug:buyer-default-instrumentation-and-it | category_description:Instrumentation & IT | category_key:buyer-default-instrumentation-and-it | sub_category_name:Communications | sub_category_id:cd43821c-9213-4a52-ad96-7af05f52a02d | sub_category_slug:buyer-default-instrumentation-and-it-communications | sub_category_description:Communications | sub_category_key:buyer-default-instrumentation-and-it-communications | product_type_name:LAN and Cable Distribution | product_type_id:754032b4-6866-49ae-9a6b-1d5a43de6d26 | product_type_slug:buyer-default-instrumentation-and-it-communications-078000 | product_type_description:LAN and Cable Distribution | product_type_key:buyer-default-instrumentation-and-it-communications-078000 | sku_key:880002480928_1 | sku_id:880002480928_1 | aramco_material_number:JL001A | sellers:3a7b23e0-0047-4d63-88a9-cd05d1006a39, Wholesale Warehouse, Aruba, 4990027170, 100.0, SAR, 3, EA, 3a7b23e0-0047-4d63-88a9-cd05d1006a39, Wholesale Warehouse, Aruba, 4990027170, 150.0, SAR, 3, EA",
   "image_content": []
 }

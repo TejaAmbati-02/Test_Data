@@ -338,10 +338,8 @@ async def _parse_variant(
             },
         )
 
-        # Primary seller = cheapest usable offer; grouped into the singular
-        # ``seller`` object and spread as flat ``seller_*``/price fields below.
-        seller = _seller_object(min_price)
-
+        # Primary seller = cheapest usable offer (sellers[0]); spread as the flat
+        # ``seller_*``/price fields below for direct access.
         # Assemble the SKU row. Each line's comment is the JSON path (on the
         # variant for SKU/image/material fields, on the selected Price for seller
         # fields — which Price in turn read from the standalone-price JSON).
@@ -351,32 +349,20 @@ async def _parse_variant(
             # --- Master-variant / SKU details (read off this variant) ---
             "sku_key": variant.get("key"),                    # JSON path: <variant>.key
             "sku_id": sku,                                     # JSON path: <variant>.sku
-            "sku_image_url": image_urls[0] if image_urls else None,  # JSON path: <variant>.images[0].url (first image)
-            # Full image-URL list is kept for the image-download step (images.py)
-            # and downstream display; sku_image_url above is the spec's primary.
+            # Every image URL for the SKU (used by the image-download step in
+            # images.py and for display). The primary image is simply image_urls[0].
             "image_urls": image_urls or None,                 # JSON path: <variant>.images[*].url
 
             # --- Material numbers (from variant.attributes[name==...].value) ---
             "asmo_material_number": _attr(v_attrs, "ownInventoryManagedProduct"),  # attr ownInventoryManagedProduct
             "aramco_material_number": _attr(v_attrs, "manufacturerNumber"),        # attr manufacturerNumber
 
-            # --- Seller / price (primary = cheapest usable offer) ---
-            # These come from the selected standalone price (min_price); the JSON
-            # path shown is where Price read it in the standalone-price payload.
-            "seller_id": min_price.seller_id if min_price else None,          # price channel.obj.id
-            "seller_name": min_price.seller_name_en if min_price else None,   # price channel.obj.name.en
-            "price": min_price.amount if min_price else None,                # price value.centAmount / 10^fractionDigits
-            "currency_type": min_price.currency if min_price else None,      # price value.currencyCode
-            "lead_time": min_price.lead_time_days if min_price else None,    # price custom.fields.leadTimeDays
-            "moq": min_price.moq if min_price else None,                     # price custom.fields.minimumQuantity (Minimum Order Quantity)
-            "unit_type": min_price.unit_type if min_price else None,         # price custom.fields.priceUnit
-            "temporary_unavailable": min_price.temporary_unavailable if min_price else None,  # price custom.fields.temporarilyUnavailable
-            "is_blocked_for_deletion": min_price.is_blocked_for_deletion if min_price else None,  # price custom.fields.purchasingContractDeletionCode
-
-            # --- Seller objects ---
-            # ``seller``  = primary (cheapest) seller, grouped (mirrors flat fields).
-            # ``sellers`` = every usable seller offer for the SKU, lowest price first.
-            "seller": seller,
+            # --- Sellers ---
+            # Every usable seller offer for the SKU, lowest price first. Each entry
+            # (see _seller_object) carries seller_id, seller_name, supplier_id,
+            # contract_id, price, currency_type, lead_time, moq, unit_type,
+            # temporary_unavailable and is_blocked_for_deletion — so no flat
+            # seller_*/price fields are emitted; read sellers[0] for the primary.
             "sellers": sellers or None,
         }
         # Combined free-text blob of every field value, pipe-separated — useful
@@ -552,20 +538,20 @@ def _combine_content(row: dict) -> str:
 
     Iterates the row in insertion order and joins each field as ``key:value``
     with `` | `` between fields (e.g. ``productName_en:Acme | price:12.5``).
-    ``None`` and blank values are skipped so the blob stays dense. The
-    pre-existing ``content`` key is excluded so the field never folds its own
-    previous value back in, and the grouped ``seller``/``sellers`` fields are
-    excluded because their values already appear as flat ``seller_*``/price fields.
+    ``None`` and blank values are skipped so the blob stays dense. Only the
+    pre-existing ``content`` key is excluded, so the field never folds its own
+    previous value back in; every other field — including the ``sellers`` list
+    (so seller names/contracts stay searchable) — is included.
 
     Args:
-        row: The assembled transformed row (its ``content``, ``seller`` and
-            ``sellers`` keys, if present, are ignored).
+        row: The assembled transformed row (its own ``content`` key, if present,
+            is ignored).
 
     Returns:
         A single ``" | "``-separated string of ``key:value`` pairs for every
         meaningful field.
     """
-    skip = {"content", "seller", "sellers"}
+    skip = {"content"}
     parts = [
         f"{key}:{text}"
         for key, value in row.items()

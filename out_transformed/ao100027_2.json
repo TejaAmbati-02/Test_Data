@@ -20,34 +20,11 @@
   "purchase_agreements": null,
   "sku_key": "ao-100027_2",
   "sku_id": "ao-100027_2",
-  "sku_image_url": "https://assets.dev.b2x.b2bx.mindcurv.io/images/products/chemistry/ao/ao-100027.png",
   "image_urls": [
     "https://assets.dev.b2x.b2bx.mindcurv.io/images/products/chemistry/ao/ao-100027.png"
   ],
   "asmo_material_number": null,
   "aramco_material_number": null,
-  "seller_id": "3a7b23e0-0047-4d63-88a9-cd05d1006a39",
-  "seller_name": "Wholesale Warehouse",
-  "price": 18.5,
-  "currency_type": "SAR",
-  "lead_time": 3,
-  "moq": null,
-  "unit_type": null,
-  "temporary_unavailable": null,
-  "is_blocked_for_deletion": null,
-  "seller": {
-    "seller_id": "3a7b23e0-0047-4d63-88a9-cd05d1006a39",
-    "seller_name": "Wholesale Warehouse",
-    "supplier_id": "3a7b23e0-0047-4d63-88a9-cd05d1006a39",
-    "contract_id": "9901007196",
-    "price": 18.5,
-    "currency_type": "SAR",
-    "lead_time": 3,
-    "moq": null,
-    "unit_type": null,
-    "temporary_unavailable": null,
-    "is_blocked_for_deletion": null
-  },
   "sellers": [
     {
       "seller_id": "3a7b23e0-0047-4d63-88a9-cd05d1006a39",
@@ -63,6 +40,6 @@
       "is_blocked_for_deletion": null
     }
   ],
-  "content": "product_id:866a5088-49a0-403f-b5df-7c50bdcc6005 | product_title:7X50 A211 ACULON BINO NIKON | product_description:7X50 A211 ACULON BINO NIKON | category_name:Communities, Offices & Others | category_id:2b4437cb-4e08-4e70-8ed2-feaf7193ad70 | category_slug:buyer-default-communities-offices-and-others | category_description:Communities, Offices & Others | category_key:buyer-default-communities-offices-and-others | sub_category_name:Office Supplies | sub_category_id:26e9db10-a7e5-465a-b616-1db6a6ad1614 | sub_category_slug:buyer-default-communities-offices-and-others-office-supplies | sub_category_description:Office Supplies | sub_category_key:buyer-default-communities-offices-and-others-office-supplies | product_type_name:Stationary Items | product_type_id:f88c9554-2d67-41ee-86d2-17430c5abc90 | product_type_slug:buyer-default-communities-offices-and-others-office-supplies-106000 | product_type_description:Stationary Items | product_type_key:buyer-default-communities-offices-and-others-office-supplies-106000 | sku_key:ao-100027_2 | sku_id:ao-100027_2 | sku_image_url:https://assets.dev.b2x.b2bx.mindcurv.io/images/products/chemistry/ao/ao-100027.png | image_urls:https://assets.dev.b2x.b2bx.mindcurv.io/images/products/chemistry/ao/ao-100027.png | seller_id:3a7b23e0-0047-4d63-88a9-cd05d1006a39 | seller_name:Wholesale Warehouse | price:18.5 | currency_type:SAR | lead_time:3",
+  "content": "product_id:866a5088-49a0-403f-b5df-7c50bdcc6005 | product_title:7X50 A211 ACULON BINO NIKON | product_description:7X50 A211 ACULON BINO NIKON | category_name:Communities, Offices & Others | category_id:2b4437cb-4e08-4e70-8ed2-feaf7193ad70 | category_slug:buyer-default-communities-offices-and-others | category_description:Communities, Offices & Others | category_key:buyer-default-communities-offices-and-others | sub_category_name:Office Supplies | sub_category_id:26e9db10-a7e5-465a-b616-1db6a6ad1614 | sub_category_slug:buyer-default-communities-offices-and-others-office-supplies | sub_category_description:Office Supplies | sub_category_key:buyer-default-communities-offices-and-others-office-supplies | product_type_name:Stationary Items | product_type_id:f88c9554-2d67-41ee-86d2-17430c5abc90 | product_type_slug:buyer-default-communities-offices-and-others-office-supplies-106000 | product_type_description:Stationary Items | product_type_key:buyer-default-communities-offices-and-others-office-supplies-106000 | sku_key:ao-100027_2 | sku_id:ao-100027_2 | image_urls:https://assets.dev.b2x.b2bx.mindcurv.io/images/products/chemistry/ao/ao-100027.png | sellers:3a7b23e0-0047-4d63-88a9-cd05d1006a39, Wholesale Warehouse, 3a7b23e0-0047-4d63-88a9-cd05d1006a39, 9901007196, 18.5, SAR, 3",
   "image_content": []
 }

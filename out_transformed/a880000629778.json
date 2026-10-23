@@ -20,34 +20,11 @@
   "purchase_agreements": null,
   "sku_key": "a-880000629778",
   "sku_id": "a-880000629778",
-  "sku_image_url": "https://apimangementb2bapplip1vn1v35si.sa1.hana.ondemand.com/apimangement-b2b-application/getcmis/json/6665cadb23fff41ad6558656/root/EXT_4600027170_6000001100_00003/JL086A_1_JL086A.png",
   "image_urls": [
     "https://apimangementb2bapplip1vn1v35si.sa1.hana.ondemand.com/apimangement-b2b-application/getcmis/json/6665cadb23fff41ad6558656/root/EXT_4600027170_6000001100_00003/JL086A_1_JL086A.png"
   ],
   "asmo_material_number": null,
   "aramco_material_number": "JL086A",
-  "seller_id": "7f67afea-9853-43b5-bc5b-69904e4e2a6f",
-  "seller_name": "GCC Control",
-  "price": 55.0,
-  "currency_type": "SAR",
-  "lead_time": 3,
-  "moq": null,
-  "unit_type": "EA",
-  "temporary_unavailable": null,
-  "is_blocked_for_deletion": null,
-  "seller": {
-    "seller_id": "7f67afea-9853-43b5-bc5b-69904e4e2a6f",
-    "seller_name": "GCC Control",
-    "supplier_id": "Aruba",
-    "contract_id": "4990027170",
-    "price": 55.0,
-    "currency_type": "SAR",
-    "lead_time": 3,
-    "moq": null,
-    "unit_type": "EA",
-    "temporary_unavailable": null,
-    "is_blocked_for_deletion": null
-  },
   "sellers": [
     {
       "seller_id": "7f67afea-9853-43b5-bc5b-69904e4e2a6f",
@@ -76,6 +53,6 @@
       "is_blocked_for_deletion": null
     }
   ],
-  "content": "product_id:fcfacb0a-127d-4a97-a87c-4f0cacc3317f | product_title:Aruba X372 54VDC 680W PS | product_description:Aruba X372 54VDC 680W PS (JL086A#ACC United Kingdom - English localization) | category_name:Instrumentation & IT | category_id:938869fc-bc69-4c1f-bc2d-ef37b479629f | category_slug:buyer-default-instrumentation-and-it | category_description:Instrumentation & IT | category_key:buyer-default-instrumentation-and-it | sub_category_name:Communications | sub_category_id:cd43821c-9213-4a52-ad96-7af05f52a02d | sub_category_slug:buyer-default-instrumentation-and-it-communications | sub_category_description:Communications | sub_category_key:buyer-default-instrumentation-and-it-communications | product_type_name:LAN and Cable Distribution | product_type_id:754032b4-6866-49ae-9a6b-1d5a43de6d26 | product_type_slug:buyer-default-instrumentation-and-it-communications-078000 | product_type_description:LAN and Cable Distribution | product_type_key:buyer-default-instrumentation-and-it-communications-078000 | sku_key:a-880000629778 | sku_id:a-880000629778 | sku_image_url:https://apimangementb2bapplip1vn1v35si.sa1.hana.ondemand.com/apimangement-b2b-application/getcmis/json/6665cadb23fff41ad6558656/root/EXT_4600027170_6000001100_00003/JL086A_1_JL086A.png | image_urls:https://apimangementb2bapplip1vn1v35si.sa1.hana.ondemand.com/apimangement-b2b-application/getcmis/json/6665cadb23fff41ad6558656/root/EXT_4600027170_6000001100_00003/JL086A_1_JL086A.png | aramco_material_number:JL086A | seller_id:7f67afea-9853-43b5-bc5b-69904e4e2a6f | seller_name:GCC Control | price:55.0 | currency_type:SAR | lead_time:3 | unit_type:EA",
+  "content": "product_id:fcfacb0a-127d-4a97-a87c-4f0cacc3317f | product_title:Aruba X372 54VDC 680W PS | product_description:Aruba X372 54VDC 680W PS (JL086A#ACC United Kingdom - English localization) | category_name:Instrumentation & IT | category_id:938869fc-bc69-4c1f-bc2d-ef37b479629f | category_slug:buyer-default-instrumentation-and-it | category_description:Instrumentation & IT | category_key:buyer-default-instrumentation-and-it | sub_category_name:Communications | sub_category_id:cd43821c-9213-4a52-ad96-7af05f52a02d | sub_category_slug:buyer-default-instrumentation-and-it-communications | sub_category_description:Communications | sub_category_key:buyer-default-instrumentation-and-it-communications | product_type_name:LAN and Cable Distribution | product_type_id:754032b4-6866-49ae-9a6b-1d5a43de6d26 | product_type_slug:buyer-default-instrumentation-and-it-communications-078000 | product_type_description:LAN and Cable Distribution | product_type_key:buyer-default-instrumentation-and-it-communications-078000 | sku_key:a-880000629778 | sku_id:a-880000629778 | image_urls:https://apimangementb2bapplip1vn1v35si.sa1.hana.ondemand.com/apimangement-b2b-application/getcmis/json/6665cadb23fff41ad6558656/root/EXT_4600027170_6000001100_00003/JL086A_1_JL086A.png | aramco_material_number:JL086A | sellers:7f67afea-9853-43b5-bc5b-69904e4e2a6f, GCC Control, Aruba, 4990027170, 55.0, SAR, 3, EA, 7f67afea-9853-43b5-bc5b-69904e4e2a6f, GCC Control, Aruba, 4990027170, 120.0, SAR, 3, EA",
   "image_content": []
 }

@@ -57,7 +57,7 @@ def build_text_body(vector: list[float], vector_field: str, size: int) -> dict:
     """kNN search body over the content (text) vector."""
     return {
         "size": size,
-        "_source": ["sku_id", "product_id", "product_title", "category_name", "sku_image_url"],
+        "_source": ["sku_id", "product_id", "product_title", "category_name", "image_urls"],
         "query": {"knn": {vector_field: {"vector": vector, "k": size}}},
     }
 

@@ -20,32 +20,9 @@
   "purchase_agreements": null,
   "sku_key": "880003961856_1",
   "sku_id": "880003961856_1",
-  "sku_image_url": null,
   "image_urls": null,
   "asmo_material_number": null,
   "aramco_material_number": "JL085A",
-  "seller_id": "3a7b23e0-0047-4d63-88a9-cd05d1006a39",
-  "seller_name": "Wholesale Warehouse",
-  "price": 100.0,
-  "currency_type": "SAR",
-  "lead_time": 3,
-  "moq": null,
-  "unit_type": "EA",
-  "temporary_unavailable": null,
-  "is_blocked_for_deletion": null,
-  "seller": {
-    "seller_id": "3a7b23e0-0047-4d63-88a9-cd05d1006a39",
-    "seller_name": "Wholesale Warehouse",
-    "supplier_id": "Aruba",
-    "contract_id": "4990027170",
-    "price": 100.0,
-    "currency_type": "SAR",
-    "lead_time": 3,
-    "moq": null,
-    "unit_type": "EA",
-    "temporary_unavailable": null,
-    "is_blocked_for_deletion": null
-  },
   "sellers": [
     {
       "seller_id": "3a7b23e0-0047-4d63-88a9-cd05d1006a39",
@@ -74,6 +51,6 @@
       "is_blocked_for_deletion": null
     }
   ],
-  "content": "product_id:b9ee9e68-0591-4c2b-b3fb-1e34c1a8b5d4 | product_title:Aruba X371 12VDC 250W AC Power Supply | product_description:Aruba X371 12VDC 250W AC Power Supply (JL085A#ACC United Kingdom - English localization) | category_name:Instrumentation & IT | category_id:938869fc-bc69-4c1f-bc2d-ef37b479629f | category_slug:buyer-default-instrumentation-and-it | category_description:Instrumentation & IT | category_key:buyer-default-instrumentation-and-it | sub_category_name:Communications | sub_category_id:cd43821c-9213-4a52-ad96-7af05f52a02d | sub_category_slug:buyer-default-instrumentation-and-it-communications | sub_category_description:Communications | sub_category_key:buyer-default-instrumentation-and-it-communications | product_type_name:LAN and Cable Distribution | product_type_id:754032b4-6866-49ae-9a6b-1d5a43de6d26 | product_type_slug:buyer-default-instrumentation-and-it-communications-078000 | product_type_description:LAN and Cable Distribution | product_type_key:buyer-default-instrumentation-and-it-communications-078000 | sku_key:880003961856_1 | sku_id:880003961856_1 | aramco_material_number:JL085A | seller_id:3a7b23e0-0047-4d63-88a9-cd05d1006a39 | seller_name:Wholesale Warehouse | price:100.0 | currency_type:SAR | lead_time:3 | unit_type:EA",
+  "content": "product_id:b9ee9e68-0591-4c2b-b3fb-1e34c1a8b5d4 | product_title:Aruba X371 12VDC 250W AC Power Supply | product_description:Aruba X371 12VDC 250W AC Power Supply (JL085A#ACC United Kingdom - English localization) | category_name:Instrumentation & IT | category_id:938869fc-bc69-4c1f-bc2d-ef37b479629f | category_slug:buyer-default-instrumentation-and-it | category_description:Instrumentation & IT | category_key:buyer-default-instrumentation-and-it | sub_category_name:Communications | sub_category_id:cd43821c-9213-4a52-ad96-7af05f52a02d | sub_category_slug:buyer-default-instrumentation-and-it-communications | sub_category_description:Communications | sub_category_key:buyer-default-instrumentation-and-it-communications | product_type_name:LAN and Cable Distribution | product_type_id:754032b4-6866-49ae-9a6b-1d5a43de6d26 | product_type_slug:buyer-default-instrumentation-and-it-communications-078000 | product_type_description:LAN and Cable Distribution | product_type_key:buyer-default-instrumentation-and-it-communications-078000 | sku_key:880003961856_1 | sku_id:880003961856_1 | aramco_material_number:JL085A | sellers:3a7b23e0-0047-4d63-88a9-cd05d1006a39, Wholesale Warehouse, Aruba, 4990027170, 100.0, SAR, 3, EA, 3a7b23e0-0047-4d63-88a9-cd05d1006a39, Wholesale Warehouse, Aruba, 4990027170, 150.0, SAR, 3, EA",
   "image_content": []
 }
