@@ -170,16 +170,37 @@ class ProductsClient:
             Exception: Re-raised after logging on any request or HTTP error.
         """
         from datetime import datetime
+        # ------------------------------------------------------------------
+        # Build the request URL + query string, piece by piece.
+        #
+        #   base path  : {api_base}/product-projections
+        #                api_base = https://api.{region}.commercetools.com/{project_key}
+        #                → e.g. https://api.eu.commercetools.com/easmo-dev/product-projections
+        #                (A "product projection" is the product's current data already
+        #                 flattened — equivalent to masterData.current on /products/{id}.)
+        #   query args : limit  — page size (records per page)
+        #                sort   — "id asc" so the id cursor below is monotonic
+        #                expand — "categories[*].ancestors[*]" so every category
+        #                         reference embeds its full ancestor chain under
+        #                         categories[i].obj.ancestors[j].obj, which the
+        #                         transformer walks to build the category levels.
+        #                where  — the CURSOR: only added after page 1. "id > <last_id>"
+        #                         returns the records AFTER the previous page's last id
+        #                         (more reliable than offset for very large catalogues).
+        # ------------------------------------------------------------------
+        endpoint = "product-projections"
+        url = f"{self._config.api_base}/{endpoint}"
         params = {
-            "limit": self.PAGE_SIZE,
-            "sort": "id asc",
-            "expand": "categories[*].ancestors[*]",
+            "limit": self.PAGE_SIZE,                      # query: limit=<page_size>
+            "sort": "id asc",                              # query: sort=id asc (stable id cursor)
+            "expand": "categories[*].ancestors[*]",        # query: expand category ancestor chain
         }
         if last_id:
-            params["where"] = f'id > "{last_id}"'
-        url = f"{self._config.api_base}/product-projections"
+            # Cursor predicate: fetch products whose id sorts after the last one we saw.
+            params["where"] = f'id > "{last_id}"'          # query: where=id > "<last_id>"
         logger.info(
-            f"GET {url} last_id={last_id!r} params={params}",
+            f"Built GET URL → {url} | query params → {params} "
+            f"(api_base={self._config.api_base!r}, endpoint={endpoint!r}, cursor last_id={last_id!r})",
             extra={"function_name": "_fetch_page", "input_data": {"url": url, "params": params, "last_id": last_id, "limit": self.PAGE_SIZE}},
         )
         t0 = datetime.now()

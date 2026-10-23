@@ -99,52 +99,109 @@ class Price:
         Returns:
             The populated :class:`Price` instance.
         """
-        value = raw.get("value", {})
-        custom_fields = raw.get("custom", {}).get("fields", {})
-        channel_obj = raw.get("channel", {}).get("obj", {})
-        cent_amount = value.get("centAmount", 0)
-        fraction_digits = value.get("fractionDigits", 2)
+        # ------------------------------------------------------------------
+        # STEP 1 — Pull the three nested JSON blocks we read fields out of.
+        # A commercetools standalone-price payload looks like:
+        #   {
+        #     "id": "...", "sku": "...",
+        #     "value":   { "currencyCode": "SAR", "centAmount": 10000, "fractionDigits": 2 },
+        #     "channel": { "obj": { "id": "...", "name": {"en": "...", "de": "..."} } },  # expand=channel.id
+        #     "custom":  { "fields": { "scope": "...", "contractId": "...", ... } }
+        #   }
+        # We dig those sub-objects out first (defaulting to {} so a missing block
+        # never raises) and log exactly what we found.
+        # ------------------------------------------------------------------
+        value = raw.get("value", {})                       # JSON path: value
+        custom_fields = raw.get("custom", {}).get("fields", {})  # JSON path: custom.fields
+        channel_obj = raw.get("channel", {}).get("obj", {})      # JSON path: channel.obj (needs expand=channel.id)
+        logger.debug(
+            f"Price blocks for sku={raw.get('sku')!r}: value keys={list(value)}, "
+            f"custom.fields keys={list(custom_fields)}, channel.obj present={bool(channel_obj)}",
+            extra={
+                "request_id": raw.get("sku"),
+                "function_name": "Price._from_raw",
+                "input_data": {"value": value, "custom_fields": custom_fields, "channel_obj_keys": list(channel_obj)},
+            },
+        )
+
+        # ------------------------------------------------------------------
+        # STEP 2 — Convert the money. commercetools stores the amount as an
+        # integer in minor units (cents): value.centAmount=10000 with
+        # value.fractionDigits=2 means 100.00. So amount = centAmount / 10**digits.
+        # ------------------------------------------------------------------
+        cent_amount = value.get("centAmount", 0)           # JSON path: value.centAmount (integer minor units)
+        fraction_digits = value.get("fractionDigits", 2)   # JSON path: value.fractionDigits (how many minor digits)
+        amount = cent_amount / (10 ** fraction_digits)     # major-unit price, e.g. 10000 / 100 = 100.0
+        logger.debug(
+            f"Money for sku={raw.get('sku')!r}: centAmount={cent_amount} / 10^{fraction_digits} "
+            f"= {amount} {value.get('currencyCode')}",
+            extra={"request_id": raw.get("sku"), "function_name": "Price._from_raw",
+                   "input_data": {"centAmount": cent_amount, "fractionDigits": fraction_digits, "amount": amount}},
+        )
+
+        # ------------------------------------------------------------------
+        # STEP 3 — Read each field we keep, right out of the blocks above.
+        # The comment on every line is the exact commercetools JSON path.
+        # ------------------------------------------------------------------
         price = cls(
-            id=raw["id"],
-            sku=raw.get("sku", "N/A"),
-            currency=value.get("currencyCode", "N/A"),
-            amount=cent_amount / (10 ** fraction_digits),
-            scope=custom_fields.get("scope"),
-            seller_id=channel_obj.get("id"),
-            seller_name_en=_channel_name(raw, "en"),
-            seller_name_de=_channel_name(raw, "de"),
-            supplier_id=custom_fields.get("supplierId"),
-            contract_id=custom_fields.get("contractId"),
-            lead_time_days=custom_fields.get("leadTimeDays"),
-            price_unit=value.get("currencyCode"),
-            # Spec "Unit_type" — the price's unit of measure. Real payloads carry
-            # it as custom.fields.priceUnit; fall back to the other spellings the
-            # spec/data have used so a populated value is never missed.
+            id=raw["id"],                                   # JSON path: id
+            sku=raw.get("sku", "N/A"),                      # JSON path: sku
+            currency=value.get("currencyCode", "N/A"),      # JSON path: value.currencyCode (e.g. "SAR")
+            amount=amount,                                  # computed in STEP 2 from value.centAmount
+            scope=custom_fields.get("scope"),               # JSON path: custom.fields.scope (e.g. "CONTRACTED")
+            seller_id=channel_obj.get("id"),                # JSON path: channel.obj.id (the seller = supply channel)
+            seller_name_en=_channel_name(raw, "en"),        # JSON path: channel.obj.name.en
+            seller_name_de=_channel_name(raw, "de"),        # JSON path: channel.obj.name.de
+            supplier_id=custom_fields.get("supplierId"),    # JSON path: custom.fields.supplierId
+            contract_id=custom_fields.get("contractId"),    # JSON path: custom.fields.contractId (ties to a purchase agreement)
+            lead_time_days=custom_fields.get("leadTimeDays"),   # JSON path: custom.fields.leadTimeDays
+            price_unit=value.get("currencyCode"),           # JSON path: value.currencyCode (kept for back-compat)
+            # Spec "Unit_type" — JSON path: custom.fields.priceUnit (real data).
+            # We fall back to the other spellings the spec/older data have used so
+            # a populated value is never missed.
             unit_type=custom_fields.get("priceUnit") or custom_fields.get("unit_type") or custom_fields.get("priceUnitType"),
-            # Spec "MOQ" — minimum order quantity. Prefer the custom field; fall
-            # back to the standalone-price's top-level minimumQuantity.
+            # Spec "MOQ" (Minimum Order Quantity) — JSON path: custom.fields.minimumQuantity.
+            # Fall back to the standalone-price's top-level minimumQuantity when the
+            # custom field is absent.
             moq=custom_fields.get("minimumQuantity") if custom_fields.get("minimumQuantity") is not None else raw.get("minimumQuantity"),
-            # Spec "temporary_unavialable" — a localized "true"/"false" string
-            # (custom.fields.temporarilyUnavailable, e.g. {"en": "false"});
-            # coerced to a bool. None when absent.
+            # Spec "temporary_unavialable" — JSON path: custom.fields.temporarilyUnavailable,
+            # a localized "true"/"false" string (e.g. {"en": "false"}) coerced to a
+            # bool by _localized_bool. None when absent.
             temporary_unavailable=_localized_bool(custom_fields.get("temporarilyUnavailable")),
-            # Spec "isBlockedForDeletion" — a deletion-code string ("L" == blocked
-            # for deletion). Real payloads carry it as purchasingContractDeletionCode;
-            # prefer the spec name, then the data field. None when absent.
+            # Spec "isBlockedForDeletion" — a deletion-code string ("L" == blocked).
+            # JSON path: custom.fields.isBlockedForDeletion (spec name) OR
+            # custom.fields.purchasingContractDeletionCode (real data). None when absent.
             is_blocked_for_deletion=custom_fields.get("isBlockedForDeletion") or custom_fields.get("purchasingContractDeletionCode"),
             raw=raw,
         )
+
+        # ------------------------------------------------------------------
+        # STEP 4 — Log every field we extracted, next to the JSON path it came
+        # from, so the parse is fully auditable from the logs alone.
+        # ------------------------------------------------------------------
         logger.info(
-            f"Parsed price id={price.id!r} sku={price.sku!r} amount={price.amount} {price.currency} scope={price.scope!r}",
+            f"Parsed price id={price.id!r} sku={price.sku!r} amount={price.amount} {price.currency} "
+            f"scope={price.scope!r} seller_id={price.seller_id!r} contract_id={price.contract_id!r}",
             extra={
                 "request_id": price.sku,
                 "function_name": "Price.from_raw",
                 "input_data": {"value": value, "custom_fields": custom_fields},
+                # field -> (commercetools JSON path, extracted value)
                 "response_payload": {
-                    "id": price.id, "sku": price.sku, "amount": price.amount,
-                    "currency": price.currency, "scope": price.scope,
-                    "seller_name_en": price.seller_name_en, "contract_id": price.contract_id,
-                    "lead_time_days": price.lead_time_days, "moq": price.moq,
+                    "id": ("id", price.id),
+                    "sku": ("sku", price.sku),
+                    "currency": ("value.currencyCode", price.currency),
+                    "amount": ("value.centAmount / 10^fractionDigits", price.amount),
+                    "scope": ("custom.fields.scope", price.scope),
+                    "seller_id": ("channel.obj.id", price.seller_id),
+                    "seller_name_en": ("channel.obj.name.en", price.seller_name_en),
+                    "supplier_id": ("custom.fields.supplierId", price.supplier_id),
+                    "contract_id": ("custom.fields.contractId", price.contract_id),
+                    "lead_time_days": ("custom.fields.leadTimeDays", price.lead_time_days),
+                    "unit_type": ("custom.fields.priceUnit", price.unit_type),
+                    "moq": ("custom.fields.minimumQuantity", price.moq),
+                    "temporary_unavailable": ("custom.fields.temporarilyUnavailable", price.temporary_unavailable),
+                    "is_blocked_for_deletion": ("custom.fields.purchasingContractDeletionCode", price.is_blocked_for_deletion),
                 },
             },
         )
@@ -279,15 +336,32 @@ class PricesClient:
             Exception: Re-raised after logging on any request or HTTP error.
         """
         from datetime import datetime
+        # ------------------------------------------------------------------
+        # Build the request URL + query string, piece by piece.
+        #
+        #   base path  : {api_base}/standalone-prices
+        #                api_base = https://api.{region}.commercetools.com/{project_key}
+        #                (see Config.api_base), so the full path is e.g.
+        #                https://api.eu.commercetools.com/easmo-dev/standalone-prices
+        #   query args : limit  — page size (how many records per page)
+        #                sort   — "id asc" so paging by offset is stable
+        #                offset — where this page starts (0, page_size, 2*page_size, …)
+        #                expand — "channel.id" so each price embeds its channel
+        #                         (the seller) under channel.obj, which Price parses.
+        # aiohttp URL-encodes `params` onto the URL, giving a final request of e.g.
+        #   GET .../standalone-prices?limit=500&sort=id+asc&offset=0&expand=channel.id
+        # ------------------------------------------------------------------
+        endpoint = "standalone-prices"
+        url = f"{self._config.api_base}/{endpoint}"
         params = {
-            "limit": self._config.page_size,
-            "sort": "id asc",
-            "offset": offset,
-            "expand": "channel.id",
+            "limit": self._config.page_size,   # query: limit=<page_size>
+            "sort": "id asc",                   # query: sort=id asc (stable offset paging)
+            "offset": offset,                   # query: offset=<offset>
+            "expand": "channel.id",             # query: expand=channel.id (embed seller channel)
         }
-        url = f"{self._config.api_base}/standalone-prices"
         logger.info(
-            f"GET {url} offset={offset} params={params}",
+            f"Built GET URL → {url} | query params → {params} "
+            f"(api_base={self._config.api_base!r}, endpoint={endpoint!r}, offset={offset})",
             extra={"function_name": "_fetch_page", "input_data": {"url": url, "params": params, "offset": offset, "limit": self._config.page_size}},
         )
         t0 = datetime.now()

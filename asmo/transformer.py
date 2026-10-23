@@ -122,16 +122,22 @@ async def _parse_product(
             after logging it with the product key for context.
     """
     try:
+        # Product-level fields shared by every SKU of this product. The comment
+        # on each line is the commercetools JSON path we read it from. `raw` is a
+        # product projection, so these paths equal masterData.current.* on the
+        # full /products/{id} endpoint.
         product_fields = {
-            "product_id": raw.get("id"),
-            "product_title": raw.get("name", {}).get("en"),
-            "product_description": raw.get("description", {}).get("en"),
-            **await _category_fields(raw),
-            "purchase_agreements": purchase_agreements or None,
+            "product_id": raw.get("id"),                                 # JSON path: id
+            "product_title": raw.get("name", {}).get("en"),             # JSON path: name.en
+            "product_description": raw.get("description", {}).get("en"), # JSON path: description.en
+            **await _category_fields(raw),                               # category/sub_category/product_type (see _category_fields)
+            "purchase_agreements": purchase_agreements or None,          # from the product-selection step (contract_id + valid_until)
         }
 
         logger.info(
-            f"Extracted product-level fields for id={raw.get('id')!r} ({len(product_fields)} fields)",
+            f"Extracted product-level fields for id={raw.get('id')!r} "
+            f"title={product_fields['product_title']!r} category={product_fields.get('category_name')!r} "
+            f"({len(product_fields)} fields)",
             extra={
                 "function_name": "_parse_product",
                 "input_data": {"id": raw.get("id"), "key": raw.get("key"), "variants": 1 + len(raw.get("variants", []))},
@@ -139,6 +145,8 @@ async def _parse_product(
             },
         )
 
+        # The master variant plus any additional variants — one SKU row each.
+        # JSON paths: masterVariant and variants[*].
         all_variants = [raw.get("masterVariant", {}), *raw.get("variants", [])]
 
         # Contract ids of the product's valid purchase agreements drive seller
@@ -334,31 +342,36 @@ async def _parse_variant(
         # ``seller`` object and spread as flat ``seller_*``/price fields below.
         seller = _seller_object(min_price)
 
+        # Assemble the SKU row. Each line's comment is the JSON path (on the
+        # variant for SKU/image/material fields, on the selected Price for seller
+        # fields — which Price in turn read from the standalone-price JSON).
         row = {
             **product_fields,
 
-            # --- Master-variant / SKU details ---
-            "sku_key": variant.get("key"),
-            "sku_id": sku,
-            "sku_image_url": image_urls[0] if image_urls else None,
+            # --- Master-variant / SKU details (read off this variant) ---
+            "sku_key": variant.get("key"),                    # JSON path: <variant>.key
+            "sku_id": sku,                                     # JSON path: <variant>.sku
+            "sku_image_url": image_urls[0] if image_urls else None,  # JSON path: <variant>.images[0].url (first image)
             # Full image-URL list is kept for the image-download step (images.py)
             # and downstream display; sku_image_url above is the spec's primary.
-            "image_urls": image_urls or None,
+            "image_urls": image_urls or None,                 # JSON path: <variant>.images[*].url
 
-            # --- Material numbers ---
-            "asmo_material_number": _attr(v_attrs, "ownInventoryManagedProduct"),
-            "aramco_material_number": _attr(v_attrs, "manufacturerNumber"),
+            # --- Material numbers (from variant.attributes[name==...].value) ---
+            "asmo_material_number": _attr(v_attrs, "ownInventoryManagedProduct"),  # attr ownInventoryManagedProduct
+            "aramco_material_number": _attr(v_attrs, "manufacturerNumber"),        # attr manufacturerNumber
 
             # --- Seller / price (primary = cheapest usable offer) ---
-            "seller_id": min_price.seller_id if min_price else None,
-            "seller_name": min_price.seller_name_en if min_price else None,
-            "price": min_price.amount if min_price else None,
-            "currency_type": min_price.currency if min_price else None,
-            "lead_time": min_price.lead_time_days if min_price else None,
-            "moq": min_price.moq if min_price else None,
-            "unit_type": min_price.unit_type if min_price else None,
-            "temporary_unavailable": min_price.temporary_unavailable if min_price else None,
-            "is_blocked_for_deletion": min_price.is_blocked_for_deletion if min_price else None,
+            # These come from the selected standalone price (min_price); the JSON
+            # path shown is where Price read it in the standalone-price payload.
+            "seller_id": min_price.seller_id if min_price else None,          # price channel.obj.id
+            "seller_name": min_price.seller_name_en if min_price else None,   # price channel.obj.name.en
+            "price": min_price.amount if min_price else None,                # price value.centAmount / 10^fractionDigits
+            "currency_type": min_price.currency if min_price else None,      # price value.currencyCode
+            "lead_time": min_price.lead_time_days if min_price else None,    # price custom.fields.leadTimeDays
+            "moq": min_price.moq if min_price else None,                     # price custom.fields.minimumQuantity (Minimum Order Quantity)
+            "unit_type": min_price.unit_type if min_price else None,         # price custom.fields.priceUnit
+            "temporary_unavailable": min_price.temporary_unavailable if min_price else None,  # price custom.fields.temporarilyUnavailable
+            "is_blocked_for_deletion": min_price.is_blocked_for_deletion if min_price else None,  # price custom.fields.purchasingContractDeletionCode
 
             # --- Seller objects ---
             # ``seller``  = primary (cheapest) seller, grouped (mirrors flat fields).
@@ -421,13 +434,22 @@ def _category_block(obj: dict, prefix: str) -> dict:
         A dict of ``{prefix}_name``, ``{prefix}_id``, ``{prefix}_slug``,
         ``{prefix}_description`` and ``{prefix}_key`` for this level.
     """
-    return {
-        f"{prefix}_name": (obj.get("name") or {}).get("en"),
-        f"{prefix}_id": obj.get("id"),
-        f"{prefix}_slug": (obj.get("slug") or {}).get("en"),
-        f"{prefix}_description": (obj.get("description") or {}).get("en"),
-        f"{prefix}_key": obj.get("key"),
+    # `obj` here is one category object (categories[0].obj, or one of its
+    # ancestors' .obj). Each field below is read straight off it; the JSON path
+    # on each line is relative to that category obj.
+    block = {
+        f"{prefix}_name": (obj.get("name") or {}).get("en"),               # <cat>.name.en  (localized name)
+        f"{prefix}_id": obj.get("id"),                                     # <cat>.id
+        f"{prefix}_slug": (obj.get("slug") or {}).get("en"),              # <cat>.slug.en  (localized slug)
+        f"{prefix}_description": (obj.get("description") or {}).get("en"), # <cat>.description.en
+        f"{prefix}_key": obj.get("key"),                                   # <cat>.key
     }
+    logger.debug(
+        f"Category level {prefix!r}: name={block[f'{prefix}_name']!r} id={block[f'{prefix}_id']!r} "
+        f"key={block[f'{prefix}_key']!r}",
+        extra={"function_name": "_category_block", "input_data": block},
+    )
+    return block
 
 
 async def _category_fields(raw: dict) -> dict:

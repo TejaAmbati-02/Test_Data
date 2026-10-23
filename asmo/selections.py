@@ -86,30 +86,58 @@ def _agreement_info(assignment: dict) -> dict:
         A dict with ``active`` (bool), ``contract_id``, ``valid_until`` (raw
         string) and ``valid_until_date`` (parsed :class:`date` or ``None``).
     """
-    selection_ref = assignment.get("productSelection", {})
-    selection = selection_ref.get("obj", {}) or {}
+    # One assignment (one entry of /products/{id}/product-selections .results) looks like:
+    #   {
+    #     "productSelection": {                 # JSON path: productSelection (a reference)
+    #        "typeId": "product-selection",
+    #        "id": "a463a502-...",              # JSON path: productSelection.id
+    #        "obj": {                           # JSON path: productSelection.obj (needs expand)
+    #           "key": "assortment-supplier01",
+    #           "custom": { "fields": {         # JSON path: productSelection.obj.custom.fields
+    #               "active": true, "validUntil": "2026-12-31", "contractId": "CONTRACT-327", ...
+    #           } }
+    #        }
+    #     }
+    #   }
+    selection_ref = assignment.get("productSelection", {})   # JSON path: productSelection
+    selection = selection_ref.get("obj", {}) or {}           # JSON path: productSelection.obj
+
+    # validUntil / active / contractId are custom fields. We look in the
+    # assignment's own custom.fields first, then the product selection's — so
+    # wherever this project stores them, pick() finds them.
     sources = [
-        assignment.get("custom", {}).get("fields", {}),
-        selection.get("custom", {}).get("fields", {}),
+        assignment.get("custom", {}).get("fields", {}),      # JSON path: custom.fields (on the assignment)
+        selection.get("custom", {}).get("fields", {}),       # JSON path: productSelection.obj.custom.fields
     ]
 
     def pick(key):
+        # Return the first non-null value for `key` across the source blocks above.
         for fields in sources:
             if fields.get(key) is not None:
                 return fields.get(key)
         return None
 
-    active = pick("active")
-    valid_until = pick("validUntil")
+    active = pick("active")                                   # custom.fields.active
+    valid_until = pick("validUntil")                         # custom.fields.validUntil
+    # contractId is the key join to standalone prices. Fall back to the selection
+    # key, then its id, so a valid agreement always carries an identifier.
     contract_id = pick("contractId") or selection.get("key") or selection_ref.get("id")
-    return {
+
+    info = {
         # No active flag anywhere → cannot disprove it; treat as active. An
         # explicit falsy value rejects the agreement.
         "active": True if active is None else bool(active),
-        "contract_id": contract_id,
-        "valid_until": valid_until,
-        "valid_until_date": _as_date(valid_until),
+        "contract_id": contract_id,                          # from custom.fields.contractId (or key/id)
+        "valid_until": valid_until,                          # raw custom.fields.validUntil string
+        "valid_until_date": _as_date(valid_until),           # parsed to a date for the expiry check
     }
+    logger.debug(
+        f"Agreement fields: selection.id={selection_ref.get('id')!r} key={selection.get('key')!r} "
+        f"→ active={info['active']} contract_id={info['contract_id']!r} "
+        f"valid_until={info['valid_until']!r} (parsed {info['valid_until_date']})",
+        extra={"function_name": "_agreement_info", "input_data": info | {"valid_until_date": str(info["valid_until_date"])}},
+    )
+    return info
 
 
 class ProductSelectionsClient:
@@ -260,8 +288,34 @@ class ProductSelectionsClient:
         Raises:
             Exception: Re-raised after logging on any request or HTTP error.
         """
-        params = {"limit": self._config.page_size, "offset": offset, "expand": self.EXPAND}
+        # ------------------------------------------------------------------
+        # Build the request URL + query string, piece by piece.
+        #
+        #   base path  : {api_base}/{path}
+        #                `path` is passed in by the caller and is one of:
+        #                  "products/{product_id}/product-selections" — the agreements
+        #                      a product belongs to (this is what validation uses), or
+        #                  "product-selections" — the full selection list.
+        #                api_base = https://api.{region}.commercetools.com/{project_key}
+        #                → e.g. .../easmo-dev/products/<id>/product-selections
+        #   query args : limit  — page size (records per page)
+        #                offset — where this page starts (0, page_size, …)
+        #                expand — EXPAND = "productSelection.id;obj.custom.supplier",
+        #                         so each assignment embeds its productSelection.obj
+        #                         (with custom.fields holding validUntil/active/contractId)
+        #                         and resolves the supplier reference.
+        # ------------------------------------------------------------------
         url = f"{self._config.api_base}/{path}"
+        params = {
+            "limit": self._config.page_size,   # query: limit=<page_size>
+            "offset": offset,                   # query: offset=<offset>
+            "expand": self.EXPAND,              # query: expand=productSelection.id;obj.custom.supplier
+        }
+        logger.debug(
+            f"Built GET URL → {url} | query params → {params} "
+            f"(api_base={self._config.api_base!r}, path={path!r}, offset={offset})",
+            extra={"function_name": "_fetch_page", "input_data": {"url": url, "params": params, "path": path, "offset": offset}},
+        )
         t0 = datetime.now()
         try:
             async with session.get(url, headers=self._auth.headers, params=params, ssl=SSL_CONTEXT) as resp:
