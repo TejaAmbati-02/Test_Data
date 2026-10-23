@@ -141,11 +141,15 @@ async def _parse_product(
 
         all_variants = [raw.get("masterVariant", {}), *raw.get("variants", [])]
 
+        # Contract ids of the product's valid purchase agreements drive seller
+        # selection: a SKU's price is matched to one of these contracts.
+        contract_ids = {a["contract_id"] for a in (purchase_agreements or []) if a.get("contract_id")}
+
         rows: dict[str, dict] = {}
         failed_variants = 0
         for v in all_variants:
             try:
-                row = await _parse_variant(product_fields, v, prices_by_sku)
+                row = await _parse_variant(product_fields, v, prices_by_sku, contract_ids)
             except Exception:
                 # _parse_variant already logged the error with sku context. Skip
                 # the single bad variant rather than failing the whole product.
@@ -176,25 +180,77 @@ async def _parse_product(
         raise
 
 
+def _attr(attributes: list, name: str):
+    """Return the value of the named variant attribute, or ``None`` if absent.
+
+    Args:
+        attributes: A list of attribute dicts shaped like
+            ``{"name": ..., "value": ...}``.
+        name: The attribute name to look up.
+
+    Returns:
+        The matching attribute's ``value``, or ``None`` when not present.
+    """
+    for a in attributes or []:
+        if a.get("name") == name:
+            return a.get("value")
+    return None
+
+
+def _select_price(sku_prices: list[Price], contract_ids: set[str]) -> tuple[Price | None, bool]:
+    """Select the standalone price that supplies a SKU's seller details.
+
+    Mirrors the spec's standalone-price query
+    (``contractId=… AND isBlockedForDeletion!="L" AND sku=…``):
+
+      1. drop prices blocked for deletion (``is_blocked_for_deletion == "L"``);
+      2. prefer a usable price whose ``contract_id`` is one of the product's valid
+         purchase-agreement contracts — the lowest-amount such price;
+      3. otherwise fall back to the lowest ``CONTRACTED`` price, or the lowest
+         usable price of any scope.
+
+    Args:
+        sku_prices: All standalone prices matched to this SKU.
+        contract_ids: Contract ids of the product's valid purchase agreements.
+
+    Returns:
+        A ``(price, matched_by_contract)`` tuple. ``price`` is ``None`` when no
+        usable price exists; ``matched_by_contract`` is ``True`` when the price
+        was chosen by a purchase-agreement contract match.
+    """
+    usable = [p for p in sku_prices if p.is_blocked_for_deletion != "L"]
+    if contract_ids:
+        matched = [p for p in usable if p.contract_id in contract_ids]
+        if matched:
+            return min(matched, key=lambda p: p.amount), True
+    contracted = [p for p in usable if p.scope == "CONTRACTED"]
+    pool = contracted if contracted else usable
+    return min(pool, key=lambda p: p.amount, default=None), False
+
+
 async def _parse_variant(
     product_fields: dict,
     variant: dict,
     prices_by_sku: dict[str, list[Price]],
+    contract_ids: set[str],
 ) -> dict:
     """Build a single flat SKU row for one product variant.
 
     Merges the shared product-level fields (title, description, category
-    hierarchy) with the variant's master-variant details (SKU key/id, primary
-    image URL) and the selected seller/price. Price selection prefers
-    ``CONTRACTED`` prices when any exist and otherwise falls back to the full
-    price pool; the lowest-amount price in the chosen pool is used, and its
-    channel supplies the seller fields.
+    hierarchy, purchase agreements) with the variant's master-variant details
+    (SKU key/id, primary image, material numbers) and the selected seller/price.
+
+    Seller selection (:func:`_select_price`) drops prices blocked for deletion
+    (deletion code ``"L"``), then prefers a price whose ``contractId`` matches one
+    of the product's valid purchase agreements, falling back to the lowest
+    ``CONTRACTED`` (else any) price. All seller fields come from that one price.
 
     Args:
         product_fields: The product-level fields shared by every variant of the
             parent product (produced by :func:`_parse_product`).
         variant: The raw variant document (master variant or additional variant).
         prices_by_sku: Mapping of SKU to its list of matched prices.
+        contract_ids: Contract ids of the product's valid purchase agreements.
 
     Returns:
         A dict representing the fully flattened SKU row for this variant.
@@ -205,16 +261,16 @@ async def _parse_variant(
     """
     try:
         sku = variant.get("sku")
+        v_attrs = variant.get("attributes", [])
         image_urls = await _image_urls(variant)
 
         sku_prices = prices_by_sku.get(sku, []) if sku else []
-        contracted = [p for p in sku_prices if p.scope == "CONTRACTED"]
-        pool = contracted if contracted else sku_prices
-        min_price = min(pool, key=lambda p: p.amount, default=None)
+        min_price, matched_contract = _select_price(sku_prices, contract_ids)
 
         logger.info(
-            f"SKU={sku!r} → total_prices={len(sku_prices)} contracted={len(contracted)} "
-            f"selected={'CONTRACTED' if contracted else 'pool'} "
+            f"SKU={sku!r} → prices={len(sku_prices)} "
+            f"selected={'contract' if matched_contract else 'fallback'} "
+            f"contract={min_price.contract_id if min_price else None!r} "
             f"price={f'{min_price.amount} {min_price.currency}' if min_price else 'none'} "
             f"seller={min_price.seller_name_en if min_price else 'none'}",
             extra={
@@ -223,10 +279,11 @@ async def _parse_variant(
                 "input_data": {
                     "sku": sku,
                     "total_prices": len(sku_prices),
-                    "contracted_prices": len(contracted),
+                    "contract_matched": matched_contract,
                     "selected_price": min_price.amount if min_price else None,
                     "currency": min_price.currency if min_price else None,
                     "seller_id": min_price.seller_id if min_price else None,
+                    "contract_id": min_price.contract_id if min_price else None,
                 },
             },
         )
@@ -242,14 +299,18 @@ async def _parse_variant(
             # and downstream display; sku_image_url above is the spec's primary.
             "image_urls": image_urls or None,
 
-            # --- Seller / price (from the selected standalone price) ---
+            # --- Material numbers ---
+            "asmo_material_number": _attr(v_attrs, "ownInventoryManagedProduct"),
+            "aramco_material_number": _attr(v_attrs, "manufacturerNumber"),
+
+            # --- Seller / price (all from the one selected standalone price) ---
             "seller_id": min_price.seller_id if min_price else None,
             "seller_name": min_price.seller_name_en if min_price else None,
             "price": min_price.amount if min_price else None,
             "currency_type": min_price.currency if min_price else None,
             "lead_time": min_price.lead_time_days if min_price else None,
-            "moq": next((p.moq for p in pool if p.moq is not None), None),
-            "unit_type": next((p.unit_type for p in pool if p.unit_type is not None), None),
+            "moq": min_price.moq if min_price else None,
+            "unit_type": min_price.unit_type if min_price else None,
             "temporary_unavailable": min_price.temporary_unavailable if min_price else None,
             "is_blocked_for_deletion": min_price.is_blocked_for_deletion if min_price else None,
         }

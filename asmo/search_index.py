@@ -162,6 +162,10 @@ def build_index_body(vector_field: str, dim: int) -> dict:
                 "sku_image_url": keyword_field(),
                 "image_urls":    keyword_field(),
 
+                # --- Material numbers ---
+                "asmo_material_number":   keyword_field(),
+                "aramco_material_number": keyword_field(),
+
                 # --- Images (parallel arrays, store-only) ---
                 # One object holding three positional arrays, one slot per image:
                 #   image_url:    ["url1", "url2", ...]
@@ -183,7 +187,7 @@ def build_index_body(vector_field: str, dim: int) -> dict:
                 "moq":                     numeric_field("integer"),
                 "unit_type":               keyword_field(),
                 "temporary_unavailable":   {"type": "boolean"},
-                "is_blocked_for_deletion": {"type": "boolean"},
+                "is_blocked_for_deletion": keyword_field(),
             },
         },
     }

@@ -47,7 +47,7 @@ class Price:
     unit_type: str | None
     moq: int | None
     temporary_unavailable: bool | None
-    is_blocked_for_deletion: bool | None
+    is_blocked_for_deletion: str | None
     raw: dict = field(repr=False)
 
     @classmethod
@@ -124,11 +124,14 @@ class Price:
             # Spec "MOQ" — minimum order quantity. Prefer the custom field; fall
             # back to the standalone-price's top-level minimumQuantity.
             moq=custom_fields.get("minimumQuantity") if custom_fields.get("minimumQuantity") is not None else raw.get("minimumQuantity"),
-            # Spec "temporary_unavialable" / "isBlockedForDeletion" — not present
-            # in current sample data; read defensively from custom fields and
-            # default to None when the upstream has not populated them yet.
-            temporary_unavailable=custom_fields.get("temporaryUnavailable", custom_fields.get("temporary_unavialable")),
-            is_blocked_for_deletion=custom_fields.get("isBlockedForDeletion"),
+            # Spec "temporary_unavialable" — a localized "true"/"false" string
+            # (custom.fields.temporarilyUnavailable, e.g. {"en": "false"});
+            # coerced to a bool. None when absent.
+            temporary_unavailable=_localized_bool(custom_fields.get("temporarilyUnavailable")),
+            # Spec "isBlockedForDeletion" — a deletion-code string ("L" == blocked
+            # for deletion). Real payloads carry it as purchasingContractDeletionCode;
+            # prefer the spec name, then the data field. None when absent.
+            is_blocked_for_deletion=custom_fields.get("isBlockedForDeletion") or custom_fields.get("purchasingContractDeletionCode"),
             raw=raw,
         )
         logger.info(
@@ -146,6 +149,28 @@ class Price:
             },
         )
         return price
+
+
+def _localized_bool(value) -> bool | None:
+    """Coerce a localized/plain truthy value into a ``bool``, or ``None``.
+
+    The ``temporarilyUnavailable`` custom field arrives as a localized string such
+    as ``{"en": "false"}``; it may also be a plain ``"true"``/``"false"`` string
+    or an actual bool. Returns the boolean meaning, or ``None`` when absent.
+
+    Args:
+        value: The raw field value (localized dict, string or bool).
+
+    Returns:
+        ``True``/``False`` when a value is present, else ``None``.
+    """
+    if isinstance(value, dict):
+        value = value.get("en")
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.strip().lower() == "true"
+    return None
 
 
 def _channel_name(raw: dict, locale: str) -> str | None:
