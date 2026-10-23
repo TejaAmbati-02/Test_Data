@@ -112,8 +112,8 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 def load_transformed(folder: Path, pattern: str, require_content: bool, limit: int | None) -> dict[str, dict]:
     """Load transformed rows from a folder of per-SKU JSON files.
 
-    Each matched file is one transformed row, keyed by its ``sku`` field (falling
-    back to the file stem). Unreadable/invalid files are skipped and logged, not
+    Each matched file is one transformed row, keyed by its ``sku_id`` field
+    (falling back to the file stem). Unreadable/invalid files are skipped and logged, not
     fatal. Rows without ``content`` are skipped only when ``require_content`` is
     set (they would index with an empty text vector otherwise).
 
@@ -155,7 +155,7 @@ def load_transformed(folder: Path, pattern: str, require_content: bool, limit: i
             continue
         if row.get("images"):
             with_images += 1
-        key = row.get("sku") or path.stem
+        key = row.get("sku_id") or path.stem
         rows[key] = row
 
     logger.info(
@@ -246,9 +246,10 @@ async def attach_image_embeddings(rows: dict[str, dict], embedder: OCIEmbedder, 
     by a local pipeline run with ``IMAGE_CONTENT_LOCAL=true``) and does not
     already have pre-computed ``images`` vectors, every image is decoded and
     embedded via OCI multimodal ``embed-v4.0``. The resulting vectors are
-    attached as a nested ``images`` list — ``{image_url, image_base64,
-    image_vector}`` — pairing each image with the matching entry in
-    ``image_urls`` by position.
+    attached as a parallel-array ``images`` object — ``{image_url: [...],
+    image_base64: [...], image_vector: [...]}`` where slot ``i`` describes
+    image ``i`` — pairing each image with the matching entry in ``image_urls``
+    by position.
 
     The raw base64 ``image_content`` is **always removed** from every row before
     returning, whether or not embedding ran, so it is never indexed into
@@ -309,16 +310,17 @@ async def attach_image_embeddings(rows: dict[str, dict], embedder: OCIEmbedder, 
         vectors, embed_failed = await _embed_images_resilient(
             embedder, [(data, mime) for _sku, data, mime, _id, _url in work]
         )
-        images_by_sku: dict[str, list[dict]] = {}
+        images_by_sku: dict[str, dict] = {}
         for (sku, _data, _mime, b64, url), vector in zip(work, vectors):
             if vector is None:  # dropped by the resilient embedder — skip it
                 continue
-            images_by_sku.setdefault(sku, []).append(
-                {"image_url": url, "image_base64": b64, "image_vector": vector}
-            )
+            obj = images_by_sku.setdefault(sku, {"image_url": [], "image_base64": [], "image_vector": []})
+            obj["image_url"].append(url)
+            obj["image_base64"].append(b64)
+            obj["image_vector"].append(vector)
             images_embedded += 1
-        for sku, imgs in images_by_sku.items():
-            rows[sku]["images"] = imgs
+        for sku, obj in images_by_sku.items():
+            rows[sku]["images"] = obj
 
     # Never index the base64 blob — strip it from every row regardless.
     for row in rows.values():

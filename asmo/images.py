@@ -215,7 +215,7 @@ class ImageDownloader:
                                "error_details": str(exc), "input_data": {"sku": sku}},
                     )
 
-            async def image_to_storage(sku: str, row: dict, want_base64: bool) -> tuple[list[str], list[dict]]:
+            async def image_to_storage(sku: str, row: dict, want_base64: bool) -> tuple[list[str], dict | None]:
                 """Download a SKU's images, save + upload + embed each (tolerant).
 
                 Iterates the SKU's image URLs (``image_urls``, falling back to the
@@ -230,12 +230,14 @@ class ImageDownloader:
 
                 When ``embed_image`` is configured, every successfully downloaded
                 image is embedded (one batched call per SKU) and returned as a
-                nested ``images`` list of ``{image_url, image_base64, image_vector}``
-                for the caller to attach to the transformed row for kNN indexing.
+                parallel-array object ``{image_url: [...], image_base64: [...],
+                image_vector: [...]}`` (slot ``i`` describes image ``i``) for the
+                caller to attach to the transformed row as the ``images`` field.
 
                 Returns:
-                    ``(base64_list, images_nested)`` — the per-image base64 blobs
-                    and the nested image/vector dicts (either may be empty).
+                    ``(base64_list, images_obj)`` — the per-image base64 blobs and
+                    the parallel-array images object (``images_obj`` is ``None``
+                    when no image was embedded).
                 """
                 urls = row.get("image_urls") or []
                 if max_images is not None:
@@ -298,7 +300,9 @@ class ImageDownloader:
                     if want_base64:
                         b64.append(base64.b64encode(data).decode("ascii"))
 
-                images_nested: list[dict] = []
+                # Parallel-array object: image_url[i], image_base64[i] and
+                # image_vector[i] all describe the same image.
+                images_obj: dict = {"image_url": [], "image_base64": [], "image_vector": []}
                 if embed_image is not None and downloaded:
                     try:
                         vectors = await embed_image([(data, mime) for _, _, data, mime in downloaded])
@@ -311,14 +315,13 @@ class ImageDownloader:
                         )
                         vectors = []
                     for (_filename, url, data, _mime), vector in zip(downloaded, vectors):
-                        images_nested.append({
-                            "image_url": url,
-                            "image_base64": base64.b64encode(data).decode("ascii"),
-                            "image_vector": vector,
-                        })
+                        images_obj["image_url"].append(url)
+                        images_obj["image_base64"].append(base64.b64encode(data).decode("ascii"))
+                        images_obj["image_vector"].append(vector)
                         counters["images_embedded"] += 1
 
-                return b64, images_nested
+                # Return None when nothing was embedded so the caller skips it.
+                return b64, (images_obj if images_obj["image_vector"] else None)
 
             async def process(sku: str, row: dict) -> None:
                 """Write a SKU's local JSON, download its images, then upload JSON.
@@ -334,7 +337,7 @@ class ImageDownloader:
                     # when the storage upload — or the opt-in local embed — uses it,
                     # and its vectors feed the nested images field for indexing.
                     want_b64 = upload_json is not None or (write_image_content_local and write_json is not None)
-                    image_b64, images_nested = await image_to_storage(sku, row, want_base64=want_b64)
+                    image_b64, images_obj = await image_to_storage(sku, row, want_base64=want_b64)
 
                     # Local JSON. image_content is embedded only when explicitly
                     # enabled (write_image_content_local); otherwise the local file
@@ -357,13 +360,13 @@ class ImageDownloader:
                                        "input_data": {"sku": sku}},
                             )
 
-                    # Attach the nested image vectors to the shared transformed
-                    # row (done after the lean local write above) so the OpenSearch
-                    # indexer — which runs later over this same dict — picks up the
-                    # images.image_vector kNN field. image_content (base64) is NOT
-                    # added here: it is never indexed, only written to storage JSON.
-                    if images_nested:
-                        row["images"] = images_nested
+                    # Attach the parallel-array images object to the shared
+                    # transformed row (done after the lean local write above) so the
+                    # OpenSearch indexer — which runs later over this same dict —
+                    # stores the images field. image_content (base64) is NOT added
+                    # here: it is never indexed, only written to storage JSON.
+                    if images_obj:
+                        row["images"] = images_obj
 
                     # Storage JSON always carries the base64 image_content. The
                     # field is never indexed into OpenSearch (that uses the plain

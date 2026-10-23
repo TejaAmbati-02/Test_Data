@@ -51,33 +51,30 @@ class OpenSearchConfig:
     recreate_index: bool = field(default_factory=lambda: os.environ.get("OPENSEARCH_RECREATE_INDEX", "false").lower() == "true")
 
 
-def build_index_body(vector_field: str, dim: int, image_dim: int | None = None) -> dict:
+def build_index_body(vector_field: str, dim: int) -> dict:
     """Build the index settings + mapping body for the search index.
 
     Enables kNN with an HNSW (Lucene, cosine) index on ``vector_field`` and maps
     **every** field produced by the transformer so each has the correct type for
-    search, filtering and aggregation. Localized name/description fields use
-    language-specific analyzers; identifiers use keyword (with a searchable text
-    sub-field); hazard ratings are nested objects.
+    search, filtering and aggregation: the product title/description and category
+    name/description fields use text analyzers; ids, keys, slugs and the seller
+    id/unit use keyword (with a searchable text sub-field); price/lead time/MOQ
+    are numeric; availability flags are boolean.
 
-    Image vectors live in a ``nested`` ``images`` array — one entry per image
-    (``image_url``, ``image_base64``, ``image_vector``) — so a SKU with several
-    images is still a single parent document, and a kNN query over
-    ``images.image_vector`` (with ``score_mode: max``) ranks each SKU by its
-    best-matching image. This keeps text and image retrieval in one index.
+    Images are stored in a single ``images`` object holding parallel arrays
+    (``image_url``, ``image_base64``, ``image_vector``), kept verbatim in
+    ``_source`` but not indexed (``enabled: false``). The image vectors are a
+    list-of-vectors and are therefore not kNN-searchable; only ``content_vector``
+    powers vector (text) search.
 
     Args:
         vector_field: Name of the kNN vector field (e.g. ``content_vector``).
         dim: Dimension of the content embedding vectors (1536 for Cohere
             embed-v4.0).
-        image_dim: Dimension of each ``images.image_vector`` embedding; defaults
-            to ``dim`` (same model/space as the text vectors, so image and text
-            embeddings are directly comparable).
 
     Returns:
         A dict suitable for passing as the ``body`` of ``indices.create``.
     """
-    image_dim = image_dim or dim
 
     def text_field(analyzer: str = "standard") -> dict:
         return {
@@ -107,12 +104,6 @@ def build_index_body(vector_field: str, dim: int, image_dim: int | None = None) 
             },
         }
 
-    def hazard_object() -> dict:
-        return {
-            "type": "object",
-            "properties": {"code": keyword_field(), "value": text_field()},
-        }
-
     return {
         "settings": {
             "index": {
@@ -128,76 +119,60 @@ def build_index_body(vector_field: str, dim: int, image_dim: int | None = None) 
                 "content": text_field(),
                 vector_field: knn_vector(dim),
 
-                # --- Category ---
-                "category_name":       text_field(),
-                "category_key":        keyword_field(),
-                "category_slug":       keyword_field(),
-                "category_order_hint":  numeric_field("float"),
+                # --- Product ---
+                "product_id":          keyword_field(),
+                "product_title":       text_field("english"),
+                "product_description": text_field("english"),
+
+                # --- Category (top business category) ---
+                "category_name":        text_field(),
+                "category_id":          keyword_field(),
+                "category_slug":        keyword_field(),
+                "category_description": text_field(),
+                "category_key":         keyword_field(),
+
+                # --- Subcategory ---
                 "sub_category_name":        text_field(),
-                "sub_category_key":         keyword_field(),
+                "sub_category_id":          keyword_field(),
                 "sub_category_slug":        keyword_field(),
                 "sub_category_description": text_field(),
+                "sub_category_key":         keyword_field(),
 
-                # --- Product ---
-                "product_key":             keyword_field(),
-                "product_name_en":         text_field("english"),
-                "product_name_de":         text_field("german"),
-                "product_description_en":  text_field("english"),
-                "product_description_de":  text_field("german"),
-                "product_slug":            keyword_field(),
-                "product_group":           keyword_field(),
-                "material_type":           keyword_field(),
-                "customer_id":             keyword_field(),
-                "customer_material_number": keyword_field(),
+                # --- Product type (leaf category level) ---
+                "product_type_name":        text_field(),
+                "product_type_id":          keyword_field(),
+                "product_type_slug":        keyword_field(),
+                "product_type_description": text_field(),
+                "product_type_key":         keyword_field(),
 
-                # --- Hazard ---
-                "chemical_hazard_bulletin": keyword_field(),
-                "hazard_health":           hazard_object(),
-                "hazard_flame":            hazard_object(),
-                "hazard_reactive":         hazard_object(),
+                # --- Master-variant / SKU ---
+                "sku_key":       keyword_field(),
+                "sku_id":        keyword_field(),
+                "sku_image_url": keyword_field(),
+                "image_urls":    keyword_field(),
 
-                # --- Variant identifiers ---
-                "sku":                       keyword_field(),
-                "variant_id":                 numeric_field("integer"),
-                "variant_key":                keyword_field(),
-                "manufacturer_number":        keyword_field(),
-                "product_manufacturer_number": keyword_field(),
-                "erp_material_number":         keyword_field(),
-                "image_urls":                 keyword_field(),
+                # --- Images (parallel arrays, store-only) ---
+                # One object holding three positional arrays, one slot per image:
+                #   image_url:    ["url1", "url2", ...]
+                #   image_base64: ["b64_1", "b64_2", ...]
+                #   image_vector: [[float, ...], [float, ...], ...]
+                # enabled:false keeps the whole object verbatim in _source but
+                # indexes nothing. NOTE: image_vector is a list-of-vectors, so it
+                # is NOT kNN-searchable — image/visual search is unavailable with
+                # this schema (chosen deliberately). content_vector still powers
+                # text search.
+                "images": {"type": "object", "enabled": False},
 
-                # --- Image embeddings (nested: one entry per image) ---
-                # Each entry stores the image itself as base64 (image_base64),
-                # its source URL, and the embedding of that image (image_vector).
-                # A kNN query over images.image_vector with score_mode=max ranks
-                # each parent SKU by its single best-matching image; inner_hits
-                # returns which image matched. image_base64 uses the `binary`
-                # type (stored in _source, never indexed/searched); image_url is
-                # index:false (retrieval only, not searchable/filterable).
-                "images": {
-                    "type": "nested",
-                    "properties": {
-                        "image_url":    {"type": "keyword", "index": False},
-                        "image_base64": {"type": "binary"},
-                        "image_vector": knn_vector(image_dim),
-                    },
-                },
-
-                # --- Availability ---
-                "available_quantity":      numeric_field("integer"),
-                "restockable_in_days":      numeric_field("integer"),
-                "in_stock_any_channel":      {"type": "boolean"},
-                "total_available_quantity": numeric_field("integer"),
-
-                # --- Pricing / commercial (added so every transformed field is mapped) ---
-                "currency_type":          keyword_field(),
-                "price":                 numeric_field("float"),
-                "lowest_contracted_price": numeric_field("float"),
-                "seller_name_en":         text_field("english"),
-                "seller_name_de":         text_field("german"),
-                "contract_ids":           keyword_field(),
-                "leadTimeDays":          numeric_field("integer"),
-                "unitOfMeasure":         keyword_field(),
-                "moq":                   numeric_field("integer"),
+                # --- Seller / price (from the selected standalone price) ---
+                "seller_id":               keyword_field(),
+                "seller_name":             text_field("english"),
+                "price":                   numeric_field("float"),
+                "currency_type":           keyword_field(),
+                "lead_time":               numeric_field("integer"),
+                "moq":                     numeric_field("integer"),
+                "unit_type":               keyword_field(),
+                "temporary_unavailable":   {"type": "boolean"},
+                "is_blocked_for_deletion": {"type": "boolean"},
             },
         },
     }
@@ -347,7 +322,7 @@ class OpenSearchIndexer:
             )
             return False
 
-        body = build_index_body(self._config.vector_field, self._config.vector_dim, self._config.image_vector_dim)
+        body = build_index_body(self._config.vector_field, self._config.vector_dim)
         response = await client.indices.create(index=self._config.index_name, body=body)
         logger.info(
             f"Index '{self._config.index_name}' created at dim={self._config.vector_dim} — acknowledged={response.get('acknowledged')}",

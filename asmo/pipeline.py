@@ -6,6 +6,7 @@ from .config import Config
 from .auth import AuthClient
 from .products import ProductsClient, Product
 from .prices import PricesClient, Price
+from .selections import ProductSelectionsClient
 from .exporter import Exporter, ExportPaths
 from .transformer import transform
 from .images import ImageDownloader
@@ -33,6 +34,7 @@ class Pipeline:
         self._auth = AuthClient(self._config)
         self._products = ProductsClient(self._config, self._auth)
         self._prices = PricesClient(self._config, self._auth)
+        self._selections = ProductSelectionsClient(self._config, self._auth)
         self._exporter = Exporter(base_dir=output_dir)
         self._images = ImageDownloader.instance(base_dir=output_dir)
         self._storage = ObjectStorageClient.instance()
@@ -53,8 +55,31 @@ class Pipeline:
             extra={"function_name": "run", "input_data": {"products": len(products), "prices": len(prices)}},
         )
 
+        # Contracted-scope gate (opt-in): drop products not in a valid, active
+        # product selection before transforming them.
+        if self._config.selection_validation_enabled:
+            logger.info(
+                "Step 2b/5 — validating product selections (contracted scope)",
+                extra={"function_name": "run"},
+            )
+            valid_ids = await self._selections.get_valid_product_ids()
+            before = len(products)
+            products = [p for p in products if p.id in valid_ids]
+            logger.info(
+                f"Selection gate — kept {len(products)}/{before} products in contracted scope",
+                extra={
+                    "function_name": "run",
+                    "input_data": {"before": before, "kept": len(products), "valid_ids": len(valid_ids)},
+                },
+            )
+        else:
+            logger.info(
+                "Step 2b/5 — selection validation disabled (SELECTION_VALIDATION_ENABLED=false)",
+                extra={"function_name": "run"},
+            )
+
         logger.info("Step 3/5 — transforming", extra={"function_name": "run"})
-        transformed = await transform(products, prices, self._config.channel_id)
+        transformed = await transform(products, prices)
 
         # Per-SKU storage callbacks — only wired up when uploads are enabled.
         # When enabled, each SKU's JSON and image are uploaded to object storage

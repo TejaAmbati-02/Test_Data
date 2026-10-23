@@ -37,12 +37,17 @@ class Price:
     currency: str
     amount: float
     scope: str | None
+    seller_id: str | None
     seller_name_en: str | None
     seller_name_de: str | None
+    supplier_id: str | None
     contract_id: str | None
     lead_time_days: int | None
     price_unit: str | None
+    unit_type: str | None
     moq: int | None
+    temporary_unavailable: bool | None
+    is_blocked_for_deletion: bool | None
     raw: dict = field(repr=False)
 
     @classmethod
@@ -96,6 +101,7 @@ class Price:
         """
         value = raw.get("value", {})
         custom_fields = raw.get("custom", {}).get("fields", {})
+        channel_obj = raw.get("channel", {}).get("obj", {})
         cent_amount = value.get("centAmount", 0)
         fraction_digits = value.get("fractionDigits", 2)
         price = cls(
@@ -104,12 +110,25 @@ class Price:
             currency=value.get("currencyCode", "N/A"),
             amount=cent_amount / (10 ** fraction_digits),
             scope=custom_fields.get("scope"),
+            seller_id=channel_obj.get("id"),
             seller_name_en=_channel_name(raw, "en"),
             seller_name_de=_channel_name(raw, "de"),
+            supplier_id=custom_fields.get("supplierId"),
             contract_id=custom_fields.get("contractId"),
             lead_time_days=custom_fields.get("leadTimeDays"),
             price_unit=value.get("currencyCode"),
-            moq=raw.get("minimumQuantity"),
+            # Spec "Unit_type" — the price's unit of measure. Real payloads carry
+            # it as custom.fields.priceUnit; fall back to the other spellings the
+            # spec/data have used so a populated value is never missed.
+            unit_type=custom_fields.get("priceUnit") or custom_fields.get("unit_type") or custom_fields.get("priceUnitType"),
+            # Spec "MOQ" — minimum order quantity. Prefer the custom field; fall
+            # back to the standalone-price's top-level minimumQuantity.
+            moq=custom_fields.get("minimumQuantity") if custom_fields.get("minimumQuantity") is not None else raw.get("minimumQuantity"),
+            # Spec "temporary_unavialable" / "isBlockedForDeletion" — not present
+            # in current sample data; read defensively from custom fields and
+            # default to None when the upstream has not populated them yet.
+            temporary_unavailable=custom_fields.get("temporaryUnavailable", custom_fields.get("temporary_unavialable")),
+            is_blocked_for_deletion=custom_fields.get("isBlockedForDeletion"),
             raw=raw,
         )
         logger.info(

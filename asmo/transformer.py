@@ -2,10 +2,12 @@
 
 This module takes the raw product documents fetched from CommerceTools together
 with their matched prices and flattens them into a dictionary keyed by SKU. Each
-SKU row combines product-level fields (category, name, hazard ratings, custom
-attributes) with variant-level fields (availability, image, lowest contracted
-price, seller, lead time) so that downstream consumers receive one self-contained
-record per sellable unit.
+SKU row combines product-level fields (title, description and the three-level
+category hierarchy — category, subcategory, product type) with variant-level
+fields (SKU key/id, primary image) and the selected seller/price (seller id and
+name, price, currency, lead time, MOQ, unit type) so that downstream consumers
+receive one self-contained record per sellable unit, matching the ingestion
+field specification.
 
 The public entry point is :func:`transform`. The remaining functions are private
 helpers that parse individual products, variants, categories, attributes and
@@ -20,7 +22,7 @@ from .logging_service import logger, log_function
 
 
 @log_function
-async def transform(products: list[Product], prices: list[Price], channel_id: str) -> dict[str, dict]:
+async def transform(products: list[Product], prices: list[Price]) -> dict[str, dict]:
     """Return a dict of sku → parsed row, one entry per SKU (masterVariant + all variants)."""
     logger.info(
         f"Transforming {len(products)} products and {len(prices)} prices",
@@ -40,7 +42,7 @@ async def transform(products: list[Product], prices: list[Price], channel_id: st
     failed_products = 0
     for product in products:
         try:
-            rows = await _parse_product(product.raw, prices_by_sku, channel_id)
+            rows = await _parse_product(product.raw, prices_by_sku)
         except Exception:
             # _parse_product already logged the error with full product context.
             # Skip this product rather than aborting the whole transform so one
@@ -77,21 +79,18 @@ async def transform(products: list[Product], prices: list[Price], channel_id: st
     return result
 
 
-async def _parse_product(raw: dict, prices_by_sku: dict[str, list[Price]], channel_id: str) -> dict[str, dict]:
+async def _parse_product(raw: dict, prices_by_sku: dict[str, list[Price]]) -> dict[str, dict]:
     """Flatten a single raw product document into one row per variant SKU.
 
-    Extracts the product-level fields that are shared across all variants
-    (category hierarchy, localized name/description/slug, custom attributes and
-    hazard ratings), then computes product-wide availability figures and parses
-    every variant (the master variant plus all additional variants) into its own
-    row via :func:`_parse_variant`.
+    Extracts the product-level fields shared across all variants (title,
+    description and the three-level category hierarchy — category, subcategory
+    and product type), then parses every variant (the master variant plus all
+    additional variants) into its own SKU row via :func:`_parse_variant`.
 
     Args:
         raw: The raw product document as returned by CommerceTools.
         prices_by_sku: Mapping of SKU to its list of matched prices, used by the
-            variant parser to select the lowest contracted price.
-        channel_id: The supply/inventory channel whose availability should be
-            reported for each variant.
+            variant parser to select the lowest contracted price and its seller.
 
     Returns:
         A dict mapping each variant's SKU to its parsed row. Variants without a
@@ -103,25 +102,14 @@ async def _parse_product(raw: dict, prices_by_sku: dict[str, list[Price]], chann
     """
     try:
         product_fields = {
+            "product_id": raw.get("id"),
+            "product_title": raw.get("name", {}).get("en"),
+            "product_description": raw.get("description", {}).get("en"),
             **await _category_fields(raw),
-            "product_key": raw.get("key"),
-            "product_name_en": raw.get("name", {}).get("en"),
-            "product_name_de": raw.get("name", {}).get("de"),
-            "product_description_en": raw.get("description", {}).get("en"),
-            "product_description_de": raw.get("description", {}).get("de"),
-            "product_slug": raw.get("slug", {}).get("en"),
-            "product_group": await _attr(raw.get("attributes", []), "productGroup"),
-            "material_type": await _attr(raw.get("attributes", []), "materialType"),
-            "customer_id": await _attr(raw.get("attributes", []), "ZCustId"),
-            "customer_material_number": await _attr(raw.get("attributes", []), "zCustMAT_9M"),
-            "chemical_hazard_bulletin": await _attr(raw.get("attributes", []), "chemicalHazardBulletin"),
-            "hazard_health": await _hazard(raw.get("attributes", []), "hazardRatingHealthChar", "hazardRatingHealthValue"),
-            "hazard_flame": await _hazard(raw.get("attributes", []), "hazardRatingFlameChar", "hazardRatingFlameValue"),
-            "hazard_reactive": await _hazard(raw.get("attributes", []), "hazardRatingReactiveChar", "hazardRatingReactiveValue"),
         }
 
         logger.info(
-            f"Extracted product-level fields for key={raw.get('key')!r} ({len(product_fields)} fields)",
+            f"Extracted product-level fields for id={raw.get('id')!r} ({len(product_fields)} fields)",
             extra={
                 "function_name": "_parse_product",
                 "input_data": {"id": raw.get("id"), "key": raw.get("key"), "variants": 1 + len(raw.get("variants", []))},
@@ -131,29 +119,17 @@ async def _parse_product(raw: dict, prices_by_sku: dict[str, list[Price]], chann
 
         all_variants = [raw.get("masterVariant", {}), *raw.get("variants", [])]
 
-        total_qty = 0
-        for v in all_variants:
-            avail = await _channel_avail(v, channel_id)
-            total_qty += avail.get("availableQuantity") or 0
-
-        in_stock_any = False
-        for v in all_variants:
-            for ch in v.get("availability", {}).get("channels", {}).values():
-                if ch.get("isOnStock"):
-                    in_stock_any = True
-                    break
-
         rows: dict[str, dict] = {}
         failed_variants = 0
         for v in all_variants:
             try:
-                row = await _parse_variant(product_fields, v, prices_by_sku, channel_id, total_qty, in_stock_any)
+                row = await _parse_variant(product_fields, v, prices_by_sku)
             except Exception:
                 # _parse_variant already logged the error with sku context. Skip
                 # the single bad variant rather than failing the whole product.
                 failed_variants += 1
                 continue
-            sku = row.get("sku")
+            sku = row.get("sku_id")
             if sku:
                 rows[sku] = row
         if failed_variants:
@@ -182,31 +158,24 @@ async def _parse_variant(
     product_fields: dict,
     variant: dict,
     prices_by_sku: dict[str, list[Price]],
-    channel_id: str,
-    total_qty: int,
-    in_stock_any: bool,
 ) -> dict:
-    """Build a single flat row for one product variant.
+    """Build a single flat SKU row for one product variant.
 
-    Merges the shared product-level fields with variant-specific values:
-    identifiers (SKU, variant id/key, manufacturer numbers), image URL,
-    channel availability, and the selected price. Price selection prefers
+    Merges the shared product-level fields (title, description, category
+    hierarchy) with the variant's master-variant details (SKU key/id, primary
+    image URL) and the selected seller/price. Price selection prefers
     ``CONTRACTED`` prices when any exist and otherwise falls back to the full
-    price pool; the lowest-amount price in the chosen pool is used.
+    price pool; the lowest-amount price in the chosen pool is used, and its
+    channel supplies the seller fields.
 
     Args:
         product_fields: The product-level fields shared by every variant of the
             parent product (produced by :func:`_parse_product`).
         variant: The raw variant document (master variant or additional variant).
         prices_by_sku: Mapping of SKU to its list of matched prices.
-        channel_id: The supply/inventory channel whose availability is reported.
-        total_qty: Total available quantity summed across all variants of the
-            parent product.
-        in_stock_any: Whether any channel of any variant of the parent product is
-            currently in stock.
 
     Returns:
-        A dict representing the fully flattened row for this variant.
+        A dict representing the fully flattened SKU row for this variant.
 
     Raises:
         Exception: Re-raises any error encountered while parsing the variant
@@ -214,8 +183,6 @@ async def _parse_variant(
     """
     try:
         sku = variant.get("sku")
-        avail = await _channel_avail(variant, channel_id)
-        v_attrs = variant.get("attributes", [])
         image_urls = await _image_urls(variant)
 
         sku_prices = prices_by_sku.get(sku, []) if sku else []
@@ -227,7 +194,7 @@ async def _parse_variant(
             f"SKU={sku!r} → total_prices={len(sku_prices)} contracted={len(contracted)} "
             f"selected={'CONTRACTED' if contracted else 'pool'} "
             f"price={f'{min_price.amount} {min_price.currency}' if min_price else 'none'} "
-            f"qty={total_qty} in_stock={in_stock_any}",
+            f"seller={min_price.seller_name_en if min_price else 'none'}",
             extra={
                 "request_id": sku,
                 "function_name": "_parse_variant",
@@ -237,34 +204,32 @@ async def _parse_variant(
                     "contracted_prices": len(contracted),
                     "selected_price": min_price.amount if min_price else None,
                     "currency": min_price.currency if min_price else None,
-                    "total_qty": total_qty,
-                    "in_stock": in_stock_any,
+                    "seller_id": min_price.seller_id if min_price else None,
                 },
             },
         )
 
         row = {
             **product_fields,
-            "sku": sku,
-            "variant_id": variant.get("id"),
-            "variant_key": variant.get("key"),
-            "manufacturer_number": await _attr(v_attrs, "manufacturerNumber"),
-            "product_manufacturer_number": await _attr(v_attrs, "productManufacturerNumber"),
-            "erp_material_number": await _attr(v_attrs, "ownInventoryManagedProduct"),
+
+            # --- Master-variant / SKU details ---
+            "sku_key": variant.get("key"),
+            "sku_id": sku,
+            "sku_image_url": image_urls[0] if image_urls else None,
+            # Full image-URL list is kept for the image-download step (images.py)
+            # and downstream display; sku_image_url above is the spec's primary.
             "image_urls": image_urls or None,
-            "available_quantity": avail.get("availableQuantity"),
-            "restockable_in_days": avail.get("restockableInDays"),
-            "in_stock_any_channel": in_stock_any,
-            "total_available_quantity": total_qty,
-            "currency_type": min_price.currency if min_price else None,
+
+            # --- Seller / price (from the selected standalone price) ---
+            "seller_id": min_price.seller_id if min_price else None,
+            "seller_name": min_price.seller_name_en if min_price else None,
             "price": min_price.amount if min_price else None,
-            "lowest_contracted_price": min_price.amount if min_price else None,
-            "seller_name_en": min_price.seller_name_en if min_price else None,
-            "seller_name_de": min_price.seller_name_de if min_price else None,
-            "contract_ids": [p.contract_id for p in contracted if p.contract_id] or None,
-            "leadTimeDays": min_price.lead_time_days if min_price else None,
-            "unitOfMeasure": next((p.price_unit for p in pool if p.price_unit is not None), None),
+            "currency_type": min_price.currency if min_price else None,
+            "lead_time": min_price.lead_time_days if min_price else None,
             "moq": next((p.moq for p in pool if p.moq is not None), None),
+            "unit_type": next((p.unit_type for p in pool if p.unit_type is not None), None),
+            "temporary_unavailable": min_price.temporary_unavailable if min_price else None,
+            "is_blocked_for_deletion": min_price.is_blocked_for_deletion if min_price else None,
         }
         # Combined free-text blob of every field value, pipe-separated — useful
         # as a single searchable/embeddable field downstream. Built from the row
@@ -298,23 +263,63 @@ async def _parse_variant(
         raise
 
 
-async def _category_fields(raw: dict) -> dict:
-    """Derive root and sub category fields from a product's category references.
+# The three category levels the spec maps, in hierarchy order, and the field
+# prefix each is emitted under.
+_CATEGORY_LEVELS = ("category", "sub_category", "product_type")
 
-    Each category reference carries an expanded ``obj`` describing the
-    subcategory. The business root is the first ancestor that itself has
-    ancestors, which skips the CommerceTools internal "All" root (whose
-    ``ancestors`` list is empty). Roots and subcategories are deduplicated by
-    key, and for each field a single value is returned when only one distinct
-    value exists, otherwise a list of values is returned.
+# Empty three-level block, returned when a product has no (expanded) categories.
+_EMPTY_CATEGORY_FIELDS = {
+    f"{prefix}_{suffix}": None
+    for prefix in _CATEGORY_LEVELS
+    for suffix in ("name", "id", "slug", "description", "key")
+}
+
+
+def _category_block(obj: dict, prefix: str) -> dict:
+    """Build the five spec fields (name/id/slug/description/key) for one level.
 
     Args:
-        raw: The raw product document.
+        obj: The expanded category ``obj`` for this hierarchy level.
+        prefix: Field prefix — ``category``, ``sub_category`` or ``product_type``.
 
     Returns:
-        A dict with localized name/key/slug (and order hint / description) for
-        both the root and sub categories. All values are ``None`` when the
-        product has no categories.
+        A dict of ``{prefix}_name``, ``{prefix}_id``, ``{prefix}_slug``,
+        ``{prefix}_description`` and ``{prefix}_key`` for this level.
+    """
+    return {
+        f"{prefix}_name": (obj.get("name") or {}).get("en"),
+        f"{prefix}_id": obj.get("id"),
+        f"{prefix}_slug": (obj.get("slug") or {}).get("en"),
+        f"{prefix}_description": (obj.get("description") or {}).get("en"),
+        f"{prefix}_key": obj.get("key"),
+    }
+
+
+async def _category_fields(raw: dict) -> dict:
+    """Derive the three-level category hierarchy from ``categories[0]``.
+
+    The spec maps Category / Subcategory / Product type to successive ancestors
+    of the product's first category. In the real data ``ancestors[0]`` is the
+    CommerceTools internal "All" root (its own ``ancestors`` list is empty), so
+    a literal ``ancestors[0..2]`` mapping would make Category="All". Instead we
+    build the hierarchy from root to leaf — the expanded ancestor ``obj``s
+    followed by the category itself — and drop the "All" root, then assign the
+    first three surviving levels to:
+
+        * ``category_*``      — top business category   (e.g. "Static Equipment")
+        * ``sub_category_*``  — second level            (e.g. "Pipe")
+        * ``product_type_*``  — third level / leaf      (e.g. "Pipe, Seamless CS")
+
+    Each level contributes ``*_name``, ``*_id``, ``*_slug``, ``*_description``
+    and ``*_key``. Missing levels yield ``None`` for all of their fields.
+
+    Args:
+        raw: The raw product document (with ``categories[*].ancestors[*]``
+            expanded).
+
+    Returns:
+        A dict with the fifteen category fields. All values are ``None`` when the
+        product has no (expanded) categories.
     """
     logger.debug(
         f"Deriving category fields for key={raw.get('key')!r}",
@@ -324,69 +329,32 @@ async def _category_fields(raw: dict) -> dict:
         },
     )
     categories = raw.get("categories", [])
-    if not categories:
+    leaf = categories[0].get("obj", {}) if categories else {}
+    if not leaf:
         logger.debug(
-            f"No categories on product key={raw.get('key')!r}; returning empty category fields",
+            f"No expanded category on product key={raw.get('key')!r}; returning empty category fields",
             extra={"function_name": "_category_fields", "input_data": {"key": raw.get("key")}},
         )
-        return {
-            "category_name": None, "category_key": None,
-            "category_slug": None, "category_order_hint": None,
-            "sub_category_name": None, "sub_category_key": None,
-            "sub_category_slug": None, "sub_category_description": None,
-        }
+        return dict(_EMPTY_CATEGORY_FIELDS)
 
-    root_seen: set[str] = set()
-    sub_seen: set[str] = set()
-    roots: list[dict] = []
-    subs: list[dict] = []
+    # Full hierarchy, root → leaf: each ancestor's expanded obj, then the leaf
+    # category itself. Drop the CT internal "All" root (empty own ancestors); the
+    # leaf keeps its ancestors so it always survives.
+    chain = [a.get("obj", {}) for a in leaf.get("ancestors", [])] + [leaf]
+    chain = [c for c in chain if c.get("ancestors")]
 
-    for cat in categories:
-        sub = cat.get("obj", {})
-        sub_key = sub.get("key")
-
-        # Collect subcategory (deduplicated by key)
-        if sub_key and sub_key not in sub_seen:
-            sub_seen.add(sub_key)
-            subs.append(sub)
-
-        # Skip CT internal "All" root (obj.ancestors is empty); first with ancestors is business root
-        ancestors = sub.get("ancestors", [])
-        business_ancestors = [a for a in ancestors if a.get("obj", {}).get("ancestors")]
-        if business_ancestors:
-            root = business_ancestors[0].get("obj", {})
-            root_key = root.get("key")
-            if root_key and root_key not in root_seen:
-                root_seen.add(root_key)
-                roots.append(root)
-
-    def _pick(items: list[dict], field: str, nested: str | None = None):
-        values = [
-            (item.get(field, {}).get(nested) if nested else item.get(field))
-            for item in items
-        ]
-        values = [v for v in values if v is not None]
-        if not values:
-            return None
-        return values[0] if len(values) == 1 else values
+    fields = dict(_EMPTY_CATEGORY_FIELDS)
+    for prefix, obj in zip(_CATEGORY_LEVELS, chain):
+        fields.update(_category_block(obj, prefix))
 
     logger.debug(
-        f"Resolved {len(roots)} root and {len(subs)} sub categories for key={raw.get('key')!r}",
+        f"Resolved {min(len(chain), len(_CATEGORY_LEVELS))} category level(s) for key={raw.get('key')!r}",
         extra={
             "function_name": "_category_fields",
-            "input_data": {"key": raw.get("key"), "roots": len(roots), "subs": len(subs)},
+            "input_data": {"key": raw.get("key"), "levels": len(chain)},
         },
     )
-    return {
-        "category_name": _pick(roots, "name", "en"),
-        "category_key": _pick(roots, "key"),
-        "category_slug": _pick(roots, "slug", "en"),
-        "category_order_hint": await _to_float(_pick(roots, "orderHint")),
-        "sub_category_name": _pick(subs, "name", "en"),
-        "sub_category_key": _pick(subs, "key"),
-        "sub_category_slug": _pick(subs, "slug", "en"),
-        "sub_category_description": _pick([{**s, "desc": (s.get("description") or {}).get("en")} for s in subs], "desc"),
-    }
+    return fields
 
 
 def _stringify(value) -> str | None:
@@ -449,91 +417,6 @@ def _combine_content(row: dict) -> str:
     return " | ".join(parts)
 
 
-async def _attr(attributes: list, name: str):
-    """Return the value of the named attribute, or ``None`` if absent.
-
-    Args:
-        attributes: A list of CommerceTools attribute dicts, each shaped like
-            ``{"name": ..., "value": ...}``. A falsy value is treated as empty.
-        name: The attribute name to look up.
-
-    Returns:
-        The attribute's ``value`` if a matching attribute is found, otherwise
-        ``None``.
-    """
-    for a in attributes or []:
-        if a.get("name") == name:
-            logger.debug(
-                f"Attribute {name!r} found",
-                extra={"function_name": "_attr", "input_data": {"name": name}},
-            )
-            return a.get("value")
-    logger.debug(
-        f"Attribute {name!r} not found",
-        extra={"function_name": "_attr", "input_data": {"name": name}},
-    )
-    return None
-
-
-async def _hazard(attrs: list, char_key: str, value_key: str) -> dict | None:
-    """Combine a hazard rating's code and value attributes into one dict.
-
-    Args:
-        attrs: The list of attribute dicts to search.
-        char_key: Attribute name holding the hazard code/character.
-        value_key: Attribute name holding the hazard value.
-
-    Returns:
-        A dict ``{"code": ..., "value": ...}`` when either attribute is present,
-        or ``None`` when both are absent.
-    """
-    char = await _attr(attrs, char_key)
-    val = await _attr(attrs, value_key)
-    if char is None and val is None:
-        logger.debug(
-            f"No hazard rating for {char_key!r}/{value_key!r}",
-            extra={"function_name": "_hazard", "input_data": {"char_key": char_key, "value_key": value_key}},
-        )
-        return None
-    logger.debug(
-        f"Hazard rating resolved for {char_key!r}/{value_key!r}",
-        extra={"function_name": "_hazard", "input_data": {"char_key": char_key, "value_key": value_key}},
-    )
-    return {"code": char, "value": val}
-
-
-async def _to_float(value) -> float | None:
-    """Best-effort conversion of a value to ``float``.
-
-    Args:
-        value: The value to coerce. May be ``None`` or a non-numeric type.
-
-    Returns:
-        ``None`` when ``value`` is ``None``; the ``float`` conversion when it
-        succeeds; or the original ``value`` unchanged when conversion raises
-        ``ValueError``/``TypeError``.
-    """
-    if value is None:
-        logger.debug(
-            "Coercing None to float -> None",
-            extra={"function_name": "_to_float", "input_data": {"value": None}},
-        )
-        return None
-    try:
-        result = float(value)
-        logger.debug(
-            f"Coerced value to float={result}",
-            extra={"function_name": "_to_float", "input_data": {"value": value}},
-        )
-        return result
-    except (ValueError, TypeError):
-        logger.debug(
-            f"Could not coerce value to float; returning unchanged value={value!r}",
-            extra={"function_name": "_to_float", "input_data": {"value": value}},
-        )
-        return value
-
-
 async def _image_urls(variant: dict) -> list[str]:
     """Resolve every available image URL for a variant.
 
@@ -576,23 +459,3 @@ async def _image_urls(variant: dict) -> list[str]:
         extra={"function_name": "_image_urls", "input_data": {"sku": variant.get("sku")}},
     )
     return []
-
-
-async def _channel_avail(variant: dict, channel_id: str) -> dict:
-    """Return the availability block for a specific channel on a variant.
-
-    Args:
-        variant: The raw variant document.
-        channel_id: The channel id whose availability should be returned.
-
-    Returns:
-        The availability dict for the requested channel (typically containing
-        ``availableQuantity``, ``isOnStock`` and ``restockableInDays``), or an
-        empty dict when the variant has no availability for that channel.
-    """
-    avail = variant.get("availability", {}).get("channels", {}).get(channel_id, {})
-    logger.debug(
-        f"Channel availability lookup for sku={variant.get('sku')!r} channel={channel_id!r} -> {'found' if avail else 'none'}",
-        extra={"function_name": "_channel_avail", "input_data": {"sku": variant.get("sku"), "channel_id": channel_id}},
-    )
-    return avail

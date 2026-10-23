@@ -32,6 +32,11 @@ class Config:
         channel_id: Supply/inventory channel id (from ``CT_CHANNEL_ID``).
         upload_enabled: Whether uploads are enabled (from ``UPLOAD_ENABLED``).
         index_enabled: Whether OpenSearch indexing is enabled (from ``INDEX_ENABLED``).
+        selection_validation_enabled: Whether to gate products on a valid, active
+            product selection (contracted scope) before transforming them (from
+            ``SELECTION_VALIDATION_ENABLED``). Defaults to ``False`` so the
+            bulk-only run keeps every product; when ``True``, products with no
+            active selection whose ``validUntil`` is in the future are excluded.
         save_local: Whether to also write products/prices/transformed JSON and
             images to local disk (from ``SAVE_LOCAL``). Defaults to ``False`` so
             data streams straight to storage/index without filling the disk.
@@ -50,6 +55,7 @@ class Config:
     channel_id: str = field(default_factory=lambda: os.environ["CT_CHANNEL_ID"])
     upload_enabled: bool = field(default_factory=lambda: os.environ.get("UPLOAD_ENABLED", "false").lower() == "true")
     index_enabled: bool = field(default_factory=lambda: os.environ.get("INDEX_ENABLED", "false").lower() == "true")
+    selection_validation_enabled: bool = field(default_factory=lambda: os.environ.get("SELECTION_VALIDATION_ENABLED", "false").lower() == "true")
     save_local: bool = field(default_factory=lambda: os.environ.get("SAVE_LOCAL", "false").lower() == "true")
     image_content_local: bool = field(default_factory=lambda: os.environ.get("IMAGE_CONTENT_LOCAL", "false").lower() == "true")
     page_size: int = 500

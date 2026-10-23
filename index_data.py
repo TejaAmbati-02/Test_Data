@@ -37,8 +37,8 @@ DEFAULT_DIR = Path("out_transformed")
 def load_transformed(folder: Path) -> dict[str, dict]:
     """Load transformed rows from a folder of per-SKU JSON files.
 
-    Each ``*.json`` file is one transformed row. Rows are keyed by their ``sku``
-    field, falling back to the file stem when a row has no ``sku``.
+    Each ``*.json`` file is one transformed row. Rows are keyed by their
+    ``sku_id`` field, falling back to the file stem when a row has no ``sku_id``.
 
     Args:
         folder: Directory containing the transformed JSON files.
@@ -60,7 +60,7 @@ def load_transformed(folder: Path) -> dict[str, dict]:
                 extra={"function_name": "load_transformed", "status": "error", "error_details": str(exc)},
             )
             continue
-        key = row.get("sku") or path.stem
+        key = row.get("sku_id") or path.stem
         rows[key] = row
     logger.info(
         f"Loaded {len(rows)} transformed row(s) from {folder}/",
