@@ -55,31 +55,33 @@ class Pipeline:
             extra={"function_name": "run", "input_data": {"products": len(products), "prices": len(prices)}},
         )
 
-        # Contracted-scope gate (opt-in): drop products not in a valid, active
-        # product selection before transforming them.
+        # Purchase-agreement gate (opt-in): keep only products with at least one
+        # valid, active, unexpired purchase agreement, and capture each valid
+        # agreement's contract id + valid-until to attach to the product's rows.
+        agreements_by_product: dict[str, list[dict]] = {}
         if self._config.selection_validation_enabled:
             logger.info(
-                "Step 2b/5 — validating product selections (contracted scope)",
+                "Step 2b/5 — validating purchase agreements (product selections)",
                 extra={"function_name": "run"},
             )
-            valid_ids = await self._selections.get_valid_product_ids()
+            agreements_by_product = await self._selections.get_valid_agreements([p.id for p in products])
             before = len(products)
-            products = [p for p in products if p.id in valid_ids]
+            products = [p for p in products if agreements_by_product.get(p.id)]
             logger.info(
-                f"Selection gate — kept {len(products)}/{before} products in contracted scope",
+                f"Agreement gate — kept {len(products)}/{before} products with a valid purchase agreement",
                 extra={
                     "function_name": "run",
-                    "input_data": {"before": before, "kept": len(products), "valid_ids": len(valid_ids)},
+                    "input_data": {"before": before, "kept": len(products), "in_scope": len(agreements_by_product)},
                 },
             )
         else:
             logger.info(
-                "Step 2b/5 — selection validation disabled (SELECTION_VALIDATION_ENABLED=false)",
+                "Step 2b/5 — purchase-agreement validation disabled (SELECTION_VALIDATION_ENABLED=false)",
                 extra={"function_name": "run"},
             )
 
         logger.info("Step 3/5 — transforming", extra={"function_name": "run"})
-        transformed = await transform(products, prices)
+        transformed = await transform(products, prices, agreements_by_product)
 
         # Per-SKU storage callbacks — only wired up when uploads are enabled.
         # When enabled, each SKU's JSON and image are uploaded to object storage

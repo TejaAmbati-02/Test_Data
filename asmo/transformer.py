@@ -22,8 +22,21 @@ from .logging_service import logger, log_function
 
 
 @log_function
-async def transform(products: list[Product], prices: list[Price]) -> dict[str, dict]:
-    """Return a dict of sku → parsed row, one entry per SKU (masterVariant + all variants)."""
+async def transform(
+    products: list[Product],
+    prices: list[Price],
+    agreements_by_product: dict[str, list[dict]] | None = None,
+) -> dict[str, dict]:
+    """Return a dict of sku → parsed row, one entry per SKU (masterVariant + all variants).
+
+    Args:
+        products: The products to flatten.
+        prices: The standalone prices to match to each SKU.
+        agreements_by_product: Optional mapping of product id → list of valid
+            purchase agreements (``{contract_id, valid_until}``) to attach to
+            every row of that product. When ``None``/absent, rows carry no
+            ``purchase_agreements``.
+    """
     logger.info(
         f"Transforming {len(products)} products and {len(prices)} prices",
         extra={"function_name": "transform", "input_data": {"products": len(products), "prices": len(prices)}},
@@ -37,12 +50,13 @@ async def transform(products: list[Product], prices: list[Price]) -> dict[str, d
         extra={"function_name": "transform", "input_data": {"unique_skus": len(prices_by_sku)}},
     )
 
+    agreements_by_product = agreements_by_product or {}
     result = {}
     no_price: list[str] = []
     failed_products = 0
     for product in products:
         try:
-            rows = await _parse_product(product.raw, prices_by_sku)
+            rows = await _parse_product(product.raw, prices_by_sku, agreements_by_product.get(product.id))
         except Exception:
             # _parse_product already logged the error with full product context.
             # Skip this product rather than aborting the whole transform so one
@@ -79,18 +93,25 @@ async def transform(products: list[Product], prices: list[Price]) -> dict[str, d
     return result
 
 
-async def _parse_product(raw: dict, prices_by_sku: dict[str, list[Price]]) -> dict[str, dict]:
+async def _parse_product(
+    raw: dict,
+    prices_by_sku: dict[str, list[Price]],
+    purchase_agreements: list[dict] | None = None,
+) -> dict[str, dict]:
     """Flatten a single raw product document into one row per variant SKU.
 
     Extracts the product-level fields shared across all variants (title,
-    description and the three-level category hierarchy — category, subcategory
-    and product type), then parses every variant (the master variant plus all
-    additional variants) into its own SKU row via :func:`_parse_variant`.
+    description, the three-level category hierarchy — category, subcategory and
+    product type — and any valid purchase agreements), then parses every variant
+    (the master variant plus all additional variants) into its own SKU row via
+    :func:`_parse_variant`.
 
     Args:
         raw: The raw product document as returned by CommerceTools.
         prices_by_sku: Mapping of SKU to its list of matched prices, used by the
             variant parser to select the lowest contracted price and its seller.
+        purchase_agreements: Optional list of the product's valid purchase
+            agreements (``{contract_id, valid_until}``) to attach to every row.
 
     Returns:
         A dict mapping each variant's SKU to its parsed row. Variants without a
@@ -106,6 +127,7 @@ async def _parse_product(raw: dict, prices_by_sku: dict[str, list[Price]]) -> di
             "product_title": raw.get("name", {}).get("en"),
             "product_description": raw.get("description", {}).get("en"),
             **await _category_fields(raw),
+            "purchase_agreements": purchase_agreements or None,
         }
 
         logger.info(

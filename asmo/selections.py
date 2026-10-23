@@ -1,24 +1,30 @@
-"""Product-selection (contracted-scope) validation against the CommerceTools API.
+"""Product-selection / purchase-agreement validation against the CommerceTools API.
 
-The ingestion spec gates a product on its *product selection*: a product is in
-"contracted scope" only when it belongs to a product selection that is **active**
-and whose **validUntil** is today or later. The spec expresses this per product
-(``GET /products/{id}/product-selections``), but to keep the bulk-fetch pipeline
-fast this module resolves the same condition in bulk:
+The ingestion spec gates a product on its **purchase agreements** (modelled as
+CommerceTools product selections):
 
-  1. list every product selection once (``GET /product-selections``);
-  2. keep the selections that are active with ``validUntil >= today``;
-  3. for each kept selection, list its assigned products
-     (``GET /product-selections/{id}/products``) and union their ids.
+  1. retrieve product ids (done by :class:`~asmo.products.ProductsClient`);
+  2. for each product id, call its product selections
+     (``GET /products/{id}/product-selections``);
+  3. each selection the product belongs to is a purchase agreement — validate it:
+       * it must be **active**;
+       * it must **not be expired** (``validUntil`` today or later);
+       * reject any agreement that fails either check;
+  4. if no valid agreement remains, the product is **not indexed**;
+  5. for every valid agreement capture its **contract id** and **valid-until**
+     date, and attach the list of ``{contract_id, valid_until}`` objects to the
+     product.
 
-The resulting set of in-scope product ids is what :class:`ProductSelectionsClient`
-returns; the pipeline drops any product whose id is not in it.
+:class:`ProductSelectionsClient` returns, per product id, the list of valid
+purchase agreements (empty/absent → the product is out of scope). The pipeline
+drops out-of-scope products and threads the agreement list onto each row.
 
-Because ``active``/``validUntil`` are project-specific custom fields rather than
-standard CommerceTools attributes, validity is read defensively (custom fields
-first, then top-level) so a differently-shaped payload degrades to "unknown"
-rather than crashing. This whole step is opt-in via
-``Config.selection_validation_enabled`` (env ``SELECTION_VALIDATION_ENABLED``).
+Because ``active``/``validUntil``/``contractId`` are project-specific custom
+fields rather than standard CommerceTools attributes, they are read defensively
+(the assignment's own custom fields first, then the expanded product selection's)
+so a differently-shaped payload degrades gracefully rather than crashing. The
+whole step is opt-in via ``Config.selection_validation_enabled`` (env
+``SELECTION_VALIDATION_ENABLED``).
 
 Network calls use :mod:`aiohttp` with the project's shared SSL context, require a
 valid auth token (via :func:`~asmo.auth.requires_token`), and are logged through
@@ -41,7 +47,7 @@ def _as_date(value) -> date | None:
 
     Accepts ISO date (``2026-10-23``) and ISO datetime (``2026-10-23T..Z``)
     strings. Returns ``None`` for missing or unparseable values so the caller can
-    treat "no/!bad validUntil" as "not provably valid".
+    treat a missing/bad ``validUntil`` as "cannot prove it is unexpired".
 
     Args:
         value: The raw ``validUntil`` value from the payload.
@@ -62,35 +68,67 @@ def _as_date(value) -> date | None:
             return None
 
 
-def _is_selection_valid(selection: dict, today: date) -> bool:
-    """Return True when a product selection is active and not expired.
+def _agreement_info(assignment: dict) -> dict:
+    """Extract one purchase agreement's validity and capture fields.
 
-    Reads ``active`` and ``validUntil`` from the selection's ``custom.fields``
-    (where this project keeps them), falling back to top-level keys. A selection
-    counts as valid only when ``active`` is truthy **and** ``validUntil`` is today
-    or later. A missing/unparseable ``validUntil`` is treated as *not* valid, so
-    the gate never admits a product on incomplete data.
+    A product-selection *assignment* ties a product to a product selection (the
+    purchase agreement). ``active``, ``validUntil`` and ``contractId`` are read
+    from the assignment's own ``custom.fields`` first, then from the expanded
+    ``productSelection.obj.custom.fields``. The contract id falls back to the
+    selection's ``key`` and then its ``id`` so a valid agreement always carries an
+    identifier. ``active`` is treated as true when no flag is present (the project
+    may not model one) and only an explicit falsy value rejects the agreement.
 
     Args:
-        selection: A single product-selection payload.
-        today: The date to compare ``validUntil`` against.
+        assignment: One product-selection assignment payload.
 
     Returns:
-        Whether the selection is active and valid as of ``today``.
+        A dict with ``active`` (bool), ``contract_id``, ``valid_until`` (raw
+        string) and ``valid_until_date`` (parsed :class:`date` or ``None``).
     """
-    fields = selection.get("custom", {}).get("fields", {})
-    active = fields.get("active", selection.get("active"))
-    valid_until = _as_date(fields.get("validUntil", selection.get("validUntil")))
-    return bool(active) and valid_until is not None and valid_until >= today
+    selection_ref = assignment.get("productSelection", {})
+    selection = selection_ref.get("obj", {}) or {}
+    sources = [
+        assignment.get("custom", {}).get("fields", {}),
+        selection.get("custom", {}).get("fields", {}),
+    ]
+
+    def pick(key):
+        for fields in sources:
+            if fields.get(key) is not None:
+                return fields.get(key)
+        return None
+
+    active = pick("active")
+    valid_until = pick("validUntil")
+    contract_id = pick("contractId") or selection.get("key") or selection_ref.get("id")
+    return {
+        # No active flag anywhere → cannot disprove it; treat as active. An
+        # explicit falsy value rejects the agreement.
+        "active": True if active is None else bool(active),
+        "contract_id": contract_id,
+        "valid_until": valid_until,
+        "valid_until_date": _as_date(valid_until),
+    }
 
 
 class ProductSelectionsClient:
-    """Resolves the set of product ids that are in a valid, active selection.
+    """Resolves each product's valid purchase agreements via its product selections.
 
-    Pages through all product selections, filters them by validity, then collects
-    the assigned product ids of each valid selection. Requires an
-    :class:`~asmo.auth.AuthClient` for authorised requests.
+    Calls ``/products/{id}/product-selections`` per product (bounded
+    concurrency), validates every agreement (active + not expired) and returns
+    the captured ``{contract_id, valid_until}`` objects for the valid ones.
+    Requires an :class:`~asmo.auth.AuthClient` for authorised requests.
     """
+
+    # Cap in-flight per-product requests so a large catalogue does not open
+    # thousands of simultaneous connections.
+    MAX_CONCURRENCY = 20
+
+    # Expand the referenced product selection (and its supplier custom field) so
+    # validity/contract fields are available on a single call, per the spec's
+    # ``expand=productSelection.id;obj.custom.supplier``.
+    EXPAND = "productSelection.id;productSelection.obj.custom.supplier"
 
     def __init__(self, config: Config, auth: AuthClient) -> None:
         """Store the configuration and auth client used for selection requests.
@@ -104,70 +142,87 @@ class ProductSelectionsClient:
 
     @log_function
     @requires_token
-    async def get_valid_product_ids(self) -> set[str]:
-        """Return every product id that belongs to a valid, active selection.
+    async def get_valid_agreements(self, product_ids: list[str]) -> dict[str, list[dict]]:
+        """Return each product's valid purchase agreements, keyed by product id.
 
-        Lists all product selections, keeps those that are active with
-        ``validUntil >= today`` (per :func:`_is_selection_valid`), and unions the
-        assigned product ids of the kept selections — fetching each selection's
-        products concurrently.
+        For every id, fetches its product selections and keeps the agreements
+        that are active and not expired, capturing each one's ``contract_id`` and
+        ``valid_until``. Products with no valid agreement are omitted from the
+        result (the caller excludes them from indexing). Requests are issued
+        concurrently with a bounded semaphore.
+
+        Args:
+            product_ids: The product ids to validate.
 
         Returns:
-            A set of in-scope product ids. May be empty when no selection is
-            currently valid.
+            Mapping of product id → non-empty list of ``{contract_id,
+            valid_until}`` objects. Out-of-scope products are absent.
         """
         today = date.today()
-        async with aiohttp.ClientSession() as session:
-            selections = await self._list_all(session, "product-selections")
-            valid = [s for s in selections if _is_selection_valid(s, today)]
-            logger.info(
-                f"Product selections — {len(valid)}/{len(selections)} active and valid as of {today.isoformat()}",
-                extra={
-                    "function_name": "get_valid_product_ids",
-                    "input_data": {"total": len(selections), "valid": len(valid)},
-                },
-            )
-
-            product_id_lists = await asyncio.gather(
-                *[self._products_of(session, s["id"]) for s in valid if s.get("id")]
-            )
-
-        ids: set[str] = set()
-        for id_list in product_id_lists:
-            ids.update(id_list)
+        sem = asyncio.Semaphore(self.MAX_CONCURRENCY)
         logger.info(
-            f"Resolved {len(ids)} in-scope product id(s) across {len(valid)} valid selection(s)",
+            f"Validating purchase agreements for {len(product_ids)} product(s) as of {today.isoformat()}",
+            extra={"function_name": "get_valid_agreements", "input_data": {"products": len(product_ids)}},
+        )
+        async with aiohttp.ClientSession() as session:
+            pairs = await asyncio.gather(
+                *[self._for_product(session, pid, today, sem) for pid in product_ids]
+            )
+
+        valid = {pid: agreements for pid, agreements in pairs if agreements}
+        logger.info(
+            f"Purchase-agreement validation complete — {len(valid)}/{len(product_ids)} product(s) in scope",
             extra={
-                "function_name": "get_valid_product_ids",
+                "function_name": "get_valid_agreements",
                 "status": "success",
-                "input_data": {"product_ids": len(ids), "valid_selections": len(valid)},
+                "input_data": {"products": len(product_ids), "in_scope": len(valid)},
             },
         )
-        return ids
+        return valid
 
-    async def _products_of(self, session: aiohttp.ClientSession, selection_id: str) -> list[str]:
-        """Return the product ids assigned to one product selection.
+    async def _for_product(
+        self, session: aiohttp.ClientSession, product_id: str, today: date, sem: asyncio.Semaphore
+    ) -> tuple[str, list[dict]]:
+        """Return ``(product_id, valid_agreements)`` for a single product.
 
         Args:
             session: An open aiohttp session.
-            selection_id: The product selection's id.
+            product_id: The product whose selections to validate.
+            today: The date to compare each agreement's ``validUntil`` against.
+            sem: Semaphore bounding concurrent per-product requests.
 
         Returns:
-            The list of assigned product ids (possibly empty).
+            The product id paired with its list of valid ``{contract_id,
+            valid_until}`` objects (empty when none qualify).
         """
-        rows = await self._list_all(session, f"product-selections/{selection_id}/products")
-        return [
-            pid
-            for row in rows
-            for pid in (row.get("product", {}).get("id") or row.get("id"),)
-            if pid
-        ]
+        async with sem:
+            rows = await self._list_all(session, f"products/{product_id}/product-selections")
+
+        agreements: list[dict] = []
+        rejected = 0
+        for row in rows:
+            info = _agreement_info(row)
+            unexpired = info["valid_until_date"] is not None and info["valid_until_date"] >= today
+            if info["active"] and unexpired:
+                agreements.append({"contract_id": info["contract_id"], "valid_until": info["valid_until"]})
+            else:
+                rejected += 1
+
+        logger.debug(
+            f"Product {product_id} → {len(agreements)} valid, {rejected} rejected of {len(rows)} agreement(s)",
+            extra={
+                "request_id": product_id,
+                "function_name": "_for_product",
+                "input_data": {"product_id": product_id, "valid": len(agreements), "rejected": rejected},
+            },
+        )
+        return product_id, agreements
 
     async def _list_all(self, session: aiohttp.ClientSession, path: str) -> list[dict]:
         """Page through an offset-paginated endpoint and return all results.
 
         Fetches the first page to learn ``total``, then issues the remaining
-        offset pages concurrently and concatenates their results.
+        offset pages (usually none for a single product) and concatenates them.
 
         Args:
             session: An open aiohttp session.
@@ -190,7 +245,7 @@ class ProductSelectionsClient:
         return results
 
     async def _fetch_page(self, session: aiohttp.ClientSession, path: str, offset: int) -> dict:
-        """Fetch a single offset page from ``path``.
+        """Fetch a single offset page from ``path`` with the selection expand.
 
         Args:
             session: An open aiohttp session.
@@ -203,16 +258,15 @@ class ProductSelectionsClient:
         Raises:
             Exception: Re-raised after logging on any request or HTTP error.
         """
-        params = {"limit": self._config.page_size, "offset": offset}
+        params = {"limit": self._config.page_size, "offset": offset, "expand": self.EXPAND}
         url = f"{self._config.api_base}/{path}"
         t0 = datetime.now()
         try:
             async with session.get(url, headers=self._auth.headers, params=params, ssl=SSL_CONTEXT) as resp:
                 body = await resp.json()
                 elapsed = (datetime.now() - t0).total_seconds()
-                logger.info(
-                    f"HTTP {resp.status} ← {resp.url} → {len(body.get('results', []))} records "
-                    f"(total={body.get('total')}) in {elapsed:.3f}s",
+                logger.debug(
+                    f"HTTP {resp.status} ← {resp.url} → {len(body.get('results', []))} agreement(s) in {elapsed:.3f}s",
                     extra={
                         "function_name": "_fetch_page",
                         "latency": f"{elapsed:.3f}s",

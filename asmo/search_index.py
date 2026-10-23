@@ -124,6 +124,17 @@ def build_index_body(vector_field: str, dim: int) -> dict:
                 "product_title":       text_field("english"),
                 "product_description": text_field("english"),
 
+                # --- Purchase agreements (valid, active, unexpired) ---
+                # One nested object per agreement so contract id and valid-until
+                # stay paired and are independently queryable.
+                "purchase_agreements": {
+                    "type": "nested",
+                    "properties": {
+                        "contract_id": keyword_field(),
+                        "valid_until": keyword_field(),
+                    },
+                },
+
                 # --- Category (top business category) ---
                 "category_name":        text_field(),
                 "category_id":          keyword_field(),
