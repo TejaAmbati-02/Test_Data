@@ -17,10 +17,13 @@
   "product_type_slug": "buyer-default-static-equipment-valves-022000",
   "product_type_description": "Valve, Gate",
   "product_type_key": "buyer-default-static-equipment-valves-022000",
+  "purchase_agreements": null,
   "sku_key": "TEST-265266-004-1",
   "sku_id": "TEST-265266-004-1",
   "sku_image_url": null,
   "image_urls": null,
+  "asmo_material_number": "000000001000000402",
+  "aramco_material_number": "EM402",
   "seller_id": null,
   "seller_name": null,
   "price": null,
@@ -30,6 +33,8 @@
   "unit_type": null,
   "temporary_unavailable": null,
   "is_blocked_for_deletion": null,
-  "content": "product_id:b27e1071-5469-4a3a-b5eb-504eb0330ba2 | product_title:Check Valve DN100 PN16 Carbon Steel | product_description:Check Valve DN100 PN16 Carbon Steel. Industrial-grade component for oil & gas applications. Compliant with international standards. | category_name:Static Equipment | category_id:5f7195cf-b988-4f19-97ba-d85242fb0fb6 | category_slug:buyer-default-static-equipment | category_description:Static Equipment | category_key:buyer-default-static-equipment | sub_category_name:Valves | sub_category_id:5a5c0d6a-67d0-46d1-9791-0b11d623c17a | sub_category_slug:buyer-default-static-equipment-valves | sub_category_description:Valves | sub_category_key:buyer-default-static-equipment-valves | product_type_name:Valve, Gate | product_type_id:ab1a2c44-c7df-45cd-b0ac-cecf8f510d2a | product_type_slug:buyer-default-static-equipment-valves-022000 | product_type_description:Valve, Gate | product_type_key:buyer-default-static-equipment-valves-022000 | sku_key:TEST-265266-004-1 | sku_id:TEST-265266-004-1",
+  "seller": null,
+  "sellers": null,
+  "content": "product_id:b27e1071-5469-4a3a-b5eb-504eb0330ba2 | product_title:Check Valve DN100 PN16 Carbon Steel | product_description:Check Valve DN100 PN16 Carbon Steel. Industrial-grade component for oil & gas applications. Compliant with international standards. | category_name:Static Equipment | category_id:5f7195cf-b988-4f19-97ba-d85242fb0fb6 | category_slug:buyer-default-static-equipment | category_description:Static Equipment | category_key:buyer-default-static-equipment | sub_category_name:Valves | sub_category_id:5a5c0d6a-67d0-46d1-9791-0b11d623c17a | sub_category_slug:buyer-default-static-equipment-valves | sub_category_description:Valves | sub_category_key:buyer-default-static-equipment-valves | product_type_name:Valve, Gate | product_type_id:ab1a2c44-c7df-45cd-b0ac-cecf8f510d2a | product_type_slug:buyer-default-static-equipment-valves-022000 | product_type_description:Valve, Gate | product_type_key:buyer-default-static-equipment-valves-022000 | sku_key:TEST-265266-004-1 | sku_id:TEST-265266-004-1 | asmo_material_number:000000001000000402 | aramco_material_number:EM402",
   "image_content": []
 }

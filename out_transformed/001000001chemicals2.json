@@ -17,10 +17,13 @@
   "product_type_slug": "buyer-default-drilling-and-chemicals-drilling-001000",
   "product_type_description": "Producing Equipment",
   "product_type_key": "buyer-default-drilling-and-chemicals-drilling-001000",
+  "purchase_agreements": null,
   "sku_key": "001000-001-chemicals-2",
   "sku_id": "001000-001-chemicals-2",
   "sku_image_url": null,
   "image_urls": null,
+  "asmo_material_number": "234342",
+  "aramco_material_number": "23423423",
   "seller_id": null,
   "seller_name": null,
   "price": null,
@@ -30,6 +33,8 @@
   "unit_type": null,
   "temporary_unavailable": null,
   "is_blocked_for_deletion": null,
-  "content": "product_id:a1ae8159-88a2-4ba5-87b3-279163e6312a | product_title:Defoamer Grade B | product_description:Defoamer Grade A. Industrial-grade component for oil & gas applications. Compliant with international standards. | category_name:Drilling & Chemicals | category_id:1ba050d2-f900-4a9b-82c0-9dade7948d72 | category_slug:buyer-default-drilling-and-chemicals | category_description:Drilling & Chemicals | category_key:buyer-default-drilling-and-chemicals | sub_category_name:Drilling | sub_category_id:13b62da1-d0f8-4208-8ff4-2f18df36fac4 | sub_category_slug:buyer-default-drilling-and-chemicals-drilling | sub_category_description:Drilling | sub_category_key:buyer-default-drilling-and-chemicals-drilling | product_type_name:Producing Equipment | product_type_id:0aca63c8-d90d-4dc0-b3a8-17b318cb2865 | product_type_slug:buyer-default-drilling-and-chemicals-drilling-001000 | product_type_description:Producing Equipment | product_type_key:buyer-default-drilling-and-chemicals-drilling-001000 | sku_key:001000-001-chemicals-2 | sku_id:001000-001-chemicals-2",
+  "seller": null,
+  "sellers": null,
+  "content": "product_id:a1ae8159-88a2-4ba5-87b3-279163e6312a | product_title:Defoamer Grade B | product_description:Defoamer Grade A. Industrial-grade component for oil & gas applications. Compliant with international standards. | category_name:Drilling & Chemicals | category_id:1ba050d2-f900-4a9b-82c0-9dade7948d72 | category_slug:buyer-default-drilling-and-chemicals | category_description:Drilling & Chemicals | category_key:buyer-default-drilling-and-chemicals | sub_category_name:Drilling | sub_category_id:13b62da1-d0f8-4208-8ff4-2f18df36fac4 | sub_category_slug:buyer-default-drilling-and-chemicals-drilling | sub_category_description:Drilling | sub_category_key:buyer-default-drilling-and-chemicals-drilling | product_type_name:Producing Equipment | product_type_id:0aca63c8-d90d-4dc0-b3a8-17b318cb2865 | product_type_slug:buyer-default-drilling-and-chemicals-drilling-001000 | product_type_description:Producing Equipment | product_type_key:buyer-default-drilling-and-chemicals-drilling-001000 | sku_key:001000-001-chemicals-2 | sku_id:001000-001-chemicals-2 | asmo_material_number:234342 | aramco_material_number:23423423",
   "image_content": []
 }

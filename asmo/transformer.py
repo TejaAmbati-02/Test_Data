@@ -197,35 +197,70 @@ def _attr(attributes: list, name: str):
     return None
 
 
-def _select_price(sku_prices: list[Price], contract_ids: set[str]) -> tuple[Price | None, bool]:
-    """Select the standalone price that supplies a SKU's seller details.
+def _rank_sellers(sku_prices: list[Price], contract_ids: set[str]) -> tuple[list[Price], bool]:
+    """Rank the standalone prices that supply a SKU's seller offers.
 
+    A SKU can be offered by several sellers/channels (one standalone price each),
+    so this returns every usable offer, lowest price first — not just one.
     Mirrors the spec's standalone-price query
     (``contractId=… AND isBlockedForDeletion!="L" AND sku=…``):
 
       1. drop prices blocked for deletion (``is_blocked_for_deletion == "L"``);
-      2. prefer a usable price whose ``contract_id`` is one of the product's valid
-         purchase-agreement contracts — the lowest-amount such price;
-      3. otherwise fall back to the lowest ``CONTRACTED`` price, or the lowest
-         usable price of any scope.
+      2. prefer the usable prices whose ``contract_id`` is one of the product's
+         valid purchase-agreement contracts;
+      3. otherwise fall back to the ``CONTRACTED`` prices, or all usable prices;
+      4. sort the chosen pool by amount ascending.
 
     Args:
         sku_prices: All standalone prices matched to this SKU.
         contract_ids: Contract ids of the product's valid purchase agreements.
 
     Returns:
-        A ``(price, matched_by_contract)`` tuple. ``price`` is ``None`` when no
-        usable price exists; ``matched_by_contract`` is ``True`` when the price
-        was chosen by a purchase-agreement contract match.
+        A ``(prices, matched_by_contract)`` tuple. ``prices`` is the ranked list
+        of seller offers (empty when none are usable); ``matched_by_contract`` is
+        ``True`` when the pool was chosen by purchase-agreement contract match.
     """
     usable = [p for p in sku_prices if p.is_blocked_for_deletion != "L"]
-    if contract_ids:
-        matched = [p for p in usable if p.contract_id in contract_ids]
-        if matched:
-            return min(matched, key=lambda p: p.amount), True
-    contracted = [p for p in usable if p.scope == "CONTRACTED"]
-    pool = contracted if contracted else usable
-    return min(pool, key=lambda p: p.amount, default=None), False
+    matched = False
+    if contract_ids and any(p.contract_id in contract_ids for p in usable):
+        pool = [p for p in usable if p.contract_id in contract_ids]
+        matched = True
+    else:
+        contracted = [p for p in usable if p.scope == "CONTRACTED"]
+        pool = contracted if contracted else usable
+    return sorted(pool, key=lambda p: p.amount), matched
+
+
+def _seller_object(price: Price | None) -> dict | None:
+    """Build the complete seller object from the selected standalone price.
+
+    Groups every seller/commercial detail (id, name, contract, price, currency,
+    lead time, MOQ, unit type and availability flags) into one object emitted as
+    the row's ``seller`` field. Returns ``None`` when no price was selected, so a
+    SKU with no usable price carries ``seller: null`` rather than an all-``None``
+    object.
+
+    Args:
+        price: The selected standalone price, or ``None``.
+
+    Returns:
+        The seller object, or ``None`` when ``price`` is ``None``.
+    """
+    if price is None:
+        return None
+    return {
+        "seller_id": price.seller_id,
+        "seller_name": price.seller_name_en,
+        "supplier_id": price.supplier_id,
+        "contract_id": price.contract_id,
+        "price": price.amount,
+        "currency_type": price.currency,
+        "lead_time": price.lead_time_days,
+        "moq": price.moq,
+        "unit_type": price.unit_type,
+        "temporary_unavailable": price.temporary_unavailable,
+        "is_blocked_for_deletion": price.is_blocked_for_deletion,
+    }
 
 
 async def _parse_variant(
@@ -265,10 +300,16 @@ async def _parse_variant(
         image_urls = await _image_urls(variant)
 
         sku_prices = prices_by_sku.get(sku, []) if sku else []
-        min_price, matched_contract = _select_price(sku_prices, contract_ids)
+        ranked_prices, matched_contract = _rank_sellers(sku_prices, contract_ids)
+        # A SKU can be offered by several sellers (one standalone price each).
+        # ``sellers`` holds every usable offer, lowest price first; ``min_price``
+        # (the first/cheapest) is the primary used for the flat fields + singular
+        # ``seller``.
+        sellers = [_seller_object(p) for p in ranked_prices]
+        min_price = ranked_prices[0] if ranked_prices else None
 
         logger.info(
-            f"SKU={sku!r} → prices={len(sku_prices)} "
+            f"SKU={sku!r} → prices={len(sku_prices)} sellers={len(sellers)} "
             f"selected={'contract' if matched_contract else 'fallback'} "
             f"contract={min_price.contract_id if min_price else None!r} "
             f"price={f'{min_price.amount} {min_price.currency}' if min_price else 'none'} "
@@ -279,6 +320,7 @@ async def _parse_variant(
                 "input_data": {
                     "sku": sku,
                     "total_prices": len(sku_prices),
+                    "sellers": len(sellers),
                     "contract_matched": matched_contract,
                     "selected_price": min_price.amount if min_price else None,
                     "currency": min_price.currency if min_price else None,
@@ -287,6 +329,10 @@ async def _parse_variant(
                 },
             },
         )
+
+        # Primary seller = cheapest usable offer; grouped into the singular
+        # ``seller`` object and spread as flat ``seller_*``/price fields below.
+        seller = _seller_object(min_price)
 
         row = {
             **product_fields,
@@ -303,7 +349,7 @@ async def _parse_variant(
             "asmo_material_number": _attr(v_attrs, "ownInventoryManagedProduct"),
             "aramco_material_number": _attr(v_attrs, "manufacturerNumber"),
 
-            # --- Seller / price (all from the one selected standalone price) ---
+            # --- Seller / price (primary = cheapest usable offer) ---
             "seller_id": min_price.seller_id if min_price else None,
             "seller_name": min_price.seller_name_en if min_price else None,
             "price": min_price.amount if min_price else None,
@@ -313,6 +359,12 @@ async def _parse_variant(
             "unit_type": min_price.unit_type if min_price else None,
             "temporary_unavailable": min_price.temporary_unavailable if min_price else None,
             "is_blocked_for_deletion": min_price.is_blocked_for_deletion if min_price else None,
+
+            # --- Seller objects ---
+            # ``seller``  = primary (cheapest) seller, grouped (mirrors flat fields).
+            # ``sellers`` = every usable seller offer for the SKU, lowest price first.
+            "seller": seller,
+            "sellers": sellers or None,
         }
         # Combined free-text blob of every field value, pipe-separated — useful
         # as a single searchable/embeddable field downstream. Built from the row
@@ -478,22 +530,24 @@ def _combine_content(row: dict) -> str:
 
     Iterates the row in insertion order and joins each field as ``key:value``
     with `` | `` between fields (e.g. ``productName_en:Acme | price:12.5``).
-    ``None`` and blank values are skipped so the blob stays dense. Any
+    ``None`` and blank values are skipped so the blob stays dense. The
     pre-existing ``content`` key is excluded so the field never folds its own
-    previous value back in.
+    previous value back in, and the grouped ``seller``/``sellers`` fields are
+    excluded because their values already appear as flat ``seller_*``/price fields.
 
     Args:
-        row: The assembled transformed row (its own ``content`` key, if present,
-            is ignored).
+        row: The assembled transformed row (its ``content``, ``seller`` and
+            ``sellers`` keys, if present, are ignored).
 
     Returns:
         A single ``" | "``-separated string of ``key:value`` pairs for every
         meaningful field.
     """
+    skip = {"content", "seller", "sellers"}
     parts = [
         f"{key}:{text}"
         for key, value in row.items()
-        if key != "content"
+        if key not in skip
         for text in (_stringify(value),)
         if text
     ]

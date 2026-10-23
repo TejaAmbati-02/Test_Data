@@ -17,12 +17,15 @@
   "product_type_slug": "buyer-default-communities-offices-and-others-office-supplies-106000",
   "product_type_description": "Stationary Items",
   "product_type_key": "buyer-default-communities-offices-and-others-office-supplies-106000",
+  "purchase_agreements": null,
   "sku_key": "ao-100023_2",
   "sku_id": "ao-100023_2",
   "sku_image_url": "https://assets.dev.b2x.b2bx.mindcurv.io/images/products/chemistry/ao/ao-100023.png",
   "image_urls": [
     "https://assets.dev.b2x.b2bx.mindcurv.io/images/products/chemistry/ao/ao-100023.png"
   ],
+  "asmo_material_number": null,
+  "aramco_material_number": null,
   "seller_id": "3a7b23e0-0047-4d63-88a9-cd05d1006a39",
   "seller_name": "Wholesale Warehouse",
   "price": 21.5,
@@ -32,6 +35,34 @@
   "unit_type": null,
   "temporary_unavailable": null,
   "is_blocked_for_deletion": null,
+  "seller": {
+    "seller_id": "3a7b23e0-0047-4d63-88a9-cd05d1006a39",
+    "seller_name": "Wholesale Warehouse",
+    "supplier_id": "3a7b23e0-0047-4d63-88a9-cd05d1006a39",
+    "contract_id": "9901007196",
+    "price": 21.5,
+    "currency_type": "SAR",
+    "lead_time": 3,
+    "moq": null,
+    "unit_type": null,
+    "temporary_unavailable": null,
+    "is_blocked_for_deletion": null
+  },
+  "sellers": [
+    {
+      "seller_id": "3a7b23e0-0047-4d63-88a9-cd05d1006a39",
+      "seller_name": "Wholesale Warehouse",
+      "supplier_id": "3a7b23e0-0047-4d63-88a9-cd05d1006a39",
+      "contract_id": "9901007196",
+      "price": 21.5,
+      "currency_type": "SAR",
+      "lead_time": 3,
+      "moq": null,
+      "unit_type": null,
+      "temporary_unavailable": null,
+      "is_blocked_for_deletion": null
+    }
+  ],
   "content": "product_id:8e603696-2778-4b3b-ad27-ba5159a22dda | product_title:Ring Binder, 2 Inch, A4, Black | product_description:Ring Binder, 2 Inch, A4, Black, For General Office Use, Standard Quality, Community Office Supplies Stock | category_name:Communities, Offices & Others | category_id:2b4437cb-4e08-4e70-8ed2-feaf7193ad70 | category_slug:buyer-default-communities-offices-and-others | category_description:Communities, Offices & Others | category_key:buyer-default-communities-offices-and-others | sub_category_name:Office Supplies | sub_category_id:26e9db10-a7e5-465a-b616-1db6a6ad1614 | sub_category_slug:buyer-default-communities-offices-and-others-office-supplies | sub_category_description:Office Supplies | sub_category_key:buyer-default-communities-offices-and-others-office-supplies | product_type_name:Stationary Items | product_type_id:f88c9554-2d67-41ee-86d2-17430c5abc90 | product_type_slug:buyer-default-communities-offices-and-others-office-supplies-106000 | product_type_description:Stationary Items | product_type_key:buyer-default-communities-offices-and-others-office-supplies-106000 | sku_key:ao-100023_2 | sku_id:ao-100023_2 | sku_image_url:https://assets.dev.b2x.b2bx.mindcurv.io/images/products/chemistry/ao/ao-100023.png | image_urls:https://assets.dev.b2x.b2bx.mindcurv.io/images/products/chemistry/ao/ao-100023.png | seller_id:3a7b23e0-0047-4d63-88a9-cd05d1006a39 | seller_name:Wholesale Warehouse | price:21.5 | currency_type:SAR | lead_time:3",
   "image_content": []
 }

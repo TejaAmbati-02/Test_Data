@@ -125,10 +125,12 @@ class ProductSelectionsClient:
     # thousands of simultaneous connections.
     MAX_CONCURRENCY = 20
 
-    # Expand the referenced product selection (and its supplier custom field) so
-    # validity/contract fields are available on a single call, per the spec's
-    # ``expand=productSelection.id;obj.custom.supplier``.
-    EXPAND = "productSelection.id;productSelection.obj.custom.supplier"
+    # Expand the referenced product selection (and its supplier custom field),
+    # matching the documented request exactly. ``validUntil``/``active``/
+    # ``contractId`` are inline custom fields on productSelection.obj.custom.fields
+    # (so present regardless of expand); the expand resolves the supplier
+    # reference. Per the API-playground docs: expand=productSelection.id;obj.custom.supplier.
+    EXPAND = "productSelection.id;obj.custom.supplier"
 
     def __init__(self, config: Config, auth: AuthClient) -> None:
         """Store the configuration and auth client used for selection requests.

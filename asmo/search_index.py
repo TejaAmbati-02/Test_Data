@@ -104,6 +104,23 @@ def build_index_body(vector_field: str, dim: int) -> dict:
             },
         }
 
+    def seller_properties() -> dict:
+        # Shared property map for the singular ``seller`` object and each entry of
+        # the ``sellers`` nested array.
+        return {
+            "seller_id":               keyword_field(),
+            "seller_name":             text_field("english"),
+            "supplier_id":             keyword_field(),
+            "contract_id":             keyword_field(),
+            "price":                   numeric_field("float"),
+            "currency_type":           keyword_field(),
+            "lead_time":               numeric_field("integer"),
+            "moq":                     numeric_field("integer"),  # Minimum Order Quantity
+            "unit_type":               keyword_field(),
+            "temporary_unavailable":   {"type": "boolean"},
+            "is_blocked_for_deletion": keyword_field(),
+        }
+
     return {
         "settings": {
             "index": {
@@ -184,10 +201,17 @@ def build_index_body(vector_field: str, dim: int) -> dict:
                 "price":                   numeric_field("float"),
                 "currency_type":           keyword_field(),
                 "lead_time":               numeric_field("integer"),
-                "moq":                     numeric_field("integer"),
+                "moq":                     numeric_field("integer"),  # Minimum Order Quantity
                 "unit_type":               keyword_field(),
                 "temporary_unavailable":   {"type": "boolean"},
                 "is_blocked_for_deletion": keyword_field(),
+
+                # --- Seller objects ---
+                # ``seller``  = primary (cheapest) seller, grouped (mirrors flat fields).
+                # ``sellers`` = every usable seller offer for the SKU (nested, so each
+                #               offer's fields stay paired and independently queryable).
+                "seller":  {"type": "object", "properties": seller_properties()},
+                "sellers": {"type": "nested", "properties": seller_properties()},
             },
         },
     }
