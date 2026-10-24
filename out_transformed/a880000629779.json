@@ -1,9 +1,15 @@
 {
-  "product_id": "9939284f-9af8-4b95-a06b-468df034770e",
-  "product_title": "Aruba X372 54VDC 1050W PS",
+  "product_key": "9939284f-9af8-4b95-a06b-468df034770e",
+  "product_name": "Aruba X372 54VDC 1050W PS",
   "product_description": "Aruba X372 54VDC 1050W PS (JL087A#ACC United Kingdom - English localization)",
+  "product_url": "",
+  "contract_indicator": "",
+  "availability": "IN_STOCK",
+  "material_type": "9COM",
   "category_name": "Instrumentation & IT",
-  "category_id": "938869fc-bc69-4c1f-bc2d-ef37b479629f",
+  "category_ids": [
+    "938869fc-bc69-4c1f-bc2d-ef37b479629f"
+  ],
   "category_slug": "buyer-default-instrumentation-and-it",
   "category_description": "Instrumentation & IT",
   "category_key": "buyer-default-instrumentation-and-it",
@@ -12,7 +18,7 @@
   "sub_category_slug": "buyer-default-instrumentation-and-it-communications",
   "sub_category_description": "Communications",
   "sub_category_key": "buyer-default-instrumentation-and-it-communications",
-  "product_type_name": "LAN and Cable Distribution",
+  "product_type": "LAN and Cable Distribution",
   "product_type_id": "754032b4-6866-49ae-9a6b-1d5a43de6d26",
   "product_type_slug": "buyer-default-instrumentation-and-it-communications-078000",
   "product_type_description": "LAN and Cable Distribution",
@@ -23,16 +29,17 @@
   "image_urls": [
     "https://apimangementb2bapplip1vn1v35si.sa1.hana.ondemand.com/apimangement-b2b-application/getcmis/json/6665cadb23fff41ad6558656/root/EXT_4600027170_6000001100_00003/JL087A_1_JL087A.png"
   ],
-  "asmo_material_number": null,
+  "primary_image_url": "https://apimangementb2bapplip1vn1v35si.sa1.hana.ondemand.com/apimangement-b2b-application/getcmis/json/6665cadb23fff41ad6558656/root/EXT_4600027170_6000001100_00003/JL087A_1_JL087A.png",
+  "asmo_material_number": "a-880000629779",
   "aramco_material_number": "JL087A",
-  "sellers": [
+  "seller_details": [
     {
       "seller_id": "7f67afea-9853-43b5-bc5b-69904e4e2a6f",
       "seller_name": "GCC Control",
       "supplier_id": "Aruba",
       "contract_id": "4990027170",
       "price": 55.0,
-      "currency_type": "SAR",
+      "currency": "SAR",
       "lead_time": 3,
       "moq": null,
       "unit_type": "EA",
@@ -45,7 +52,7 @@
       "supplier_id": "Aruba",
       "contract_id": "4990027170",
       "price": 120.0,
-      "currency_type": "SAR",
+      "currency": "SAR",
       "lead_time": 3,
       "moq": null,
       "unit_type": "EA",
@@ -53,6 +60,11 @@
       "is_blocked_for_deletion": null
     }
   ],
-  "content": "product_id:9939284f-9af8-4b95-a06b-468df034770e | product_title:Aruba X372 54VDC 1050W PS | product_description:Aruba X372 54VDC 1050W PS (JL087A#ACC United Kingdom - English localization) | category_name:Instrumentation & IT | category_id:938869fc-bc69-4c1f-bc2d-ef37b479629f | category_slug:buyer-default-instrumentation-and-it | category_description:Instrumentation & IT | category_key:buyer-default-instrumentation-and-it | sub_category_name:Communications | sub_category_id:cd43821c-9213-4a52-ad96-7af05f52a02d | sub_category_slug:buyer-default-instrumentation-and-it-communications | sub_category_description:Communications | sub_category_key:buyer-default-instrumentation-and-it-communications | product_type_name:LAN and Cable Distribution | product_type_id:754032b4-6866-49ae-9a6b-1d5a43de6d26 | product_type_slug:buyer-default-instrumentation-and-it-communications-078000 | product_type_description:LAN and Cable Distribution | product_type_key:buyer-default-instrumentation-and-it-communications-078000 | sku_key:a-880000629779 | sku_id:a-880000629779 | image_urls:https://apimangementb2bapplip1vn1v35si.sa1.hana.ondemand.com/apimangement-b2b-application/getcmis/json/6665cadb23fff41ad6558656/root/EXT_4600027170_6000001100_00003/JL087A_1_JL087A.png | aramco_material_number:JL087A | sellers:7f67afea-9853-43b5-bc5b-69904e4e2a6f, GCC Control, Aruba, 4990027170, 55.0, SAR, 3, EA, 7f67afea-9853-43b5-bc5b-69904e4e2a6f, GCC Control, Aruba, 4990027170, 120.0, SAR, 3, EA",
+  "supplier_count": 2,
+  "moq": null,
+  "price": 55.0,
+  "currency": "SAR",
+  "sold_by": "GCC Control",
+  "content": "product_key:9939284f-9af8-4b95-a06b-468df034770e | product_name:Aruba X372 54VDC 1050W PS | product_description:Aruba X372 54VDC 1050W PS (JL087A#ACC United Kingdom - English localization) | availability:IN_STOCK | material_type:9COM | category_name:Instrumentation & IT | category_ids:938869fc-bc69-4c1f-bc2d-ef37b479629f | category_slug:buyer-default-instrumentation-and-it | category_description:Instrumentation & IT | category_key:buyer-default-instrumentation-and-it | sub_category_name:Communications | sub_category_id:cd43821c-9213-4a52-ad96-7af05f52a02d | sub_category_slug:buyer-default-instrumentation-and-it-communications | sub_category_description:Communications | sub_category_key:buyer-default-instrumentation-and-it-communications | product_type:LAN and Cable Distribution | product_type_id:754032b4-6866-49ae-9a6b-1d5a43de6d26 | product_type_slug:buyer-default-instrumentation-and-it-communications-078000 | product_type_description:LAN and Cable Distribution | product_type_key:buyer-default-instrumentation-and-it-communications-078000 | sku_key:a-880000629779 | sku_id:a-880000629779 | image_urls:https://apimangementb2bapplip1vn1v35si.sa1.hana.ondemand.com/apimangement-b2b-application/getcmis/json/6665cadb23fff41ad6558656/root/EXT_4600027170_6000001100_00003/JL087A_1_JL087A.png | primary_image_url:https://apimangementb2bapplip1vn1v35si.sa1.hana.ondemand.com/apimangement-b2b-application/getcmis/json/6665cadb23fff41ad6558656/root/EXT_4600027170_6000001100_00003/JL087A_1_JL087A.png | asmo_material_number:a-880000629779 | aramco_material_number:JL087A | seller_details:7f67afea-9853-43b5-bc5b-69904e4e2a6f, GCC Control, Aruba, 4990027170, 55.0, SAR, 3, EA, 7f67afea-9853-43b5-bc5b-69904e4e2a6f, GCC Control, Aruba, 4990027170, 120.0, SAR, 3, EA | supplier_count:2 | price:55.0 | currency:SAR | sold_by:GCC Control",
   "image_content": []
 }

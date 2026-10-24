@@ -156,22 +156,17 @@ class Price:
             contract_id=custom_fields.get("contractId"),    # JSON path: custom.fields.contractId (ties to a purchase agreement)
             lead_time_days=custom_fields.get("leadTimeDays"),   # JSON path: custom.fields.leadTimeDays
             price_unit=value.get("currencyCode"),           # JSON path: value.currencyCode (kept for back-compat)
-            # Spec "Unit_type" — JSON path: custom.fields.priceUnit (real data).
-            # We fall back to the other spellings the spec/older data have used so
-            # a populated value is never missed.
-            unit_type=custom_fields.get("priceUnit") or custom_fields.get("unit_type") or custom_fields.get("priceUnitType"),
+            # Spec "unitOfMeasure" — JSON path: custom.fields.priceUnit.
+            unit_type=custom_fields.get("priceUnit"),
             # Spec "MOQ" (Minimum Order Quantity) — JSON path: custom.fields.minimumQuantity.
-            # Fall back to the standalone-price's top-level minimumQuantity when the
-            # custom field is absent.
-            moq=custom_fields.get("minimumQuantity") if custom_fields.get("minimumQuantity") is not None else raw.get("minimumQuantity"),
-            # Spec "temporary_unavialable" — JSON path: custom.fields.temporarilyUnavailable,
-            # a localized "true"/"false" string (e.g. {"en": "false"}) coerced to a
-            # bool by _localized_bool. None when absent.
-            temporary_unavailable=_localized_bool(custom_fields.get("temporarilyUnavailable")),
-            # Spec "isBlockedForDeletion" — a deletion-code string ("L" == blocked).
-            # JSON path: custom.fields.isBlockedForDeletion (spec name) OR
-            # custom.fields.purchasingContractDeletionCode (real data). None when absent.
-            is_blocked_for_deletion=custom_fields.get("isBlockedForDeletion") or custom_fields.get("purchasingContractDeletionCode"),
+            moq=custom_fields.get("minimumQuantity"),
+            # Spec "temporary unavailable" — JSON path: custom.fields.temporaryUnavailable,
+            # a localized or plain "true"/"false" value (e.g. {"en": "false"}) coerced
+            # to a bool by _localized_bool. None when absent.
+            temporary_unavailable=_localized_bool(custom_fields.get("temporaryUnavailable")),
+            # Spec "blockingDeletionCode" — a deletion-code string ("L" == blocked).
+            # JSON path: custom.fields.purchasingContractDeletionCode. None when absent.
+            is_blocked_for_deletion=custom_fields.get("purchasingContractDeletionCode"),
             raw=raw,
         )
 
@@ -200,7 +195,7 @@ class Price:
                     "lead_time_days": ("custom.fields.leadTimeDays", price.lead_time_days),
                     "unit_type": ("custom.fields.priceUnit", price.unit_type),
                     "moq": ("custom.fields.minimumQuantity", price.moq),
-                    "temporary_unavailable": ("custom.fields.temporarilyUnavailable", price.temporary_unavailable),
+                    "temporary_unavailable": ("custom.fields.temporaryUnavailable", price.temporary_unavailable),
                     "is_blocked_for_deletion": ("custom.fields.purchasingContractDeletionCode", price.is_blocked_for_deletion),
                 },
             },
@@ -211,7 +206,7 @@ class Price:
 def _localized_bool(value) -> bool | None:
     """Coerce a localized/plain truthy value into a ``bool``, or ``None``.
 
-    The ``temporarilyUnavailable`` custom field arrives as a localized string such
+    The ``temporaryUnavailable`` custom field arrives as a localized string such
     as ``{"en": "false"}``; it may also be a plain ``"true"``/``"false"`` string
     or an actual bool. Returns the boolean meaning, or ``None`` when absent.
 

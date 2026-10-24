@@ -1,9 +1,15 @@
 {
-  "product_id": "644a0dda-0362-4bec-83d2-994b6d49c52b",
-  "product_title": "File Folder, Letter Size, Manila, Pack of 25",
+  "product_key": "644a0dda-0362-4bec-83d2-994b6d49c52b",
+  "product_name": "File Folder, Letter Size, Manila, Pack of 25",
   "product_description": "File Folder, Letter Size, Manila, Pack of 25, For General Office Use, Standard Quality, Community Office Supplies Stock",
+  "product_url": "",
+  "contract_indicator": "",
+  "availability": "IN_STOCK",
+  "material_type": "9CAT",
   "category_name": "Communities, Offices & Others",
-  "category_id": "2b4437cb-4e08-4e70-8ed2-feaf7193ad70",
+  "category_ids": [
+    "2b4437cb-4e08-4e70-8ed2-feaf7193ad70"
+  ],
   "category_slug": "buyer-default-communities-offices-and-others",
   "category_description": "Communities, Offices & Others",
   "category_key": "buyer-default-communities-offices-and-others",
@@ -12,7 +18,7 @@
   "sub_category_slug": "buyer-default-communities-offices-and-others-office-supplies",
   "sub_category_description": "Office Supplies",
   "sub_category_key": "buyer-default-communities-offices-and-others-office-supplies",
-  "product_type_name": "Stationary Items",
+  "product_type": "Stationary Items",
   "product_type_id": "f88c9554-2d67-41ee-86d2-17430c5abc90",
   "product_type_slug": "buyer-default-communities-offices-and-others-office-supplies-106000",
   "product_type_description": "Stationary Items",
@@ -23,16 +29,17 @@
   "image_urls": [
     "https://assets.dev.b2x.b2bx.mindcurv.io/images/products/chemistry/ao/ao-100006.png"
   ],
-  "asmo_material_number": null,
+  "primary_image_url": "https://assets.dev.b2x.b2bx.mindcurv.io/images/products/chemistry/ao/ao-100006.png",
+  "asmo_material_number": "ao-100006",
   "aramco_material_number": null,
-  "sellers": [
+  "seller_details": [
     {
       "seller_id": "3a7b23e0-0047-4d63-88a9-cd05d1006a39",
       "seller_name": "Wholesale Warehouse",
       "supplier_id": "3a7b23e0-0047-4d63-88a9-cd05d1006a39",
       "contract_id": "9901007196",
       "price": 46.0,
-      "currency_type": "SAR",
+      "currency": "SAR",
       "lead_time": 3,
       "moq": null,
       "unit_type": null,
@@ -40,6 +47,11 @@
       "is_blocked_for_deletion": null
     }
   ],
-  "content": "product_id:644a0dda-0362-4bec-83d2-994b6d49c52b | product_title:File Folder, Letter Size, Manila, Pack of 25 | product_description:File Folder, Letter Size, Manila, Pack of 25, For General Office Use, Standard Quality, Community Office Supplies Stock | category_name:Communities, Offices & Others | category_id:2b4437cb-4e08-4e70-8ed2-feaf7193ad70 | category_slug:buyer-default-communities-offices-and-others | category_description:Communities, Offices & Others | category_key:buyer-default-communities-offices-and-others | sub_category_name:Office Supplies | sub_category_id:26e9db10-a7e5-465a-b616-1db6a6ad1614 | sub_category_slug:buyer-default-communities-offices-and-others-office-supplies | sub_category_description:Office Supplies | sub_category_key:buyer-default-communities-offices-and-others-office-supplies | product_type_name:Stationary Items | product_type_id:f88c9554-2d67-41ee-86d2-17430c5abc90 | product_type_slug:buyer-default-communities-offices-and-others-office-supplies-106000 | product_type_description:Stationary Items | product_type_key:buyer-default-communities-offices-and-others-office-supplies-106000 | sku_key:ao-100006_2 | sku_id:ao-100006_2 | image_urls:https://assets.dev.b2x.b2bx.mindcurv.io/images/products/chemistry/ao/ao-100006.png | sellers:3a7b23e0-0047-4d63-88a9-cd05d1006a39, Wholesale Warehouse, 3a7b23e0-0047-4d63-88a9-cd05d1006a39, 9901007196, 46.0, SAR, 3",
+  "supplier_count": 1,
+  "moq": null,
+  "price": 46.0,
+  "currency": "SAR",
+  "sold_by": "Wholesale Warehouse",
+  "content": "product_key:644a0dda-0362-4bec-83d2-994b6d49c52b | product_name:File Folder, Letter Size, Manila, Pack of 25 | product_description:File Folder, Letter Size, Manila, Pack of 25, For General Office Use, Standard Quality, Community Office Supplies Stock | availability:IN_STOCK | material_type:9CAT | category_name:Communities, Offices & Others | category_ids:2b4437cb-4e08-4e70-8ed2-feaf7193ad70 | category_slug:buyer-default-communities-offices-and-others | category_description:Communities, Offices & Others | category_key:buyer-default-communities-offices-and-others | sub_category_name:Office Supplies | sub_category_id:26e9db10-a7e5-465a-b616-1db6a6ad1614 | sub_category_slug:buyer-default-communities-offices-and-others-office-supplies | sub_category_description:Office Supplies | sub_category_key:buyer-default-communities-offices-and-others-office-supplies | product_type:Stationary Items | product_type_id:f88c9554-2d67-41ee-86d2-17430c5abc90 | product_type_slug:buyer-default-communities-offices-and-others-office-supplies-106000 | product_type_description:Stationary Items | product_type_key:buyer-default-communities-offices-and-others-office-supplies-106000 | sku_key:ao-100006_2 | sku_id:ao-100006_2 | image_urls:https://assets.dev.b2x.b2bx.mindcurv.io/images/products/chemistry/ao/ao-100006.png | primary_image_url:https://assets.dev.b2x.b2bx.mindcurv.io/images/products/chemistry/ao/ao-100006.png | asmo_material_number:ao-100006 | seller_details:3a7b23e0-0047-4d63-88a9-cd05d1006a39, Wholesale Warehouse, 3a7b23e0-0047-4d63-88a9-cd05d1006a39, 9901007196, 46.0, SAR, 3 | supplier_count:1 | price:46.0 | currency:SAR | sold_by:Wholesale Warehouse",
   "image_content": []
 }

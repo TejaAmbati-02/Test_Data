@@ -127,16 +127,24 @@ async def _parse_product(
         # product projection, so these paths equal masterData.current.* on the
         # full /products/{id} endpoint.
         product_fields = {
-            "product_id": raw.get("id"),                                 # JSON path: id
-            "product_title": raw.get("name", {}).get("en"),             # JSON path: name.en
+            "product_key": raw.get("id"),                                # JSON path: id
+            "product_name": raw.get("name", {}).get("en"),              # JSON path: name.en
             "product_description": raw.get("description", {}).get("en"), # JSON path: description.en
+            "product_url": "",                                           # placeholder until the source is agreed
+            "contract_indicator": "",                                    # placeholder until the source is agreed
+            "availability": "IN_STOCK",                                  # fixed for now (spec filter value)
+            "material_type": _attr(raw.get("attributes"), "materialType"), # JSON path: attributes[name=materialType].value
             **await _category_fields(raw),                               # category/sub_category/product_type (see _category_fields)
             "purchase_agreements": purchase_agreements or None,          # from the product-selection step (contract_id + valid_until)
+        }
+        # The ASMO material number is product-level, so every variant row shares it.
+        material_fields = {
+            "asmo_material_number": raw.get("key"),                      # JSON path: key
         }
 
         logger.info(
             f"Extracted product-level fields for id={raw.get('id')!r} "
-            f"title={product_fields['product_title']!r} category={product_fields.get('category_name')!r} "
+            f"title={product_fields['product_name']!r} category={product_fields.get('category_name')!r} "
             f"({len(product_fields)} fields)",
             extra={
                 "function_name": "_parse_product",
@@ -157,7 +165,7 @@ async def _parse_product(
         failed_variants = 0
         for v in all_variants:
             try:
-                row = await _parse_variant(product_fields, v, prices_by_sku, contract_ids)
+                row = await _parse_variant(product_fields, material_fields, v, prices_by_sku, contract_ids)
             except Exception:
                 # _parse_variant already logged the error with sku context. Skip
                 # the single bad variant rather than failing the whole product.
@@ -262,7 +270,7 @@ def _seller_object(price: Price | None) -> dict | None:
         "supplier_id": price.supplier_id,
         "contract_id": price.contract_id,
         "price": price.amount,
-        "currency_type": price.currency,
+        "currency": price.currency,
         "lead_time": price.lead_time_days,
         "moq": price.moq,
         "unit_type": price.unit_type,
@@ -273,6 +281,7 @@ def _seller_object(price: Price | None) -> dict | None:
 
 async def _parse_variant(
     product_fields: dict,
+    material_fields: dict,
     variant: dict,
     prices_by_sku: dict[str, list[Price]],
     contract_ids: set[str],
@@ -291,6 +300,8 @@ async def _parse_variant(
     Args:
         product_fields: The product-level fields shared by every variant of the
             parent product (produced by :func:`_parse_product`).
+        material_fields: The product-level ``asmo_material_number``
+            (produced by :func:`_parse_product`).
         variant: The raw variant document (master variant or additional variant).
         prices_by_sku: Mapping of SKU to its list of matched prices.
         contract_ids: Contract ids of the product's valid purchase agreements.
@@ -304,7 +315,6 @@ async def _parse_variant(
     """
     try:
         sku = variant.get("sku")
-        v_attrs = variant.get("attributes", [])
         image_urls = await _image_urls(variant)
 
         sku_prices = prices_by_sku.get(sku, []) if sku else []
@@ -350,20 +360,28 @@ async def _parse_variant(
             "sku_key": variant.get("key"),                    # JSON path: <variant>.key
             "sku_id": sku,                                     # JSON path: <variant>.sku
             # Every image URL for the SKU (used by the image-download step in
-            # images.py and for display). The primary image is simply image_urls[0].
+            # images.py); primary_image_url is image_urls[0] for the response contract.
             "image_urls": image_urls or None,                 # JSON path: <variant>.images[*].url
+            "primary_image_url": image_urls[0] if image_urls else None,  # JSON path: <variant>.images[0].url
 
-            # --- Material numbers (from variant.attributes[name==...].value) ---
-            "asmo_material_number": _attr(v_attrs, "ownInventoryManagedProduct"),  # attr ownInventoryManagedProduct
-            "aramco_material_number": _attr(v_attrs, "manufacturerNumber"),        # attr manufacturerNumber
+            # --- Material numbers ---
+            **material_fields,                                 # asmo_material_number (product key)
+            "aramco_material_number": _attr(variant.get("attributes", []), "manufacturerNumber"),  # attr manufacturerNumber
 
-            # --- Sellers ---
+            # --- Seller details ---
             # Every usable seller offer for the SKU, lowest price first. Each entry
             # (see _seller_object) carries seller_id, seller_name, supplier_id,
-            # contract_id, price, currency_type, lead_time, moq, unit_type,
-            # temporary_unavailable and is_blocked_for_deletion — so no flat
-            # seller_*/price fields are emitted; read sellers[0] for the primary.
-            "sellers": sellers or None,
+            # contract_id, price, currency, lead_time, moq, unit_type,
+            # temporary_unavailable and is_blocked_for_deletion.
+            "seller_details": sellers or None,
+            "supplier_count": len(sellers),                                 # number of seller_details entries
+
+            # --- Primary seller (seller_details[0], the cheapest usable offer) ---
+            # Flattened to top-level keys for the search response contract.
+            "moq": sellers[0]["moq"] if sellers else None,                  # seller_details[0].moq
+            "price": sellers[0]["price"] if sellers else None,              # seller_details[0].price
+            "currency": sellers[0]["currency"] if sellers else None,        # seller_details[0].currency
+            "sold_by": sellers[0]["seller_name"] if sellers else None,      # seller_details[0].seller_name
         }
         # Combined free-text blob of every field value, pipe-separated — useful
         # as a single searchable/embeddable field downstream. Built from the row
@@ -478,7 +496,7 @@ async def _category_fields(raw: dict) -> dict:
             f"No expanded category on product key={raw.get('key')!r}; returning empty category fields",
             extra={"function_name": "_category_fields", "input_data": {"key": raw.get("key")}},
         )
-        return dict(_EMPTY_CATEGORY_FIELDS)
+        return _contract_category_keys(dict(_EMPTY_CATEGORY_FIELDS))
 
     # Full hierarchy, root → leaf: each ancestor's expanded obj, then the leaf
     # category itself. Drop the CT internal "All" root (empty own ancestors); the
@@ -497,7 +515,24 @@ async def _category_fields(raw: dict) -> dict:
             "input_data": {"key": raw.get("key"), "levels": len(chain)},
         },
     )
-    return fields
+    return _contract_category_keys(fields)
+
+
+def _contract_category_keys(fields: dict) -> dict:
+    """Rename category keys to the search API contract, keeping field order.
+
+    ``category_id`` becomes the list ``category_ids`` and ``product_type_name``
+    becomes ``product_type``; every other category field is unchanged.
+    """
+    out = {}
+    for key, value in fields.items():
+        if key == "category_id":
+            out["category_ids"] = [value] if value else None
+        elif key == "product_type_name":
+            out["product_type"] = value
+        else:
+            out[key] = value
+    return out
 
 
 def _stringify(value) -> str | None:
@@ -540,7 +575,7 @@ def _combine_content(row: dict) -> str:
     with `` | `` between fields (e.g. ``productName_en:Acme | price:12.5``).
     ``None`` and blank values are skipped so the blob stays dense. Only the
     pre-existing ``content`` key is excluded, so the field never folds its own
-    previous value back in; every other field — including the ``sellers`` list
+    previous value back in; every other field — including the ``seller_details`` list
     (so seller names/contracts stay searchable) — is included.
 
     Args:

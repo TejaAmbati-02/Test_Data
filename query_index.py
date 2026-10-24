@@ -57,7 +57,7 @@ def build_text_body(vector: list[float], vector_field: str, size: int) -> dict:
     """kNN search body over the content (text) vector."""
     return {
         "size": size,
-        "_source": ["sku_id", "product_id", "product_title", "category_name", "image_urls"],
+        "_source": ["sku_id", "product_key", "product_name", "category_name", "image_urls"],
         "query": {"knn": {vector_field: {"vector": vector, "k": size}}},
     }
 
@@ -119,7 +119,7 @@ def _print_hits(resp: dict) -> None:
         return
     for rank, h in enumerate(hits, start=1):
         src = h.get("_source", {})
-        print(f"  {rank}. score={h.get('_score'):.4f}  sku={src.get('sku_id')}  {src.get('product_title') or ''}")
+        print(f"  {rank}. score={h.get('_score'):.4f}  sku={src.get('sku_id')}  {src.get('product_name') or ''}")
     print()
 
 

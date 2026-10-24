@@ -190,14 +190,15 @@ class ProductsClient:
         # ------------------------------------------------------------------
         endpoint = "product-projections"
         url = f"{self._config.api_base}/{endpoint}"
-        params = {
-            "limit": self.PAGE_SIZE,                      # query: limit=<page_size>
-            "sort": "id asc",                              # query: sort=id asc (stable id cursor)
-            "expand": "categories[*].ancestors[*]",        # query: expand category ancestor chain
-        }
+        # A list of pairs (not a dict) because ``expand`` is repeated.
+        params = [
+            ("limit", self.PAGE_SIZE),                     # query: limit=<page_size>
+            ("sort", "id asc"),                            # query: sort=id asc (stable id cursor)
+            ("expand", "categories[*].ancestors[*]"),      # query: expand category ancestor chain
+        ]
         if last_id:
             # Cursor predicate: fetch products whose id sorts after the last one we saw.
-            params["where"] = f'id > "{last_id}"'          # query: where=id > "<last_id>"
+            params.append(("where", f'id > "{last_id}"'))  # query: where=id > "<last_id>"
         logger.info(
             f"Built GET URL → {url} | query params → {params} "
             f"(api_base={self._config.api_base!r}, endpoint={endpoint!r}, cursor last_id={last_id!r})",

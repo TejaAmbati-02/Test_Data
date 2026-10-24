@@ -1,9 +1,15 @@
 {
-  "product_id": "563462db-f5a1-4144-b180-6e375c4b3d64",
-  "product_title": "8400X 6p 40G/100G QSFP28",
+  "product_key": "563462db-f5a1-4144-b180-6e375c4b3d64",
+  "product_name": "8400X 6p 40G/100G QSFP28",
   "product_description": "Aruba 8400X 6p 40G/100G QSFP28 Advanced Module",
+  "product_url": "",
+  "contract_indicator": "",
+  "availability": "IN_STOCK",
+  "material_type": "9COM",
   "category_name": "Instrumentation & IT",
-  "category_id": "938869fc-bc69-4c1f-bc2d-ef37b479629f",
+  "category_ids": [
+    "938869fc-bc69-4c1f-bc2d-ef37b479629f"
+  ],
   "category_slug": "buyer-default-instrumentation-and-it",
   "category_description": "Instrumentation & IT",
   "category_key": "buyer-default-instrumentation-and-it",
@@ -12,7 +18,7 @@
   "sub_category_slug": "buyer-default-instrumentation-and-it-communications",
   "sub_category_description": "Communications",
   "sub_category_key": "buyer-default-instrumentation-and-it-communications",
-  "product_type_name": "LAN and Cable Distribution",
+  "product_type": "LAN and Cable Distribution",
   "product_type_id": "754032b4-6866-49ae-9a6b-1d5a43de6d26",
   "product_type_slug": "buyer-default-instrumentation-and-it-communications-078000",
   "product_type_description": "LAN and Cable Distribution",
@@ -21,16 +27,17 @@
   "sku_key": "880008034408_1",
   "sku_id": "880008034408_1",
   "image_urls": null,
-  "asmo_material_number": null,
+  "primary_image_url": null,
+  "asmo_material_number": "a-880000629788",
   "aramco_material_number": "JL366A",
-  "sellers": [
+  "seller_details": [
     {
       "seller_id": "3a7b23e0-0047-4d63-88a9-cd05d1006a39",
       "seller_name": "Wholesale Warehouse",
       "supplier_id": "Aruba",
       "contract_id": "4990027170",
       "price": 100.0,
-      "currency_type": "SAR",
+      "currency": "SAR",
       "lead_time": 3,
       "moq": null,
       "unit_type": "EA",
@@ -43,7 +50,7 @@
       "supplier_id": "Aruba",
       "contract_id": "4990027170",
       "price": 150.0,
-      "currency_type": "SAR",
+      "currency": "SAR",
       "lead_time": 3,
       "moq": null,
       "unit_type": "EA",
@@ -51,6 +58,11 @@
       "is_blocked_for_deletion": null
     }
   ],
-  "content": "product_id:563462db-f5a1-4144-b180-6e375c4b3d64 | product_title:8400X 6p 40G/100G QSFP28 | product_description:Aruba 8400X 6p 40G/100G QSFP28 Advanced Module | category_name:Instrumentation & IT | category_id:938869fc-bc69-4c1f-bc2d-ef37b479629f | category_slug:buyer-default-instrumentation-and-it | category_description:Instrumentation & IT | category_key:buyer-default-instrumentation-and-it | sub_category_name:Communications | sub_category_id:cd43821c-9213-4a52-ad96-7af05f52a02d | sub_category_slug:buyer-default-instrumentation-and-it-communications | sub_category_description:Communications | sub_category_key:buyer-default-instrumentation-and-it-communications | product_type_name:LAN and Cable Distribution | product_type_id:754032b4-6866-49ae-9a6b-1d5a43de6d26 | product_type_slug:buyer-default-instrumentation-and-it-communications-078000 | product_type_description:LAN and Cable Distribution | product_type_key:buyer-default-instrumentation-and-it-communications-078000 | sku_key:880008034408_1 | sku_id:880008034408_1 | aramco_material_number:JL366A | sellers:3a7b23e0-0047-4d63-88a9-cd05d1006a39, Wholesale Warehouse, Aruba, 4990027170, 100.0, SAR, 3, EA, 3a7b23e0-0047-4d63-88a9-cd05d1006a39, Wholesale Warehouse, Aruba, 4990027170, 150.0, SAR, 3, EA",
+  "supplier_count": 2,
+  "moq": null,
+  "price": 100.0,
+  "currency": "SAR",
+  "sold_by": "Wholesale Warehouse",
+  "content": "product_key:563462db-f5a1-4144-b180-6e375c4b3d64 | product_name:8400X 6p 40G/100G QSFP28 | product_description:Aruba 8400X 6p 40G/100G QSFP28 Advanced Module | availability:IN_STOCK | material_type:9COM | category_name:Instrumentation & IT | category_ids:938869fc-bc69-4c1f-bc2d-ef37b479629f | category_slug:buyer-default-instrumentation-and-it | category_description:Instrumentation & IT | category_key:buyer-default-instrumentation-and-it | sub_category_name:Communications | sub_category_id:cd43821c-9213-4a52-ad96-7af05f52a02d | sub_category_slug:buyer-default-instrumentation-and-it-communications | sub_category_description:Communications | sub_category_key:buyer-default-instrumentation-and-it-communications | product_type:LAN and Cable Distribution | product_type_id:754032b4-6866-49ae-9a6b-1d5a43de6d26 | product_type_slug:buyer-default-instrumentation-and-it-communications-078000 | product_type_description:LAN and Cable Distribution | product_type_key:buyer-default-instrumentation-and-it-communications-078000 | sku_key:880008034408_1 | sku_id:880008034408_1 | asmo_material_number:a-880000629788 | aramco_material_number:JL366A | seller_details:3a7b23e0-0047-4d63-88a9-cd05d1006a39, Wholesale Warehouse, Aruba, 4990027170, 100.0, SAR, 3, EA, 3a7b23e0-0047-4d63-88a9-cd05d1006a39, Wholesale Warehouse, Aruba, 4990027170, 150.0, SAR, 3, EA | supplier_count:2 | price:100.0 | currency:SAR | sold_by:Wholesale Warehouse",
   "image_content": []
 }

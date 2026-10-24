@@ -105,15 +105,14 @@ def build_index_body(vector_field: str, dim: int) -> dict:
         }
 
     def seller_properties() -> dict:
-        # Shared property map for the singular ``seller`` object and each entry of
-        # the ``sellers`` nested array.
+        # Property map for each entry of the ``seller_details`` nested array.
         return {
             "seller_id":               keyword_field(),
             "seller_name":             text_field("english"),
             "supplier_id":             keyword_field(),
             "contract_id":             keyword_field(),
             "price":                   numeric_field("float"),
-            "currency_type":           keyword_field(),
+            "currency":                keyword_field(),
             "lead_time":               numeric_field("integer"),
             "moq":                     numeric_field("integer"),  # Minimum Order Quantity
             "unit_type":               keyword_field(),
@@ -137,9 +136,15 @@ def build_index_body(vector_field: str, dim: int) -> dict:
                 vector_field: knn_vector(dim),
 
                 # --- Product ---
-                "product_id":          keyword_field(),
-                "product_title":       text_field("english"),
+                "product_key":         keyword_field(),
+                "product_name":        text_field("english"),
                 "product_description": text_field("english"),
+                # Placeholders ("" for now). product_url is also the suggestions
+                # destination_url; an empty string indexes as false for a boolean.
+                "product_url":         keyword_field(),
+                "contract_indicator":  {"type": "boolean"},
+                "availability":        keyword_field(),  # "IN_STOCK" for every SKU for now
+                "material_type":       keyword_field(),
 
                 # --- Purchase agreements (valid, active, unexpired) ---
                 # One nested object per agreement so contract id and valid-until
@@ -154,7 +159,7 @@ def build_index_body(vector_field: str, dim: int) -> dict:
 
                 # --- Category (top business category) ---
                 "category_name":        text_field(),
-                "category_id":          keyword_field(),
+                "category_ids":         keyword_field(),  # list: [category id]
                 "category_slug":        keyword_field(),
                 "category_description": text_field(),
                 "category_key":         keyword_field(),
@@ -167,7 +172,7 @@ def build_index_body(vector_field: str, dim: int) -> dict:
                 "sub_category_key":         keyword_field(),
 
                 # --- Product type (leaf category level) ---
-                "product_type_name":        text_field(),
+                "product_type":             text_field(),
                 "product_type_id":          keyword_field(),
                 "product_type_slug":        keyword_field(),
                 "product_type_description": text_field(),
@@ -178,6 +183,7 @@ def build_index_body(vector_field: str, dim: int) -> dict:
                 "sku_id":        keyword_field(),
                 # All image URLs for the SKU; the primary image is image_urls[0].
                 "image_urls":    keyword_field(),
+                "primary_image_url": keyword_field(),
 
                 # --- Material numbers ---
                 "asmo_material_number":   keyword_field(),
@@ -195,13 +201,20 @@ def build_index_body(vector_field: str, dim: int) -> dict:
                 # text search.
                 "images": {"type": "object", "enabled": False},
 
-                # --- Sellers ---
+                # --- Seller details ---
                 # Every usable seller offer for the SKU (nested, so each offer's
-                # fields stay paired and independently queryable). All seller/price
-                # data lives here — seller_id, seller_name, supplier_id, contract_id,
-                # price, currency_type, lead_time, moq, unit_type, temporary_unavailable
-                # and is_blocked_for_deletion. Read sellers[0] for the primary (cheapest).
-                "sellers": {"type": "nested", "properties": seller_properties()},
+                # fields stay paired and independently queryable) — seller_id,
+                # seller_name, supplier_id, contract_id, price, currency, lead_time,
+                # moq, unit_type, temporary_unavailable and is_blocked_for_deletion.
+                # seller_details[0] is the primary (cheapest); supplier_count is its length.
+                "seller_details": {"type": "nested", "properties": seller_properties()},
+                "supplier_count": numeric_field("integer"),
+
+                # --- Primary seller (copied from seller_details[0], the cheapest offer) ---
+                "moq":      numeric_field("integer"),
+                "price":    numeric_field("float"),
+                "currency": keyword_field(),
+                "sold_by":  text_field("english"),
             },
         },
     }
