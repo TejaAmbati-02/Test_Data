@@ -305,6 +305,25 @@ class OpenSearchIndexer:
         except Exception:
             return None
 
+    async def _images_mapping_ok(self) -> bool:
+        """Return False when the live index maps ``images`` other than as built by
+        :func:`build_index_body` (nested, with a ``knn_vector`` ``image_vector``).
+
+        An index created before ``images`` was in the mapping picks it up via
+        dynamic mapping as a plain object with a float ``image_vector``, which
+        indexes fine but cannot be kNN-searched. Unreadable mappings count as OK.
+        """
+        client = self._connect()
+        try:
+            mapping = await client.indices.get_mapping(index=self._config.index_name)
+            images = mapping[self._config.index_name]["mappings"]["properties"].get("images")
+        except Exception:
+            return True
+        if images is None:
+            return False
+        vector = images.get("properties", {}).get("image_vector", {})
+        return images.get("type") == "nested" and vector.get("type") == "knn_vector"
+
     async def ensure_index(self, recreate: bool | None = None) -> bool:
         """Create the index from :func:`build_index_body`, if needed.
 
@@ -357,6 +376,14 @@ class OpenSearchIndexer:
                     extra={"function_name": "ensure_index", "status": "error",
                            "input_data": {"existing_dim": existing_dim, "configured_dim": self._config.vector_dim}},
                 )
+                raise RuntimeError(msg)
+            if not await self._images_mapping_ok():
+                msg = (
+                    f"Index '{self._config.index_name}' exists but 'images' is not a nested field with a "
+                    f"knn_vector 'image_vector' (the index predates the current mapping), so image search "
+                    f"cannot work. Drop and rebuild the index (re-run with --recreate)."
+                )
+                logger.error(msg, extra={"function_name": "ensure_index", "status": "error"})
                 raise RuntimeError(msg)
             logger.info(
                 f"Index '{self._config.index_name}' already exists (dim={existing_dim}) — skipping creation",
