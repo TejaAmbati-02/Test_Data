@@ -138,7 +138,7 @@ class ImageDownloader:
             embed_image: Optional async callback ``(list[(bytes, mime)]) ->
                 list[vector]`` that embeds a SKU's downloaded images. When given,
                 each row gains a nested ``images`` list of
-                ``{image_url, image_base64, image_vector}`` (one entry per
+                ``{image_url, image_vector}`` (one entry per
                 successfully embedded image) for kNN indexing. When ``None``, no
                 image vectors are produced.
             write_images: Whether each downloaded image is saved to the local
@@ -215,7 +215,7 @@ class ImageDownloader:
                                "error_details": str(exc), "input_data": {"sku": sku}},
                     )
 
-            async def image_to_storage(sku: str, row: dict, want_base64: bool) -> tuple[list[str], dict | None]:
+            async def image_to_storage(sku: str, row: dict, want_base64: bool) -> tuple[list[str], list[dict] | None]:
                 """Download a SKU's images, save + upload + embed each (tolerant).
 
                 Iterates the SKU's image URLs (``image_urls``, falling back to the
@@ -230,14 +230,12 @@ class ImageDownloader:
 
                 When ``embed_image`` is configured, every successfully downloaded
                 image is embedded (one batched call per SKU) and returned as a
-                parallel-array object ``{image_url: [...], image_base64: [...],
-                image_vector: [...]}`` (slot ``i`` describes image ``i``) for the
-                caller to attach to the transformed row as the ``images`` field.
+                list of ``{image_url, image_vector}`` objects for the caller to
+                attach to the transformed row as the nested ``images`` field.
 
                 Returns:
-                    ``(base64_list, images_obj)`` — the per-image base64 blobs and
-                    the parallel-array images object (``images_obj`` is ``None``
-                    when no image was embedded).
+                    ``(base64_list, images_list)`` — the per-image base64 blobs and
+                    the nested images list (``None`` when no image was embedded).
                 """
                 urls = row.get("image_urls") or []
                 if max_images is not None:
@@ -300,9 +298,8 @@ class ImageDownloader:
                     if want_base64:
                         b64.append(base64.b64encode(data).decode("ascii"))
 
-                # Parallel-array object: image_url[i], image_base64[i] and
-                # image_vector[i] all describe the same image.
-                images_obj: dict = {"image_url": [], "image_base64": [], "image_vector": []}
+                # Nested images list: one {image_url, image_vector} per image.
+                images_obj: list[dict] = []
                 if embed_image is not None and downloaded:
                     try:
                         vectors = await embed_image([(data, mime) for _, _, data, mime in downloaded])
@@ -314,14 +311,12 @@ class ImageDownloader:
                                    "error_details": str(exc), "input_data": {"sku": sku, "images": len(downloaded)}},
                         )
                         vectors = []
-                    for (_filename, url, data, _mime), vector in zip(downloaded, vectors):
-                        images_obj["image_url"].append(url)
-                        images_obj["image_base64"].append(base64.b64encode(data).decode("ascii"))
-                        images_obj["image_vector"].append(vector)
+                    for (_filename, url, _data, _mime), vector in zip(downloaded, vectors):
+                        images_obj.append({"image_url": url, "image_vector": vector})
                         counters["images_embedded"] += 1
 
                 # Return None when nothing was embedded so the caller skips it.
-                return b64, (images_obj if images_obj["image_vector"] else None)
+                return b64, (images_obj or None)
 
             async def process(sku: str, row: dict) -> None:
                 """Write a SKU's local JSON, download its images, then upload JSON.
@@ -360,7 +355,7 @@ class ImageDownloader:
                                        "input_data": {"sku": sku}},
                             )
 
-                    # Attach the parallel-array images object to the shared
+                    # Attach the nested images list to the shared
                     # transformed row (done after the lean local write above) so the
                     # OpenSearch indexer — which runs later over this same dict —
                     # stores the images field. image_content (base64) is NOT added

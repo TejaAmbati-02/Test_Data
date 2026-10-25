@@ -51,7 +51,7 @@ class OpenSearchConfig:
     recreate_index: bool = field(default_factory=lambda: os.environ.get("OPENSEARCH_RECREATE_INDEX", "false").lower() == "true")
 
 
-def build_index_body(vector_field: str, dim: int) -> dict:
+def build_index_body(vector_field: str, dim: int, image_dim: int | None = None) -> dict:
     """Build the index settings + mapping body for the search index.
 
     Enables kNN with an HNSW (Lucene, cosine) index on ``vector_field`` and maps
@@ -61,16 +61,16 @@ def build_index_body(vector_field: str, dim: int) -> dict:
     id/unit use keyword (with a searchable text sub-field); price/lead time/MOQ
     are numeric; availability flags are boolean.
 
-    Images are stored in a single ``images`` object holding parallel arrays
-    (``image_url``, ``image_base64``, ``image_vector``), kept verbatim in
-    ``_source`` but not indexed (``enabled: false``). The image vectors are a
-    list-of-vectors and are therefore not kNN-searchable; only ``content_vector``
-    powers vector (text) search.
+    Images are a nested ``images`` list — one ``{image_url, image_vector}``
+    object per product image — with ``image_vector`` as a kNN field, so an
+    uploaded image (or a text query, since embed-v4.0 is multimodal) can be
+    matched against every image of a SKU. ``content_vector`` powers text search.
 
     Args:
         vector_field: Name of the kNN vector field (e.g. ``content_vector``).
         dim: Dimension of the content embedding vectors (1536 for Cohere
             embed-v4.0).
+        image_dim: Dimension of the image embedding vectors; defaults to ``dim``.
 
     Returns:
         A dict suitable for passing as the ``body`` of ``indices.create``.
@@ -189,17 +189,17 @@ def build_index_body(vector_field: str, dim: int) -> dict:
                 "asmo_material_number":   keyword_field(),
                 "aramco_material_number": keyword_field(),
 
-                # --- Images (parallel arrays, store-only) ---
-                # One object holding three positional arrays, one slot per image:
-                #   image_url:    ["url1", "url2", ...]
-                #   image_base64: ["b64_1", "b64_2", ...]
-                #   image_vector: [[float, ...], [float, ...], ...]
-                # enabled:false keeps the whole object verbatim in _source but
-                # indexes nothing. NOTE: image_vector is a list-of-vectors, so it
-                # is NOT kNN-searchable — image/visual search is unavailable with
-                # this schema (chosen deliberately). content_vector still powers
-                # text search.
-                "images": {"type": "object", "enabled": False},
+                # --- Images (nested, kNN-searchable) ---
+                # One entry per product image: [{image_url, image_vector}, ...].
+                # Image search runs a nested kNN on images.image_vector and scores
+                # each SKU by its best-matching image.
+                "images": {
+                    "type": "nested",
+                    "properties": {
+                        "image_url":    keyword_field(),
+                        "image_vector": knn_vector(image_dim or dim),
+                    },
+                },
 
                 # --- Seller details ---
                 # Every usable seller offer for the SKU (nested, so each offer's
@@ -364,7 +364,7 @@ class OpenSearchIndexer:
             )
             return False
 
-        body = build_index_body(self._config.vector_field, self._config.vector_dim)
+        body = build_index_body(self._config.vector_field, self._config.vector_dim, self._config.image_vector_dim)
         response = await client.indices.create(index=self._config.index_name, body=body)
         logger.info(
             f"Index '{self._config.index_name}' created at dim={self._config.vector_dim} — acknowledged={response.get('acknowledged')}",

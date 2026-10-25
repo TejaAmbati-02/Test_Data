@@ -26,6 +26,7 @@ import argparse
 import asyncio
 import json
 import sys
+from pathlib import Path
 
 import truststore
 from dotenv import load_dotenv
@@ -62,6 +63,46 @@ def build_text_body(vector: list[float], vector_field: str, size: int) -> dict:
     }
 
 
+def build_image_body(vector: list[float], size: int) -> dict:
+    """Nested kNN body over every product image; each SKU scores by its best image."""
+    return {
+        "size": size,
+        "_source": ["sku_id", "product_key", "product_name", "category_name", "image_urls"],
+        "query": {
+            "nested": {
+                "path": "images",
+                "score_mode": "max",
+                "query": {"knn": {"images.image_vector": {"vector": vector, "k": size}}},
+                "inner_hits": {"size": 1, "_source": ["images.image_url"]},
+            }
+        },
+    }
+
+
+def _image_mime(data: bytes) -> str | None:
+    """Return the MIME type for PNG/JPEG/GIF/WebP bytes, else None."""
+    if data[:8].startswith(b"\x89PNG"):
+        return "image/png"
+    if data[:3] == b"\xff\xd8\xff":
+        return "image/jpeg"
+    if data[:6] in (b"GIF87a", b"GIF89a"):
+        return "image/gif"
+    if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return "image/webp"
+    return None
+
+
+async def embed_image_file(embedder: OCIEmbedder, path: str) -> list[float] | None:
+    """Read an image file and embed it with the same model used at ingest."""
+    data = Path(path).read_bytes()
+    mime = _image_mime(data)
+    if mime is None:
+        print(f"  Unsupported image format: {path} (use PNG, JPEG, GIF or WebP)")
+        return None
+    vectors = await embedder.embed_images([(data, mime)])
+    return vectors[0] if vectors else None
+
+
 async def show_health(indexer: OpenSearchIndexer, client) -> None:
     """Print index existence, doc count, image-mapping presence and a sample doc."""
     cfg = indexer.config
@@ -74,19 +115,19 @@ async def show_health(indexer: OpenSearchIndexer, client) -> None:
     count = (await client.count(index=name)).get("count", 0)
     mapping = await client.indices.get_mapping(index=name)
     props = mapping[name]["mappings"]["properties"]
-    has_images = "images" in props
+    has_images = props.get("images", {}).get("type") == "nested"
     txt_dim = props.get(cfg.vector_field, {}).get("dimension")
 
     print(f"\n  Index          : {name}")
     print(f"  Documents      : {count}")
     print(f"  Text vector    : {cfg.vector_field} (dim {txt_dim})")
-    print(f"  Images field   : {'present (parallel arrays, store-only — not kNN-searchable)' if has_images else 'MISSING — recreate the index'}")
+    print(f"  Images field   : {'nested kNN (images.image_vector)' if has_images else 'MISSING or old format — recreate the index'}")
 
-    sample = await client.search(index=name, body={"size": 1, "_source": {"excludes": ["content_vector", "images.image_vector", "images.image_base64", "content"]}})
+    sample = await client.search(index=name, body={"size": 1, "_source": {"excludes": ["content_vector", "images.image_vector", "content"]}})
     hits = sample.get("hits", {}).get("hits", [])
     if hits:
         src = hits[0]["_source"]
-        n_imgs = len((src.get("images") or {}).get("image_url", []))
+        n_imgs = len(src.get("images") or [])
         print(f"  Sample images  : {n_imgs} image(s) in the sample document")
         print("\n  Sample document (vectors / base64 / content omitted):")
         print("   ", json.dumps(src, ensure_ascii=False)[:800])
@@ -104,11 +145,15 @@ async def search_text(embedder: OCIEmbedder, client, index: str, vector_field: s
     _print_hits(resp)
 
 
-IMAGE_SEARCH_UNAVAILABLE = (
-    "\n  Image (kNN) search is not available with the current images schema:\n"
-    "  image vectors are stored as a parallel array (image_vector: [[...], ...]),\n"
-    "  which OpenSearch cannot vector-search. Use --text for semantic search.\n"
-)
+async def search_image(embedder: OCIEmbedder, client, index: str, path: str, size: int) -> None:
+    """Embed the image file and run a nested kNN search over every product image."""
+    print(f"\n  Image search: {path}")
+    vec = await embed_image_file(embedder, path)
+    if not vec:
+        print("  (failed to embed image)")
+        return
+    resp = await client.search(index=index, body=build_image_body(vec, size))
+    _print_hits(resp)
 
 
 def _print_hits(resp: dict) -> None:
@@ -120,6 +165,9 @@ def _print_hits(resp: dict) -> None:
     for rank, h in enumerate(hits, start=1):
         src = h.get("_source", {})
         print(f"  {rank}. score={h.get('_score'):.4f}  sku={src.get('sku_id')}  {src.get('product_name') or ''}")
+        matched = h.get("inner_hits", {}).get("images", {}).get("hits", {}).get("hits", [])
+        if matched:
+            print(f"       matched image: {matched[0].get('_source', {}).get('image_url')}")
     print()
 
 
@@ -128,11 +176,17 @@ async def emit_query(args: argparse.Namespace) -> int:
     if not args.image and not args.text:
         print("\n  --emit-query needs --image PATH or --text QUERY.\n")
         return 2
-    if args.image:
-        print(IMAGE_SEARCH_UNAVAILABLE)
-        return 1
     cfg = OpenSearchIndexer().config
     embedder = OCIEmbedder()
+    if args.image:
+        vec = await embed_image_file(embedder, args.image)
+        if not vec:
+            print("  (failed to embed image)")
+            return 1
+        body = build_image_body(vec, args.size)
+        print(f"\n# Image kNN for {args.image!r} — paste into OpenSearch Dashboards → Dev Tools:\n")
+        print(f"POST {cfg.index_name}/_search\n{json.dumps(body)}\n")
+        return 0
     vec = await embedder.embed_query(args.text)
     if not vec:
         print("  (failed to embed query)")
@@ -159,10 +213,10 @@ async def run(args: argparse.Namespace) -> int:
             await show_health(indexer, client)
             return 0
 
+        embedder = OCIEmbedder()
         if args.image:
-            print(IMAGE_SEARCH_UNAVAILABLE)
+            await search_image(embedder, client, cfg.index_name, args.image, args.size)
         if args.text:
-            embedder = OCIEmbedder()
             await search_text(embedder, client, cfg.index_name, cfg.vector_field, args.text, args.size)
         return 0
     except Exception as exc:

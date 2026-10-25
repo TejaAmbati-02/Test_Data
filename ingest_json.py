@@ -246,9 +246,8 @@ async def attach_image_embeddings(rows: dict[str, dict], embedder: OCIEmbedder, 
     by a local pipeline run with ``IMAGE_CONTENT_LOCAL=true``) and does not
     already have pre-computed ``images`` vectors, every image is decoded and
     embedded via OCI multimodal ``embed-v4.0``. The resulting vectors are
-    attached as a parallel-array ``images`` object — ``{image_url: [...],
-    image_base64: [...], image_vector: [...]}`` where slot ``i`` describes
-    image ``i`` — pairing each image with the matching entry in ``image_urls``
+    attached as the nested ``images`` list — one ``{image_url, image_vector}``
+    per image — pairing each image with the matching entry in ``image_urls``
     by position.
 
     The raw base64 ``image_content`` is **always removed** from every row before
@@ -310,14 +309,11 @@ async def attach_image_embeddings(rows: dict[str, dict], embedder: OCIEmbedder, 
         vectors, embed_failed = await _embed_images_resilient(
             embedder, [(data, mime) for _sku, data, mime, _id, _url in work]
         )
-        images_by_sku: dict[str, dict] = {}
-        for (sku, _data, _mime, b64, url), vector in zip(work, vectors):
+        images_by_sku: dict[str, list[dict]] = {}
+        for (sku, _data, _mime, _b64, url), vector in zip(work, vectors):
             if vector is None:  # dropped by the resilient embedder — skip it
                 continue
-            obj = images_by_sku.setdefault(sku, {"image_url": [], "image_base64": [], "image_vector": []})
-            obj["image_url"].append(url)
-            obj["image_base64"].append(b64)
-            obj["image_vector"].append(vector)
+            images_by_sku.setdefault(sku, []).append({"image_url": url, "image_vector": vector})
             images_embedded += 1
         for sku, obj in images_by_sku.items():
             rows[sku]["images"] = obj
