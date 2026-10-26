@@ -36,33 +36,37 @@ def _is_vector(v) -> bool:
 async def best_stored_cosine(client, index: str, skus: list[str], vec: list[float]) -> tuple[float | None, int]:
     """Highest cosine between `vec` and any image vector stored on the given SKUs, and the vector count.
 
-    Scored server-side with an exact ``knn_score`` script rather than by reading
-    ``images.image_vector`` from ``_source``: with k-NN derived source the stored
-    _source holds only a placeholder (``1``) for each vector, so it can't be
-    compared client-side. ``cosinesimil`` scores are ``1 + cosine``.
+    Vectors can't be read back from ``_source`` (k-NN derived source leaves a
+    placeholder ``1`` there), so this scores server-side with the same nested kNN
+    the API uses, filtered to the expected SKUs. A filter that selective makes
+    Lucene search exactly rather than approximately. Lucene ``cosinesimil``
+    scores are ``(1 + cosine) / 2``.
     """
+    filt = {"terms": {"sku_id": skus}}
     resp = await client.search(index=index, body={
         "size": len(skus),
         "_source": ["sku_id"],
-        "query": {"bool": {
-            "filter": [{"terms": {"sku_id": skus}}],
-            "must": [{"nested": {
-                "path": "images", "score_mode": "max",
-                "query": {"script_score": {
-                    "query": {"match_all": {}},
-                    "script": {"source": "knn_score", "lang": "knn", "params": {
-                        "field": "images.image_vector", "query_value": vec, "space_type": "cosinesimil",
-                    }},
-                }},
-                "inner_hits": {"size": 1, "_source": False},
-            }}],
+        "query": {"nested": {
+            "path": "images", "score_mode": "max",
+            "query": {"knn": {"images.image_vector": {"vector": vec, "k": max(K, len(skus)), "filter": filt}}},
         }},
     })
-    best, count = None, 0
+    best = None
     for h in resp["hits"]["hits"]:
-        count += h.get("inner_hits", {}).get("images", {}).get("hits", {}).get("total", {}).get("value", 0)
-        sim = h["_score"] - 1.0
+        sim = 2.0 * h["_score"] - 1.0
         best = sim if best is None else max(best, sim)
+
+    # Stored image count per SKU (nested docs), independent of scoring.
+    counts = await client.search(index=index, body={
+        "size": len(skus),
+        "_source": False,
+        "query": {"bool": {"filter": [filt, {"nested": {
+            "path": "images", "query": {"match_all": {}},
+            "inner_hits": {"size": 0, "_source": False},
+        }}]}},
+    })
+    count = sum(h.get("inner_hits", {}).get("images", {}).get("hits", {}).get("total", {}).get("value", 0)
+                for h in counts["hits"]["hits"])
     return best, count
 
 
