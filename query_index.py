@@ -17,6 +17,7 @@ Usage:
     uv run python query_index.py --text "water pump"          # text semantic search
     uv run python query_index.py --image out_images/001000001chemicals.jpg
     uv run python query_index.py --text "valve" --size 5
+    uv run python query_index.py --sku 172000-001-hvac --image test.png   # stored vectors vs an image
 
 Configuration (OpenSearch + OCI) is read from environment variables / .env.
 """
@@ -25,6 +26,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import math
 import sys
 from pathlib import Path
 
@@ -46,6 +48,11 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     p.add_argument("--text", metavar="QUERY", help="Run a semantic text search for this query.")
     p.add_argument("--image", metavar="PATH", help="Run an image search using this image file.")
     p.add_argument("--size", type=int, default=5, help="Number of hits to return (default: 5).")
+    p.add_argument(
+        "--sku", metavar="SKU_ID",
+        help="Show the image vectors stored for this SKU (sku_id prefix); with --image, also the "
+             "exact cosine similarity of each against that image (a byte-identical image is ~1.0).",
+    )
     p.add_argument(
         "--emit-query", action="store_true",
         help="Embed the --image/--text and PRINT a ready-to-paste OpenSearch Dashboards "
@@ -156,6 +163,38 @@ async def search_image(embedder: OCIEmbedder, client, index: str, path: str, siz
     _print_hits(resp)
 
 
+def _cosine(a: list[float], b: list[float]) -> float:
+    dot = sum(x * y for x, y in zip(a, b))
+    na = math.sqrt(sum(x * x for x in a))
+    nb = math.sqrt(sum(y * y for y in b))
+    return dot / (na * nb) if na and nb else 0.0
+
+
+async def inspect_sku(embedder: OCIEmbedder, client, index: str, sku: str, image_path: str | None) -> None:
+    """Print the image vectors stored on a SKU's documents, and their exact cosine vs an image."""
+    print(f"\n  Stored images for sku_id starting {sku!r}")
+    vec = await embed_image_file(embedder, image_path) if image_path else None
+    resp = await client.search(index=index, body={
+        "size": 20,
+        "_source": ["sku_id", "image_urls", "images"],
+        "query": {"prefix": {"sku_id": sku}},
+    })
+    hits = resp.get("hits", {}).get("hits", [])
+    if not hits:
+        print("  No document found.\n")
+        return
+    for h in hits:
+        src = h["_source"]
+        images = src.get("images") or []
+        print(f"  doc _id={h['_id']} sku_id={src.get('sku_id')} image_urls={len(src.get('image_urls') or [])} "
+              f"stored image vectors={len(images)}")
+        for i, img in enumerate(images):
+            v = img.get("image_vector") or []
+            sim = f" cosine={_cosine(vec, v):.4f}" if vec and v else ""
+            print(f"     [{i}] dim={len(v)}{sim} url={img.get('image_url')}")
+    print()
+
+
 def _print_hits(resp: dict) -> None:
     """Pretty-print search hits."""
     hits = resp.get("hits", {}).get("hits", [])
@@ -209,11 +248,14 @@ async def run(args: argparse.Namespace) -> int:
             return 2
         client = indexer._connect()  # reuse the configured, authenticated client
 
-        if not args.text and not args.image:
+        if not args.text and not args.image and not args.sku:
             await show_health(indexer, client)
             return 0
 
         embedder = OCIEmbedder()
+        if args.sku:
+            await inspect_sku(embedder, client, cfg.index_name, args.sku, args.image)
+            return 0
         if args.image:
             await search_image(embedder, client, cfg.index_name, args.image, args.size)
         if args.text:

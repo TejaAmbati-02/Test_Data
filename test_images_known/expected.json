@@ -1,0 +1,225 @@
+{
+ "cases": [
+  {
+   "image": "172000-001-hvac__img0.png",
+   "expected_skus": [
+    "172000-001-hvac"
+   ],
+   "product_name": "Air Handling Unit 5 TR",
+   "image_url": "https://images.cdn.europe-west1.gcp.commercetools.com/6d877ad5-a985-4d59-b7ae-bdff63ab1f40/Designer%20%282%29-zBdCPKlK.png",
+   "bytes": 2818339
+  },
+  {
+   "image": "172000-003-hvac__img0.png",
+   "expected_skus": [
+    "172000-003-hvac"
+   ],
+   "product_name": "Cooling Tower 3 TR",
+   "image_url": "https://images.cdn.europe-west1.gcp.commercetools.com/6d877ad5-a985-4d59-b7ae-bdff63ab1f40/Cooling-Tower-3-TR-XrO93zMH.png",
+   "bytes": 1689948
+  },
+  {
+   "image": "174000-001-hvac__img0.jpg",
+   "expected_skus": [
+    "174000-001-hvac"
+   ],
+   "product_name": "Cooling Tower 3 TR",
+   "image_url": "https://images.cdn.europe-west1.gcp.commercetools.com/6d877ad5-a985-4d59-b7ae-bdff63ab1f40/coolingTower1-vE3h59ZY.jpg",
+   "bytes": 5482
+  },
+  {
+   "image": "a-880000629771__img0.png",
+   "expected_skus": [
+    "a-880000629771"
+   ],
+   "product_name": "HPE X242 40G QSFP",
+   "image_url": "https://images.cdn.europe-west1.gcp.commercetools.com/6d877ad5-a985-4d59-b7ae-bdff63ab1f40/ChatGPT%20Image%20Sep%2027-Tsx7-erR.png",
+   "bytes": 1490909
+  },
+  {
+   "image": "a-880000629773__img1.png",
+   "expected_skus": [
+    "a-880000629773"
+   ],
+   "product_name": "5412R 92GT PoE+/4SFP+ v3 zl2 Swch",
+   "image_url": "https://images.cdn.europe-west1.gcp.commercetools.com/6d877ad5-a985-4d59-b7ae-bdff63ab1f40/JL001A-nPQAdj3x.png",
+   "bytes": 139565
+  },
+  {
+   "image": "ao-100004_1__img1.png",
+   "expected_skus": [
+    "ao-100004_1"
+   ],
+   "product_name": "Stapler, Standard Duty, Black",
+   "image_url": "https://images.cdn.europe-west1.gcp.commercetools.com/6d877ad5-a985-4d59-b7ae-bdff63ab1f40/image%20%284%29-qNMcRMK6.png",
+   "bytes": 2907960
+  },
+  {
+   "image": "ao-100014_1__img0.png",
+   "expected_skus": [
+    "ao-100014_1"
+   ],
+   "product_name": "Scissors, Stainless Steel, 8 Inch",
+   "image_url": "https://images.cdn.europe-west1.gcp.commercetools.com/6d877ad5-a985-4d59-b7ae-bdff63ab1f40/Designer%20%2834%29-TiLVCKbQ.png",
+   "bytes": 1337277
+  },
+  {
+   "image": "ao-100018_1__img0.jpg",
+   "expected_skus": [
+    "ao-100018_1"
+   ],
+   "product_name": "Charger, Battery, (Uk PIN), 2100MAH, AA",
+   "image_url": "https://images.cdn.europe-west1.gcp.commercetools.com/6d877ad5-a985-4d59-b7ae-bdff63ab1f40/Kodak-ZTJq4wXD.jpg",
+   "bytes": 18840
+  },
+  {
+   "image": "ao-100021_1__img0.png",
+   "expected_skus": [
+    "ao-100021_1"
+   ],
+   "product_name": "Calculator, Desktop, 12 Digit",
+   "image_url": "https://images.cdn.europe-west1.gcp.commercetools.com/6d877ad5-a985-4d59-b7ae-bdff63ab1f40/image-R95HLQd4.png",
+   "bytes": 511886
+  },
+  {
+   "image": "ao-100027_1__img0.png",
+   "expected_skus": [
+    "ao-100027_1"
+   ],
+   "product_name": "7X50 A211 ACULON BINO NIKON",
+   "image_url": "https://images.cdn.europe-west1.gcp.commercetools.com/6d877ad5-a985-4d59-b7ae-bdff63ab1f40/4600028466-2-LfmC5fUr.png",
+   "bytes": 73007
+  },
+  {
+   "image": "ao-100031_1__img2.png",
+   "expected_skus": [
+    "ao-100031_1"
+   ],
+   "product_name": "Book, 20 Pages, Sz Letter, 80GSM",
+   "image_url": "https://images.cdn.europe-west1.gcp.commercetools.com/6d877ad5-a985-4d59-b7ae-bdff63ab1f40/Designer%20%2817%29-zw5qAwlk.png",
+   "bytes": 1343264
+  },
+  {
+   "image": "qa-product-01__img3.png",
+   "expected_skus": [
+    "qa-product-01"
+   ],
+   "product_name": "AeroDry Smart Dehumidifier 20L",
+   "image_url": "https://images.cdn.europe-west1.gcp.commercetools.com/6d877ad5-a985-4d59-b7ae-bdff63ab1f40/image-H2VPsQ5Q.png",
+   "bytes": 291347
+  },
+  {
+   "image": "shared__105_skus.jpg",
+   "expected_skus": [
+    "001300-001-instrumentation-1",
+    "001300-002-instrumentation",
+    "003500-001-services-1",
+    "027100-002-instrumentation-1",
+    "027100-003-instrumentation",
+    "029000-004-instrumentation-1",
+    "029000-005-instrumentation",
+    "029000-009-instrumentation-1",
+    "029000-010-instrumentation",
+    "029000-014-instrumentation-1",
+    "029000-015-instrumentation",
+    "029000-019-instrumentation-1",
+    "029000-020-instrumentation",
+    "029000-024-instrumentation-1",
+    "029000-025-instrumentation",
+    "032000-001-instrumentation-1",
+    "032000-002-instrumentation",
+    "032000-006-instrumentation-1",
+    "032000-007-instrumentation",
+    "032000-011-instrumentation-1",
+    "032000-012-instrumentation",
+    "044000-002-instrumentation-1",
+    "044000-003-instrumentation",
+    "044000-007-instrumentation-1",
+    "044000-008-instrumentation",
+    "044100-002-instrumentation-1",
+    "064000-001-instrumentation",
+    "067000-001-instrumentation-1",
+    "067000-002-instrumentation",
+    "067000-006-instrumentation-1",
+    "067000-007-instrumentation",
+    "068000-001-instrumentation-1",
+    "068000-002-instrumentation",
+    "069000-003-instrumentation-1",
+    "070000-001-instrumentation",
+    "072000-002-instrumentation-1",
+    "072000-003-instrumentation",
+    "075000-001-instrumentation-1",
+    "075000-002-instrumentation",
+    "076000-001-instrumentation-1",
+    "076000-002-instrumentation",
+    "077000-001-instrumentation",
+    "079000-002-instrumentation-1",
+    "080000-001-instrumentation",
+    "082000-002-instrumentation-1",
+    "082000-003-instrumentation",
+    "083100-002-instrumentation-1",
+    "084000-002-instrumentation-1",
+    "084100-001-instrumentation",
+    "085000-001-instrumentation",
+    "088000-002-instrumentation-1",
+    "088000-003-instrumentation",
+    "089000-001-instrumentation-1",
+    "089100-001-instrumentation",
+    "090000-002-instrumentation-1",
+    "090100-001-instrumentation",
+    "092100-002-instrumentation-1",
+    "093000-001-instrumentation",
+    "093100-003-instrumentation-1",
+    "094000-001-instrumentation",
+    "095000-001-instrumentation-1",
+    "151000-001-services-1",
+    "151000-002-services",
+    "151000-004-services-1",
+    "151000-005-services",
+    "151000-007-services-1",
+    "151000-008-services",
+    "151000-010-services-1",
+    "151100-001-services",
+    "152100-001-services-1",
+    "152100-002-services",
+    "152500-002-services-1",
+    "152500-003-services",
+    "153000-001-services",
+    "153100-001-services-1",
+    "153100-002-services",
+    "154000-002-services-1",
+    "154000-003-services",
+    "158100-001-services-1",
+    "158100-002-services",
+    "158500-002-services-1",
+    "158500-003-services",
+    "159000-002-services-1",
+    "159100-001-services",
+    "159100-003-services-1",
+    "159200-001-services",
+    "159500-001-services",
+    "160000-002-services-1",
+    "160000-003-services",
+    "198000-002-services-1",
+    "199000-001-services-1",
+    "199000-002-services",
+    "213000-001-instrumentation",
+    "213100-003-instrumentation-1",
+    "214000-001-instrumentation",
+    "216000-001-services-1",
+    "216000-002-services",
+    "216100-002-services-1",
+    "216100-003-services",
+    "217000-002-services-1",
+    "217000-003-services",
+    "227100-001-services-1",
+    "227100-002-services",
+    "871000-001-services-1",
+    "871000-002-services"
+   ],
+   "product_name": "Control Valve Positioner HART",
+   "bytes": 306889,
+   "note": "One image shared by many SKUs: every top hit should be one of expected_skus, all with the same score."
+  }
+ ]
+}
