@@ -7,7 +7,7 @@ For each case this checks:
   * STORED — the expected SKU has a stored image vector whose exact cosine
     similarity to the test image is >= 0.98 (a copy should be ~1.0). Failing
     means the ingest dropped the image or stored another image's vector.
-  * RANK   — a nested kNN (k=100, as the API uses) ranks an expected SKU #1.
+  * RANK   — a nested kNN (k=100, ef_search=500, as the API uses) ranks an expected SKU #1.
     Failing while STORED passes means approximate search missed the match.
 
 Usage:
@@ -27,7 +27,8 @@ from query_index import OCIEmbedder, OpenSearchIndexer, embed_image_file
 CASES_DIR = Path(__file__).parent / "test_images_known"
 MIN_COSINE = 0.98
 K = 100
-PROBE_EF = (500, 2000, 10000)  # ef_search values tried when the k=100 search misses
+EF_SEARCH = 500  # must match the API's knn_ef_search (ASMO_SEARCH_CODE config.py)
+PROBE_EF = (1000, 2000, 10000)  # wider ef_search tried when the API-equivalent search misses
 
 
 def _is_vector(v) -> bool:
@@ -71,11 +72,10 @@ async def best_stored_cosine(client, index: str, skus: list[str], vec: list[floa
     return best, count
 
 
-async def top_hit(client, index: str, vec: list[float], ef_search: int | None = None) -> tuple[str | None, float | None]:
+async def top_hit(client, index: str, vec: list[float], ef_search: int = EF_SEARCH) -> tuple[str | None, float | None]:
     knn = {"vector": vec, "k": K}
-    if ef_search:
-        # Lucene ignores index.knn.algo_param.ef_search; the per-query override is the only knob.
-        knn["method_parameters"] = {"ef_search": ef_search}
+    # Lucene ignores index.knn.algo_param.ef_search; the per-query override is the only knob.
+    knn["method_parameters"] = {"ef_search": ef_search}
     resp = await client.search(index=index, body={
         "size": 1,
         "_source": ["sku_id"],
