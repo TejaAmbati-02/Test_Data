@@ -27,6 +27,7 @@ from query_index import OCIEmbedder, OpenSearchIndexer, embed_image_file
 CASES_DIR = Path(__file__).parent / "test_images_known"
 MIN_COSINE = 0.98
 K = 100
+PROBE_EF = (500, 2000, 10000)  # ef_search values tried when the k=100 search misses
 
 
 def _is_vector(v) -> bool:
@@ -70,17 +71,33 @@ async def best_stored_cosine(client, index: str, skus: list[str], vec: list[floa
     return best, count
 
 
-async def top_hit(client, index: str, vec: list[float]) -> tuple[str | None, float | None]:
+async def top_hit(client, index: str, vec: list[float], ef_search: int | None = None) -> tuple[str | None, float | None]:
+    knn = {"vector": vec, "k": K}
+    if ef_search:
+        # Lucene ignores index.knn.algo_param.ef_search; the per-query override is the only knob.
+        knn["method_parameters"] = {"ef_search": ef_search}
     resp = await client.search(index=index, body={
         "size": 1,
         "_source": ["sku_id"],
         "query": {"nested": {
             "path": "images", "score_mode": "max",
-            "query": {"knn": {"images.image_vector": {"vector": vec, "k": K}}},
+            "query": {"knn": {"images.image_vector": knn}},
         }},
     })
     hits = resp["hits"]["hits"]
     return (hits[0]["_source"].get("sku_id"), hits[0]["_score"]) if hits else (None, None)
+
+
+async def probe_ef(client, index: str, vec: list[float], expected: list[str]) -> str:
+    """Retry a missed search with wider ef_search to tell a recall problem from a graph problem."""
+    for ef in PROBE_EF:
+        try:
+            top, _ = await top_hit(client, index, vec, ef_search=ef)
+        except Exception as exc:
+            return f"ef_search override rejected: {str(exc)[:80]}"
+        if top in expected:
+            return f"found at ef_search={ef}"
+    return f"still missed at ef_search={PROBE_EF[-1]}"
 
 
 async def run(only: str | None) -> int:
@@ -108,7 +125,9 @@ async def run(only: str | None) -> int:
             rank_ok = top in expected
             result = "PASS" if stored_ok and rank_ok else (
                 "FAIL stored" if not stored_ok else "FAIL rank (vector OK, kNN missed it)")
-            failures += result != "PASS"
+            if stored_ok and not rank_ok:
+                result += "; " + await probe_ef(client, index, vec, expected)
+            failures += not result.startswith("PASS")
             cos = f"{best:.4f}" if best is not None else "-"
             sc = f"{score:.4f}" if score is not None else "-"
             print(f"  {c['image']:<30} {count:>11} {cos:>9} {str(top):<30} {sc:>7}  {result}")
