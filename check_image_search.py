@@ -22,7 +22,7 @@ import json
 import sys
 from pathlib import Path
 
-from query_index import OCIEmbedder, OpenSearchIndexer, _cosine, embed_image_file
+from query_index import OCIEmbedder, OpenSearchIndexer, embed_image_file
 
 CASES_DIR = Path(__file__).parent / "test_images_known"
 MIN_COSINE = 0.98
@@ -34,28 +34,35 @@ def _is_vector(v) -> bool:
 
 
 async def best_stored_cosine(client, index: str, skus: list[str], vec: list[float]) -> tuple[float | None, int]:
-    """Highest cosine between `vec` and any image vector stored on the given SKUs, and the vector count."""
+    """Highest cosine between `vec` and any image vector stored on the given SKUs, and the vector count.
+
+    Scored server-side with an exact ``knn_score`` script rather than by reading
+    ``images.image_vector`` from ``_source``: with k-NN derived source the stored
+    _source holds only a placeholder (``1``) for each vector, so it can't be
+    compared client-side. ``cosinesimil`` scores are ``1 + cosine``.
+    """
     resp = await client.search(index=index, body={
         "size": len(skus),
-        "_source": ["sku_id", "images"],
-        "query": {"terms": {"sku_id": skus}},
+        "_source": ["sku_id"],
+        "query": {"bool": {
+            "filter": [{"terms": {"sku_id": skus}}],
+            "must": [{"nested": {
+                "path": "images", "score_mode": "max",
+                "query": {"script_score": {
+                    "query": {"match_all": {}},
+                    "script": {"source": "knn_score", "lang": "knn", "params": {
+                        "field": "images.image_vector", "query_value": vec, "space_type": "cosinesimil",
+                    }},
+                }},
+                "inner_hits": {"size": 1, "_source": False},
+            }}],
+        }},
     })
     best, count = None, 0
     for h in resp["hits"]["hits"]:
-        images = h["_source"].get("images") or []
-        if isinstance(images, dict):  # a single nested object is returned unwrapped
-            images = [images]
-        for img in images:
-            v = img.get("image_vector") if isinstance(img, dict) else None
-            if not _is_vector(v):
-                print(f"  ! sku_id={h['_source'].get('sku_id')} has a malformed image_vector "
-                      f"(type={type(v).__name__}, value={str(v)[:60]}) - skipped")
-                continue
-            if len(v) != len(vec):
-                print(f"  ! sku_id={h['_source'].get('sku_id')} image_vector dim={len(v)} != query dim={len(vec)}")
-            count += 1
-            sim = _cosine(vec, v)
-            best = sim if best is None else max(best, sim)
+        count += h.get("inner_hits", {}).get("images", {}).get("hits", {}).get("total", {}).get("value", 0)
+        sim = h["_score"] - 1.0
+        best = sim if best is None else max(best, sim)
     return best, count
 
 
