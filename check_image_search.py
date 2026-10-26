@@ -29,6 +29,10 @@ MIN_COSINE = 0.98
 K = 100
 
 
+def _is_vector(v) -> bool:
+    return isinstance(v, list) and bool(v) and all(isinstance(x, (int, float)) for x in v)
+
+
 async def best_stored_cosine(client, index: str, skus: list[str], vec: list[float]) -> tuple[float | None, int]:
     """Highest cosine between `vec` and any image vector stored on the given SKUs, and the vector count."""
     resp = await client.search(index=index, body={
@@ -38,12 +42,20 @@ async def best_stored_cosine(client, index: str, skus: list[str], vec: list[floa
     })
     best, count = None, 0
     for h in resp["hits"]["hits"]:
-        for img in h["_source"].get("images") or []:
-            v = img.get("image_vector")
-            if v:
-                count += 1
-                sim = _cosine(vec, v)
-                best = sim if best is None else max(best, sim)
+        images = h["_source"].get("images") or []
+        if isinstance(images, dict):  # a single nested object is returned unwrapped
+            images = [images]
+        for img in images:
+            v = img.get("image_vector") if isinstance(img, dict) else None
+            if not _is_vector(v):
+                print(f"  ! sku_id={h['_source'].get('sku_id')} has a malformed image_vector "
+                      f"(type={type(v).__name__}, value={str(v)[:60]}) - skipped")
+                continue
+            if len(v) != len(vec):
+                print(f"  ! sku_id={h['_source'].get('sku_id')} image_vector dim={len(v)} != query dim={len(vec)}")
+            count += 1
+            sim = _cosine(vec, v)
+            best = sim if best is None else max(best, sim)
     return best, count
 
 
@@ -73,8 +85,9 @@ async def run(only: str | None) -> int:
         print(f"\n  {'image':<30} {'stored vecs':>11} {'best cos':>9} {'top hit':<30} {'score':>7}  result")
         for c in cases:
             vec = await embed_image_file(embedder, str(CASES_DIR / c["image"]))
-            if not vec:
-                print(f"  {c['image']:<30} could not embed the test image  FAIL")
+            if not _is_vector(vec):
+                print(f"  {c['image']:<30} could not embed the test image "
+                      f"(got {type(vec).__name__}: {str(vec)[:60]})  FAIL")
                 failures += 1
                 continue
             expected = c["expected_skus"]
