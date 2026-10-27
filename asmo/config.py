@@ -45,6 +45,11 @@ class Config:
             Only takes effect when ``save_local`` is on. Defaults to ``False`` so
             the base64 blobs go only to the uploaded storage JSON and local files
             stay lean.
+        image_max_products_per_url: Images whose URL is shared by more than this
+            many distinct products are treated as placeholders and not embedded
+            for image search (from ``IMAGE_MAX_PRODUCTS_PER_URL``; unset or ``0``
+            disables the check). Set to 1 once the catalogue has real images —
+            in the dev data 1,992 of 2,193 SKUs have only shared stock photos.
         page_size: Page size used when paging through API results.
     """
 
@@ -58,6 +63,8 @@ class Config:
     selection_validation_enabled: bool = field(default_factory=lambda: os.environ.get("SELECTION_VALIDATION_ENABLED", "false").lower() == "true")
     save_local: bool = field(default_factory=lambda: os.environ.get("SAVE_LOCAL", "false").lower() == "true")
     image_content_local: bool = field(default_factory=lambda: os.environ.get("IMAGE_CONTENT_LOCAL", "false").lower() == "true")
+    image_max_products_per_url: int | None = field(
+        default_factory=lambda: int(os.environ.get("IMAGE_MAX_PRODUCTS_PER_URL") or 0) or None)
     page_size: int = 500
 
     @property

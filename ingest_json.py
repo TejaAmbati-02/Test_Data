@@ -56,6 +56,7 @@ truststore.inject_into_ssl()
 load_dotenv(override=True)
 
 from asmo.embeddings import OCIEmbedder  # noqa: E402
+from asmo.images import shared_image_urls  # noqa: E402
 from asmo.logging_service import setup_logging, logger  # noqa: E402
 from asmo.search_index import OpenSearchIndexer  # noqa: E402
 
@@ -101,6 +102,11 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument(
         "--no-image-embeddings", action="store_true",
         help="Do not embed the base64 'image_content'; strip it and index text/content only.",
+    )
+    parser.add_argument(
+        "--max-products-per-image", type=int, default=0, metavar="N",
+        help="Do not embed an image whose URL is shared by more than N distinct products "
+             "(placeholder / stock photos); 1 is right for a real catalogue. 0 embeds every image (default).",
     )
     parser.add_argument(
         "--dry-run", action="store_true",
@@ -239,7 +245,9 @@ async def _embed_images_resilient(embedder: OCIEmbedder, images: list[tuple[byte
     return vectors, failed
 
 
-async def attach_image_embeddings(rows: dict[str, dict], embedder: OCIEmbedder, enabled: bool) -> dict:
+async def attach_image_embeddings(
+    rows: dict[str, dict], embedder: OCIEmbedder, enabled: bool, max_products_per_image: int | None = None,
+) -> dict:
     """Embed each row's base64 ``image_content`` and attach nested ``images``.
 
     For every row that carries an ``image_content`` list (base64 images written
@@ -259,6 +267,9 @@ async def attach_image_embeddings(rows: dict[str, dict], embedder: OCIEmbedder, 
         embedder: The OCI embedder used to vectorise images.
         enabled: When False, skip embedding entirely (only strip
             ``image_content``) — e.g. for a text-only ingest.
+        max_products_per_image: Images whose URL is shared by more than this
+            many distinct products are placeholders: they are not embedded, and
+            are removed from any pre-computed ``images`` list. ``None`` keeps all.
 
     Returns:
         A summary dict with ``rows_with_content``, ``images_embedded`` and
@@ -269,10 +280,24 @@ async def attach_image_embeddings(rows: dict[str, dict], embedder: OCIEmbedder, 
     decode_failed = 0
     unsupported = 0
     rows_with_content = 0
+    placeholder_skipped = 0
+    placeholder_urls = shared_image_urls(rows, max_products_per_image)
+    if placeholder_urls:
+        logger.info(
+            f"Not embedding {len(placeholder_urls)} placeholder image URL(s) shared by more than "
+            f"{max_products_per_image} product(s)",
+            extra={"function_name": "attach_image_embeddings", "input_data": {"placeholder_urls": len(placeholder_urls)}},
+        )
 
     if enabled:
         for sku, row in rows.items():
-            if row.get("images"):  # already carries vectors — leave as-is
+            if row.get("images"):  # already carries vectors — only drop placeholders
+                kept = [img for img in row["images"] if img.get("image_url") not in placeholder_urls]
+                placeholder_skipped += len(row["images"]) - len(kept)
+                if kept:
+                    row["images"] = kept
+                else:
+                    row.pop("images")
                 continue
             b64_list = row.get("image_content") or []
             if not b64_list:
@@ -297,6 +322,9 @@ async def attach_image_embeddings(rows: dict[str, dict], embedder: OCIEmbedder, 
                     )
                     continue
                 url = urls[i] if i < len(urls) else None
+                if url in placeholder_urls:
+                    placeholder_skipped += 1
+                    continue
                 work.append((sku, data, mime, b64, url))
 
     images_embedded = 0
@@ -324,17 +352,20 @@ async def attach_image_embeddings(rows: dict[str, dict], embedder: OCIEmbedder, 
 
     logger.info(
         f"Image embedding done — {images_embedded} vector(s) from {rows_with_content} row(s); "
-        f"{unsupported} unsupported, {decode_failed} decode failure(s), {embed_failed} embed failure(s)"
+        f"{unsupported} unsupported, {decode_failed} decode failure(s), {embed_failed} embed failure(s), "
+        f"{placeholder_skipped} placeholder image(s) skipped"
         + ("" if enabled else " (disabled — image_content stripped, not embedded)"),
         extra={
             "function_name": "attach_image_embeddings",
             "status": "success",
             "input_data": {"rows_with_content": rows_with_content, "images_embedded": images_embedded,
-                           "unsupported": unsupported, "decode_failed": decode_failed, "embed_failed": embed_failed},
+                           "unsupported": unsupported, "decode_failed": decode_failed, "embed_failed": embed_failed,
+                           "placeholder_skipped": placeholder_skipped},
         },
     )
     return {"rows_with_content": rows_with_content, "images_embedded": images_embedded,
-            "unsupported": unsupported, "decode_failed": decode_failed, "embed_failed": embed_failed}
+            "unsupported": unsupported, "decode_failed": decode_failed, "embed_failed": embed_failed,
+            "placeholder_skipped": placeholder_skipped}
 
 
 async def run(args: argparse.Namespace) -> int:
@@ -407,7 +438,10 @@ async def run(args: argparse.Namespace) -> int:
 
         # 4) Embed each row's base64 image_content into nested images vectors
         #    (and always strip the base64 so it is never indexed).
-        await attach_image_embeddings(transformed, embedder, enabled=not args.no_image_embeddings)
+        await attach_image_embeddings(
+            transformed, embedder, enabled=not args.no_image_embeddings,
+            max_products_per_image=args.max_products_per_image or None,
+        )
 
         # 5) Embed content + bulk-index (nested image vectors ride along on rows).
         summary = await indexer.index_rows(transformed)

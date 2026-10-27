@@ -129,6 +129,7 @@ class Pipeline:
                 embed_image=embed_image,
                 write_images=save_local,
                 write_image_content_local=save_local and self._config.image_content_local,
+                max_products_per_image=self._config.image_max_products_per_url,
             )
             if save_local:
                 return await asyncio.gather(

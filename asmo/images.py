@@ -22,6 +22,25 @@ from .ssl_support import SSL_CONTEXT
 from .logging_service import logger, log_function
 
 
+def shared_image_urls(rows: dict[str, dict], max_products: int | None) -> set[str]:
+    """Image URLs used by more than ``max_products`` distinct products.
+
+    A URL reused across unrelated products is a placeholder / stock photo (in
+    this catalogue: Unsplash images shared by up to 105 products, while every
+    real product image belongs to exactly one product). Embedding such images
+    makes image search return arbitrary products for them, so callers skip
+    them. Counted per ``product_key`` (falling back to the SKU) so variants of
+    one product may still share an image. ``None`` disables the check.
+    """
+    if max_products is None:
+        return set()
+    products_by_url: dict[str, set[str]] = {}
+    for sku, row in rows.items():
+        for url in row.get("image_urls") or []:
+            products_by_url.setdefault(url, set()).add(row.get("product_key") or sku)
+    return {url for url, products in products_by_url.items() if len(products) > max_products}
+
+
 class ImageDownloader:
     """Downloads product images concurrently, one file per SKU.
 
@@ -96,6 +115,7 @@ class ImageDownloader:
         write_images: bool = True,
         write_image_content_local: bool = False,
         max_images: int | None = None,
+        max_products_per_image: int | None = None,
     ) -> dict:
         """Persist every transformed row's JSON and image, optionally to storage.
 
@@ -150,6 +170,10 @@ class ImageDownloader:
                 (download, store and embed). ``None`` (the default) means no
                 cap — every image a SKU has is processed and embedded into its
                 nested ``images`` array.
+            max_products_per_image: Images whose URL is used by more than this
+                many distinct products are placeholders and are not embedded
+                (see :func:`shared_image_urls`); they are still downloaded and
+                stored. ``None`` embeds every image.
 
         Returns:
             A summary dict with ``downloaded``, ``skipped``, ``failed`` (image
@@ -180,8 +204,15 @@ class ImageDownloader:
             "downloaded": 0, "skipped": 0, "failed": 0,
             "json_uploaded": 0, "image_uploaded": 0, "upload_failed": 0,
             "json_write_failed": 0, "image_save_failed": 0,
-            "images_embedded": 0, "embed_failed": 0,
+            "images_embedded": 0, "embed_failed": 0, "placeholder_skipped": 0,
         }
+        placeholder_urls = shared_image_urls(transformed, max_products_per_image)
+        if placeholder_urls:
+            logger.info(
+                f"Not embedding {len(placeholder_urls)} placeholder image URL(s) shared by more than "
+                f"{max_products_per_image} product(s)",
+                extra={"function_name": "download_all", "input_data": {"placeholder_urls": len(placeholder_urls)}},
+            )
 
         # trust_env=True so aiohttp honours the standard HTTP(S)_PROXY / NO_PROXY
         # env vars — required for outbound image fetches to reach public CDNs
@@ -300,6 +331,10 @@ class ImageDownloader:
 
                 # Nested images list: one {image_url, image_vector} per image.
                 images_obj: list[dict] = []
+                if placeholder_urls:
+                    kept = [d for d in downloaded if d[1] not in placeholder_urls]
+                    counters["placeholder_skipped"] += len(downloaded) - len(kept)
+                    downloaded = kept
                 if embed_image is not None and downloaded:
                     try:
                         vectors = await embed_image([(data, mime) for _, _, data, mime in downloaded])
