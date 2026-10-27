@@ -182,8 +182,9 @@ def load_transformed(folder: Path, pattern: str, require_content: bool, limit: i
 def apply_frontend_schema(rows: dict[str, dict]) -> None:
     """Add the frontend-contract fields to every row, in place.
 
-    The search API returns these keys as-is, so they are indexed alongside the
-    transformer's own fields rather than derived at query time:
+    The transformer now writes these itself; this backfills JSON files produced
+    before that change (it is a no-op on newer files). The search API returns
+    these keys as-is, so they are indexed alongside the transformer's own fields:
 
       * ``sku_name`` — the product title (copy of ``product_name``);
       * ``temporary_unavailable`` — the primary seller's flag

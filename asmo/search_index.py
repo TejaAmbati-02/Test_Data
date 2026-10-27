@@ -149,13 +149,16 @@ def build_index_body(vector_field: str, dim: int, image_dim: int | None = None) 
                 "availability":        keyword_field(),  # "IN_STOCK" for every SKU for now
                 "material_type":       keyword_field(),
 
-                # --- Purchase agreements (valid, active, unexpired) ---
-                # One nested object per agreement so contract id and valid-until
-                # stay paired and are independently queryable.
+                # --- Purchase agreements (active, started, unexpired) ---
+                # One nested object per agreement so its contract id, supplier
+                # (seller) and validity window stay paired and are independently
+                # queryable.
                 "purchase_agreements": {
                     "type": "nested",
                     "properties": {
                         "contract_id": keyword_field(),
+                        "supplier_id": keyword_field(),
+                        "valid_from":  keyword_field(),
                         "valid_until": keyword_field(),
                     },
                 },
@@ -405,14 +408,16 @@ class OpenSearchIndexer:
         return True
 
     async def add_missing_fields(self) -> list[str]:
-        """Add top-level fields of :func:`build_index_body` the live index lacks.
+        """Add fields of :func:`build_index_body` the live index lacks.
 
         Lets an index created before a field joined the mapping pick it up with
         the right type instead of via dynamic mapping, without a destructive
-        recreate. Adding new fields is always allowed; existing ones are left alone.
+        recreate — including new sub-fields of an existing nested / object field
+        (e.g. ``purchase_agreements.supplier_id``). Adding new fields is always
+        allowed; existing ones are left alone.
 
         Returns:
-            The names of the fields that were added (empty when none were missing).
+            The dotted names of the fields that were added (empty when none were missing).
         """
         client = self._connect()
         mapping = await client.indices.get_mapping(index=self._config.index_name)
@@ -420,15 +425,31 @@ class OpenSearchIndexer:
         wanted = build_index_body(
             self._config.vector_field, self._config.vector_dim, self._config.image_vector_dim
         )["mappings"]["properties"]
-        missing = {name: spec for name, spec in wanted.items() if name not in live}
+
+        added: list[str] = []
+
+        def missing_from(want: dict, have: dict, prefix: str = "") -> dict:
+            out: dict = {}
+            for name, spec in want.items():
+                if name not in have:
+                    out[name] = spec
+                    added.append(prefix + name)
+                elif "properties" in spec and "properties" in have[name]:
+                    sub = missing_from(spec["properties"], have[name]["properties"], f"{prefix}{name}.")
+                    if sub:
+                        # A nested field must restate its type when sub-fields are added.
+                        out[name] = {**({"type": spec["type"]} if "type" in spec else {}), "properties": sub}
+            return out
+
+        missing = missing_from(wanted, live)
         if missing:
             await client.indices.put_mapping(index=self._config.index_name, body={"properties": missing})
             logger.info(
-                f"Added {len(missing)} missing field(s) to '{self._config.index_name}': {', '.join(missing)}",
+                f"Added {len(added)} missing field(s) to '{self._config.index_name}': {', '.join(added)}",
                 extra={"function_name": "add_missing_fields", "status": "success",
-                       "input_data": {"index": self._config.index_name, "fields": list(missing)}},
+                       "input_data": {"index": self._config.index_name, "fields": added}},
             )
-        return list(missing)
+        return added
 
     async def index_rows(self, transformed: dict[str, dict]) -> dict:
         """Embed each row's ``content`` and bulk-index all rows into OpenSearch.

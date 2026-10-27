@@ -26,6 +26,7 @@ async def transform(
     products: list[Product],
     prices: list[Price],
     agreements_by_product: dict[str, list[dict]] | None = None,
+    availability_by_product: dict[str, dict[str, bool]] | None = None,
 ) -> dict[str, dict]:
     """Return a dict of sku → parsed row, one entry per SKU (masterVariant + all variants).
 
@@ -33,9 +34,14 @@ async def transform(
         products: The products to flatten.
         prices: The standalone prices to match to each SKU.
         agreements_by_product: Optional mapping of product id → list of valid
-            purchase agreements (``{contract_id, valid_until}``) to attach to
-            every row of that product. When ``None``/absent, rows carry no
-            ``purchase_agreements``.
+            purchase agreements (``{contract_id, supplier_id, valid_from,
+            valid_until}``) attached to every row of that product; their
+            contract ids steer which seller price is preferred.
+        availability_by_product: Optional mapping of product id → {seller id →
+            available}, from the sellers' product selections. When given, each
+            seller offer's ``temporary_unavailable`` is ``not available`` (a
+            seller with no agreement for the product is unavailable); when
+            ``None``, it comes from the price's own custom field.
     """
     logger.info(
         f"Transforming {len(products)} products and {len(prices)} prices",
@@ -55,8 +61,9 @@ async def transform(
     no_price: list[str] = []
     failed_products = 0
     for product in products:
+        availability = None if availability_by_product is None else availability_by_product.get(product.id, {})
         try:
-            rows = await _parse_product(product.raw, prices_by_sku, agreements_by_product.get(product.id))
+            rows = await _parse_product(product.raw, prices_by_sku, agreements_by_product.get(product.id), availability)
         except Exception:
             # _parse_product already logged the error with full product context.
             # Skip this product rather than aborting the whole transform so one
@@ -97,6 +104,7 @@ async def _parse_product(
     raw: dict,
     prices_by_sku: dict[str, list[Price]],
     purchase_agreements: list[dict] | None = None,
+    availability: dict[str, bool] | None = None,
 ) -> dict[str, dict]:
     """Flatten a single raw product document into one row per variant SKU.
 
@@ -111,7 +119,11 @@ async def _parse_product(
         prices_by_sku: Mapping of SKU to its list of matched prices, used by the
             variant parser to select the lowest contracted price and its seller.
         purchase_agreements: Optional list of the product's valid purchase
-            agreements (``{contract_id, valid_until}``) to attach to every row.
+            agreements (``{contract_id, supplier_id, valid_from, valid_until}``)
+            to attach to every row.
+        availability: Optional {seller id → available} for this product, used
+            for each seller offer's ``temporary_unavailable``; ``None`` keeps the
+            price's own value.
 
     Returns:
         A dict mapping each variant's SKU to its parsed row. Variants without a
@@ -129,13 +141,14 @@ async def _parse_product(
         product_fields = {
             "product_key": raw.get("id"),                                # JSON path: id
             "product_name": raw.get("name", {}).get("en"),              # JSON path: name.en
+            "sku_name": raw.get("name", {}).get("en"),                  # frontend-contract name for the title (= product_name)
             "product_description": raw.get("description", {}).get("en"), # JSON path: description.en
             "product_url": "",                                           # placeholder until the source is agreed
-            "contract_indicator": "",                                    # placeholder until the source is agreed
+            "contract_indicator": False,                                 # placeholder until the source is agreed
             "availability": "IN_STOCK",                                  # fixed for now (spec filter value)
             "material_type": _attr(raw.get("attributes"), "materialType"), # JSON path: attributes[name=materialType].value
             **await _category_fields(raw),                               # category/sub_category/product_type (see _category_fields)
-            "purchase_agreements": purchase_agreements or None,          # from the product-selection step (contract_id + valid_until)
+            "purchase_agreements": purchase_agreements or None,          # from the product-selection step (contract_id, supplier_id, valid_from, valid_until)
         }
         # The ASMO material number is product-level, so every variant row shares it.
         material_fields = {
@@ -165,7 +178,7 @@ async def _parse_product(
         failed_variants = 0
         for v in all_variants:
             try:
-                row = await _parse_variant(product_fields, material_fields, v, prices_by_sku, contract_ids)
+                row = await _parse_variant(product_fields, material_fields, v, prices_by_sku, contract_ids, availability)
             except Exception:
                 # _parse_variant already logged the error with sku context. Skip
                 # the single bad variant rather than failing the whole product.
@@ -247,7 +260,7 @@ def _rank_sellers(sku_prices: list[Price], contract_ids: set[str]) -> tuple[list
     return sorted(pool, key=lambda p: p.amount), matched
 
 
-def _seller_object(price: Price | None) -> dict | None:
+def _seller_object(price: Price | None, availability: dict[str, bool] | None = None) -> dict | None:
     """Build the complete seller object from the selected standalone price.
 
     Groups every seller/commercial detail (id, name, contract, price, currency,
@@ -258,6 +271,10 @@ def _seller_object(price: Price | None) -> dict | None:
 
     Args:
         price: The selected standalone price, or ``None``.
+        availability: Optional {seller id → available} for the product (from the
+            sellers' product selections). When given, ``temporary_unavailable``
+            is ``not available`` — ``True`` for a seller with no agreement for
+            the product; when ``None``, the price's own value is used.
 
     Returns:
         The seller object, or ``None`` when ``price`` is ``None``.
@@ -274,7 +291,10 @@ def _seller_object(price: Price | None) -> dict | None:
         "lead_time": price.lead_time_days,
         "moq": price.moq,
         "unit_type": price.unit_type,
-        "temporary_unavailable": price.temporary_unavailable,
+        "temporary_unavailable": (
+            price.temporary_unavailable if availability is None
+            else not availability.get(price.seller_id, False)
+        ),
         "is_blocked_for_deletion": price.is_blocked_for_deletion,
     }
 
@@ -285,6 +305,7 @@ async def _parse_variant(
     variant: dict,
     prices_by_sku: dict[str, list[Price]],
     contract_ids: set[str],
+    availability: dict[str, bool] | None = None,
 ) -> dict:
     """Build a single flat SKU row for one product variant.
 
@@ -292,10 +313,10 @@ async def _parse_variant(
     hierarchy, purchase agreements) with the variant's master-variant details
     (SKU key/id, primary image, material numbers) and the selected seller/price.
 
-    Seller selection (:func:`_select_price`) drops prices blocked for deletion
-    (deletion code ``"L"``), then prefers a price whose ``contractId`` matches one
-    of the product's valid purchase agreements, falling back to the lowest
-    ``CONTRACTED`` (else any) price. All seller fields come from that one price.
+    Seller selection (:func:`_rank_sellers`) drops prices blocked for deletion
+    (deletion code ``"L"``), then prefers prices whose ``contractId`` matches one
+    of the product's valid purchase agreements, falling back to ``CONTRACTED``
+    (else any) prices. The cheapest offer is the primary seller.
 
     Args:
         product_fields: The product-level fields shared by every variant of the
@@ -305,6 +326,8 @@ async def _parse_variant(
         variant: The raw variant document (master variant or additional variant).
         prices_by_sku: Mapping of SKU to its list of matched prices.
         contract_ids: Contract ids of the product's valid purchase agreements.
+        availability: Optional {seller id → available} for the product, used for
+            each offer's ``temporary_unavailable`` (see :func:`_seller_object`).
 
     Returns:
         A dict representing the fully flattened SKU row for this variant.
@@ -323,7 +346,7 @@ async def _parse_variant(
         # ``sellers`` holds every usable offer, lowest price first; ``min_price``
         # (the first/cheapest) is the primary used for the flat fields + singular
         # ``seller``.
-        sellers = [_seller_object(p) for p in ranked_prices]
+        sellers = [_seller_object(p, availability) for p in ranked_prices]
         min_price = ranked_prices[0] if ranked_prices else None
 
         logger.info(
@@ -382,6 +405,7 @@ async def _parse_variant(
             "price": sellers[0]["price"] if sellers else None,              # seller_details[0].price
             "currency": sellers[0]["currency"] if sellers else None,        # seller_details[0].currency
             "sold_by": sellers[0]["seller_name"] if sellers else None,      # seller_details[0].seller_name
+            "temporary_unavailable": sellers[0]["temporary_unavailable"] if sellers else None,  # seller_details[0].temporary_unavailable
         }
         # Combined free-text blob of every field value, pipe-separated — useful
         # as a single searchable/embeddable field downstream. Built from the row
@@ -575,7 +599,9 @@ def _combine_content(row: dict) -> str:
     with `` | `` between fields (e.g. ``productName_en:Acme | price:12.5``).
     ``None`` and blank values are skipped so the blob stays dense. Only the
     pre-existing ``content`` key is excluded, so the field never folds its own
-    previous value back in; every other field — including the ``seller_details`` list
+    previous value back in, as are the frontend-contract copies / flags
+    (``sku_name``, ``temporary_unavailable``, ``contract_indicator``) so they
+    do not change the embedded text; every other field — including the ``seller_details`` list
     (so seller names/contracts stay searchable) — is included.
 
     Args:
@@ -586,7 +612,7 @@ def _combine_content(row: dict) -> str:
         A single ``" | "``-separated string of ``key:value`` pairs for every
         meaningful field.
     """
-    skip = {"content"}
+    skip = {"content", "sku_name", "temporary_unavailable", "contract_indicator"}
     parts = [
         f"{key}:{text}"
         for key, value in row.items()

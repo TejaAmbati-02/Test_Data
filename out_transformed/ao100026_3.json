@@ -1,9 +1,10 @@
 {
   "product_key": "71986623-e87d-4f2a-9334-a5aea2c9bdbe",
   "product_name": "Air Freshener Spray, 300ml, Lavender",
+  "sku_name": "Air Freshener Spray, 300ml, Lavender",
   "product_description": "Air Freshener Spray, 300ml, Lavender, For General Office Use, Standard Quality, Community Office Supplies Stock",
   "product_url": "",
-  "contract_indicator": "",
+  "contract_indicator": false,
   "availability": "IN_STOCK",
   "material_type": "9CAT",
   "category_name": "Communities, Offices & Others",
@@ -23,7 +24,14 @@
   "product_type_slug": "buyer-default-communities-offices-and-others-office-supplies-106000",
   "product_type_description": "Stationary Items",
   "product_type_key": "buyer-default-communities-offices-and-others-office-supplies-106000",
-  "purchase_agreements": null,
+  "purchase_agreements": [
+    {
+      "contract_id": "demo-cont-001",
+      "supplier_id": "7f67afea-9853-43b5-bc5b-69904e4e2a6f",
+      "valid_from": "2026-09-30T18:30:00.000Z",
+      "valid_until": "2028-10-26T06:48:00.000Z"
+    }
+  ],
   "sku_key": "ao-100026_3",
   "sku_id": "ao-100026_3",
   "image_urls": null,
@@ -36,6 +44,7 @@
   "price": null,
   "currency": null,
   "sold_by": null,
-  "content": "product_key:71986623-e87d-4f2a-9334-a5aea2c9bdbe | product_name:Air Freshener Spray, 300ml, Lavender | product_description:Air Freshener Spray, 300ml, Lavender, For General Office Use, Standard Quality, Community Office Supplies Stock | availability:IN_STOCK | material_type:9CAT | category_name:Communities, Offices & Others | category_ids:2b4437cb-4e08-4e70-8ed2-feaf7193ad70 | category_slug:buyer-default-communities-offices-and-others | category_description:Communities, Offices & Others | category_key:buyer-default-communities-offices-and-others | sub_category_name:Office Supplies | sub_category_id:26e9db10-a7e5-465a-b616-1db6a6ad1614 | sub_category_slug:buyer-default-communities-offices-and-others-office-supplies | sub_category_description:Office Supplies | sub_category_key:buyer-default-communities-offices-and-others-office-supplies | product_type:Stationary Items | product_type_id:f88c9554-2d67-41ee-86d2-17430c5abc90 | product_type_slug:buyer-default-communities-offices-and-others-office-supplies-106000 | product_type_description:Stationary Items | product_type_key:buyer-default-communities-offices-and-others-office-supplies-106000 | sku_key:ao-100026_3 | sku_id:ao-100026_3 | asmo_material_number:ao-100026 | supplier_count:0",
+  "temporary_unavailable": null,
+  "content": "product_key:71986623-e87d-4f2a-9334-a5aea2c9bdbe | product_name:Air Freshener Spray, 300ml, Lavender | product_description:Air Freshener Spray, 300ml, Lavender, For General Office Use, Standard Quality, Community Office Supplies Stock | availability:IN_STOCK | material_type:9CAT | category_name:Communities, Offices & Others | category_ids:2b4437cb-4e08-4e70-8ed2-feaf7193ad70 | category_slug:buyer-default-communities-offices-and-others | category_description:Communities, Offices & Others | category_key:buyer-default-communities-offices-and-others | sub_category_name:Office Supplies | sub_category_id:26e9db10-a7e5-465a-b616-1db6a6ad1614 | sub_category_slug:buyer-default-communities-offices-and-others-office-supplies | sub_category_description:Office Supplies | sub_category_key:buyer-default-communities-offices-and-others-office-supplies | product_type:Stationary Items | product_type_id:f88c9554-2d67-41ee-86d2-17430c5abc90 | product_type_slug:buyer-default-communities-offices-and-others-office-supplies-106000 | product_type_description:Stationary Items | product_type_key:buyer-default-communities-offices-and-others-office-supplies-106000 | purchase_agreements:demo-cont-001, 7f67afea-9853-43b5-bc5b-69904e4e2a6f, 2026-09-30T18:30:00.000Z, 2028-10-26T06:48:00.000Z | sku_key:ao-100026_3 | sku_id:ao-100026_3 | asmo_material_number:ao-100026 | supplier_count:0",
   "image_content": []
 }

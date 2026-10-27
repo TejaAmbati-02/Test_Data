@@ -55,33 +55,32 @@ class Pipeline:
             extra={"function_name": "run", "input_data": {"products": len(products), "prices": len(prices)}},
         )
 
-        # Purchase-agreement gate (opt-in): keep only products with at least one
-        # valid, active, unexpired purchase agreement, and capture each valid
-        # agreement's contract id + valid-until to attach to the product's rows.
-        agreements_by_product: dict[str, list[dict]] = {}
-        if self._config.selection_validation_enabled:
-            logger.info(
-                "Step 2b/5 — validating purchase agreements (product selections)",
-                extra={"function_name": "run"},
-            )
-            agreements_by_product = await self._selections.get_valid_agreements([p.id for p in products])
-            before = len(products)
-            products = [p for p in products if agreements_by_product.get(p.id)]
-            logger.info(
-                f"Agreement gate — kept {len(products)}/{before} products with a valid purchase agreement",
-                extra={
-                    "function_name": "run",
-                    "input_data": {"before": before, "kept": len(products), "in_scope": len(agreements_by_product)},
-                },
-            )
-        else:
-            logger.info(
-                "Step 2b/5 — purchase-agreement validation disabled (SELECTION_VALIDATION_ENABLED=false)",
-                extra={"function_name": "run"},
-            )
+        # Purchase agreements, one product-selections call per product drives
+        # two checks:
+        #   * product scope — keep only products with a valid (active, unexpired)
+        #     purchase agreement, and capture each agreement's contract id etc.;
+        #   * seller availability — the product's selection whose supplier is the
+        #     seller sets that seller's temporary_unavailable: available when the
+        #     selection is active and has started (validFrom <= today).
+        logger.info(
+            f"Step 2b/5 — validating purchase agreements (product selections) for {len(products)} product(s)",
+            extra={"function_name": "run"},
+        )
+        agreements_by_product, availability_by_product = await self._selections.get_agreements_and_availability(
+            [p.id for p in products]
+        )
+        before = len(products)
+        products = [p for p in products if agreements_by_product.get(p.id)]
+        logger.info(
+            f"Agreement gate — kept {len(products)}/{before} products with a valid purchase agreement",
+            extra={
+                "function_name": "run",
+                "input_data": {"before": before, "kept": len(products), "in_scope": len(agreements_by_product)},
+            },
+        )
 
         logger.info("Step 3/5 — transforming", extra={"function_name": "run"})
-        transformed = await transform(products, prices, agreements_by_product)
+        transformed = await transform(products, prices, agreements_by_product, availability_by_product)
 
         # Per-SKU storage callbacks — only wired up when uploads are enabled.
         # When enabled, each SKU's JSON and image are uploaded to object storage
