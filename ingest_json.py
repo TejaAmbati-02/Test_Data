@@ -179,6 +179,26 @@ def load_transformed(folder: Path, pattern: str, require_content: bool, limit: i
     return rows
 
 
+def apply_frontend_schema(rows: dict[str, dict]) -> None:
+    """Add the frontend-contract fields to every row, in place.
+
+    The search API returns these keys as-is, so they are indexed alongside the
+    transformer's own fields rather than derived at query time:
+
+      * ``sku_name`` — the product title (copy of ``product_name``);
+      * ``temporary_unavailable`` — the primary seller's flag
+        (``seller_details[0]``, the cheapest offer, like ``price`` / ``moq`` /
+        ``sold_by``); ``None`` when the SKU has no seller offers;
+      * ``contract_indicator`` — coerced to a real boolean (the transformer
+        writes ``""`` as a placeholder until a source is agreed).
+    """
+    for row in rows.values():
+        row["sku_name"] = row.get("product_name")
+        sellers = row.get("seller_details") or []
+        row["temporary_unavailable"] = sellers[0].get("temporary_unavailable") if sellers else None
+        row["contract_indicator"] = bool(row.get("contract_indicator"))
+
+
 def _supported_image_mime(data: bytes) -> str | None:
     """Return the MIME type if the bytes are an OCI-supported image, else None.
 
@@ -384,6 +404,7 @@ async def run(args: argparse.Namespace) -> int:
             extra={"function_name": "run"},
         )
         return EXIT_BAD_INPUT
+    apply_frontend_schema(transformed)
 
     # One embedder shared by image embedding (below) and content embedding
     # (inside index_rows), so a single OCI client is reused.
@@ -418,6 +439,10 @@ async def run(args: argparse.Namespace) -> int:
         except RuntimeError as exc:
             logger.error(str(exc), extra={"function_name": "run", "status": "error", "error_details": str(exc)})
             return EXIT_DIM_MISMATCH
+        if not created and not args.dry_run:
+            # An index built before sku_name / temporary_unavailable joined the
+            # mapping gets them added here, so no --recreate is needed.
+            await indexer.add_missing_fields()
         logger.info(
             f"Index ready — {'created' if created else 'reused existing'} '{cfg.index_name}'",
             extra={"function_name": "run", "input_data": {"created": created}},

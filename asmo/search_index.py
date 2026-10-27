@@ -138,6 +138,9 @@ def build_index_body(vector_field: str, dim: int, image_dim: int | None = None) 
                 # --- Product ---
                 "product_key":         keyword_field(),
                 "product_name":        text_field("english"),
+                # Frontend contract name for the product title (copy of product_name,
+                # written by ingest_json.py).
+                "sku_name":            text_field("english"),
                 "product_description": text_field("english"),
                 # Placeholders ("" for now). product_url is also the suggestions
                 # destination_url; an empty string indexes as false for a boolean.
@@ -215,6 +218,7 @@ def build_index_body(vector_field: str, dim: int, image_dim: int | None = None) 
                 "price":    numeric_field("float"),
                 "currency": keyword_field(),
                 "sold_by":  text_field("english"),
+                "temporary_unavailable": {"type": "boolean"},
             },
         },
     }
@@ -399,6 +403,32 @@ class OpenSearchIndexer:
                    "input_data": {"index": self._config.index_name, "dim": self._config.vector_dim, "acknowledged": response.get("acknowledged")}},
         )
         return True
+
+    async def add_missing_fields(self) -> list[str]:
+        """Add top-level fields of :func:`build_index_body` the live index lacks.
+
+        Lets an index created before a field joined the mapping pick it up with
+        the right type instead of via dynamic mapping, without a destructive
+        recreate. Adding new fields is always allowed; existing ones are left alone.
+
+        Returns:
+            The names of the fields that were added (empty when none were missing).
+        """
+        client = self._connect()
+        mapping = await client.indices.get_mapping(index=self._config.index_name)
+        live = mapping[self._config.index_name]["mappings"].get("properties", {})
+        wanted = build_index_body(
+            self._config.vector_field, self._config.vector_dim, self._config.image_vector_dim
+        )["mappings"]["properties"]
+        missing = {name: spec for name, spec in wanted.items() if name not in live}
+        if missing:
+            await client.indices.put_mapping(index=self._config.index_name, body={"properties": missing})
+            logger.info(
+                f"Added {len(missing)} missing field(s) to '{self._config.index_name}': {', '.join(missing)}",
+                extra={"function_name": "add_missing_fields", "status": "success",
+                       "input_data": {"index": self._config.index_name, "fields": list(missing)}},
+            )
+        return list(missing)
 
     async def index_rows(self, transformed: dict[str, dict]) -> dict:
         """Embed each row's ``content`` and bulk-index all rows into OpenSearch.
