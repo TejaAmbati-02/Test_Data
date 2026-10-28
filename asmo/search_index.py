@@ -116,7 +116,7 @@ def build_index_body(vector_field: str, dim: int, image_dim: int | None = None) 
             "lead_time":               numeric_field("integer"),
             "moq":                     numeric_field("integer"),  # Minimum Order Quantity
             "unit_type":               keyword_field(),
-            "temporary_unavailable":   {"type": "boolean"},
+            "contracted_scope":        {"type": "boolean"},
             "is_blocked_for_deletion": keyword_field(),
         }
 
@@ -211,7 +211,7 @@ def build_index_body(vector_field: str, dim: int, image_dim: int | None = None) 
                 # Every usable seller offer for the SKU (nested, so each offer's
                 # fields stay paired and independently queryable) — seller_id,
                 # seller_name, supplier_id, contract_id, price, currency, lead_time,
-                # moq, unit_type, temporary_unavailable and is_blocked_for_deletion.
+                # moq, unit_type, contracted_scope and is_blocked_for_deletion.
                 # seller_details[0] is the primary (cheapest); supplier_count is its length.
                 "seller_details": {"type": "nested", "properties": seller_properties()},
                 "supplier_count": numeric_field("integer"),
@@ -221,7 +221,7 @@ def build_index_body(vector_field: str, dim: int, image_dim: int | None = None) 
                 "price":    numeric_field("float"),
                 "currency": keyword_field(),
                 "sold_by":  text_field("english"),
-                "temporary_unavailable": {"type": "boolean"},
+                "contracted_scope": {"type": "boolean"},
             },
         },
     }

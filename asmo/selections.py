@@ -15,15 +15,15 @@ used for two things:
      valid_until}`` is attached to the product (its contract ids also steer
      which seller price is preferred).
 
-**Seller availability** (each seller offer's ``temporary_unavailable``). Each
+**Seller availability** (each seller offer's ``contracted_scope``). Each
 selection names its supplier in the ``supplier`` custom field — the same channel
 a standalone price's ``channel`` points at (the price's ``seller_id``). From the
 same per-product call above, a seller is **available** for the product when one
 of the product's selections whose ``supplier`` is that seller is **active** and
 has **started** (``validFrom`` today or earlier; no ``validFrom`` means no start
-restriction) — its offer then has ``temporary_unavailable = false``; otherwise
+restriction) — its offer then has ``contracted_scope = false``; otherwise
 (inactive / not yet started, or no agreement for the product)
-``temporary_unavailable = true``.
+``contracted_scope = true``.
 
 Because ``active``/``validFrom``/``validUntil``/``contractId``/``supplier`` are
 project-specific custom fields rather than standard CommerceTools attributes,
@@ -172,6 +172,14 @@ def _available(info: dict, today: date) -> bool:
     return info["active"] and (info["valid_from_date"] is None or info["valid_from_date"] <= today)
 
 
+def _unexpired(info: dict, today: date) -> bool:
+    """True when an agreement has not expired: ``validUntil`` >= today.
+
+    ``validUntil`` is required — without it the agreement cannot be proven unexpired.
+    """
+    return info["valid_until_date"] is not None and info["valid_until_date"] >= today
+
+
 def _agreement(info: dict) -> dict:
     """The agreement fields attached to a product's rows."""
     return {
@@ -212,7 +220,7 @@ class ProductSelectionsClient:
     @requires_token
     async def get_agreements_and_availability(
         self, product_ids: list[str],
-    ) -> tuple[dict[str, list[dict]], dict[str, dict[str, bool]]]:
+    ) -> tuple[dict[str, list[dict]], dict[str, dict[str, dict[str, bool]]]]:
         """Return each product's valid agreements and each seller's availability for it.
 
         For every product id, calls ``GET /products/{id}/product-selections``
@@ -222,7 +230,7 @@ class ProductSelectionsClient:
         * **scope** — the selection is active and ``validUntil`` >= today;
         * **availability** — the selection's ``supplier`` (a seller's channel id)
           is available for the product when the selection is active and
-          ``validFrom`` <= today.
+          ``validFrom`` <= today, and unexpired when ``validUntil`` >= today.
 
         Args:
             product_ids: The product ids to check.
@@ -231,8 +239,9 @@ class ProductSelectionsClient:
             ``(agreements, availability)``: product id → non-empty list of
             ``{contract_id, supplier_id, valid_from, valid_until}`` (products with
             no valid agreement omitted), and product id → {supplier id →
-            available}. A seller missing from a product's map has no agreement
-            for it (treat as unavailable).
+            {"available": bool, "unexpired": bool}} (each true when any of the
+            seller's selections for the product qualifies). A seller missing
+            from a product's map has no agreement for it (treat as unavailable).
         """
         today = date.today()
         sem = asyncio.Semaphore(self.MAX_CONCURRENCY)
@@ -241,15 +250,19 @@ class ProductSelectionsClient:
             extra={"function_name": "get_agreements_and_availability", "input_data": {"products": len(product_ids)}},
         )
 
-        async def for_product(session: aiohttp.ClientSession, pid: str) -> tuple[str, list[dict], dict[str, bool]]:
+        async def for_product(
+            session: aiohttp.ClientSession, pid: str,
+        ) -> tuple[str, list[dict], dict[str, dict[str, bool]]]:
             async with sem:
                 rows = await self._list_all(session, f"products/{pid}/product-selections", expand=self.EXPAND)
             infos = [_agreement_info(r) for r in rows]
             valid = [_agreement(i) for i in infos if _in_scope(i, today)]
-            sellers: dict[str, bool] = {}
+            sellers: dict[str, dict[str, bool]] = {}
             for i in infos:
                 if i["supplier_id"]:
-                    sellers[i["supplier_id"]] = sellers.get(i["supplier_id"], False) or _available(i, today)
+                    seller = sellers.setdefault(i["supplier_id"], {"available": False, "unexpired": False})
+                    seller["available"] = seller["available"] or _available(i, today)
+                    seller["unexpired"] = seller["unexpired"] or _unexpired(i, today)
             logger.debug(
                 f"Product {pid} → {len(valid)} valid of {len(infos)} agreement(s); sellers available={sellers}",
                 extra={"request_id": pid, "function_name": "get_agreements_and_availability",

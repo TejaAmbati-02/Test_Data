@@ -60,7 +60,7 @@ class Pipeline:
         #   * product scope — keep only products with a valid (active, unexpired)
         #     purchase agreement, and capture each agreement's contract id etc.;
         #   * seller availability — the product's selection whose supplier is the
-        #     seller sets that seller's temporary_unavailable: available when the
+        #     seller sets that seller's contracted_scope: available when the
         #     selection is active and has started (validFrom <= today).
         logger.info(
             f"Step 2b/5 — validating purchase agreements (product selections) for {len(products)} product(s)",
