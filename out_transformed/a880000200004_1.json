@@ -1,0 +1,51 @@
+{
+  "product_key": "deacf34f-5a48-404e-9307-a04760f55968",
+  "product_name": "Stapler, Standard Duty, Black",
+  "sku_name": "Stapler, Standard Duty, Black",
+  "product_description": "Stapler, Standard Duty, Black, For General Office Use, Standard Quality, Community Office Supplies Stock",
+  "product_url": "",
+  "contract_indicator": false,
+  "availability": "IN_STOCK",
+  "material_type": "9COM",
+  "category_name": "Communities, Offices & Others",
+  "category_ids": [
+    "2b4437cb-4e08-4e70-8ed2-feaf7193ad70"
+  ],
+  "category_slug": "buyer-default-communities-offices-and-others",
+  "category_description": "Communities, Offices & Others",
+  "category_key": "buyer-default-communities-offices-and-others",
+  "sub_category_name": "Office Supplies",
+  "sub_category_id": "26e9db10-a7e5-465a-b616-1db6a6ad1614",
+  "sub_category_slug": "buyer-default-communities-offices-and-others-office-supplies",
+  "sub_category_description": "Office Supplies",
+  "sub_category_key": "buyer-default-communities-offices-and-others-office-supplies",
+  "product_type": "Stationary Items",
+  "product_type_id": "f88c9554-2d67-41ee-86d2-17430c5abc90",
+  "product_type_slug": "buyer-default-communities-offices-and-others-office-supplies-106000",
+  "product_type_description": "Stationary Items",
+  "product_type_key": "buyer-default-communities-offices-and-others-office-supplies-106000",
+  "purchase_agreements": [
+    {
+      "contract_id": "demo-cont-001",
+      "supplier_id": "7f67afea-9853-43b5-bc5b-69904e4e2a6f",
+      "valid_from": "2026-10-01T01:30:00.000Z",
+      "valid_until": "2029-10-31T16:30:00.000Z"
+    }
+  ],
+  "sku_key": "a-880000200004_1",
+  "sku_id": "a-880000200004_1",
+  "image_urls": null,
+  "primary_image_url": null,
+  "asmo_material_number": "a-880000200004",
+  "aramco_material_number": null,
+  "seller_details": null,
+  "supplier_count": 0,
+  "moq": null,
+  "price": null,
+  "currency": null,
+  "sold_by": null,
+  "temporary_unavailable": null,
+  "under_agreement": null,
+  "content": "product_key:deacf34f-5a48-404e-9307-a04760f55968 | product_name:Stapler, Standard Duty, Black | product_description:Stapler, Standard Duty, Black, For General Office Use, Standard Quality, Community Office Supplies Stock | availability:IN_STOCK | material_type:9COM | category_name:Communities, Offices & Others | category_ids:2b4437cb-4e08-4e70-8ed2-feaf7193ad70 | category_slug:buyer-default-communities-offices-and-others | category_description:Communities, Offices & Others | category_key:buyer-default-communities-offices-and-others | sub_category_name:Office Supplies | sub_category_id:26e9db10-a7e5-465a-b616-1db6a6ad1614 | sub_category_slug:buyer-default-communities-offices-and-others-office-supplies | sub_category_description:Office Supplies | sub_category_key:buyer-default-communities-offices-and-others-office-supplies | product_type:Stationary Items | product_type_id:f88c9554-2d67-41ee-86d2-17430c5abc90 | product_type_slug:buyer-default-communities-offices-and-others-office-supplies-106000 | product_type_description:Stationary Items | product_type_key:buyer-default-communities-offices-and-others-office-supplies-106000 | purchase_agreements:demo-cont-001, 7f67afea-9853-43b5-bc5b-69904e4e2a6f, 2026-10-01T01:30:00.000Z, 2029-10-31T16:30:00.000Z | sku_key:a-880000200004_1 | sku_id:a-880000200004_1 | asmo_material_number:a-880000200004 | supplier_count:0",
+  "image_content": []
+}
