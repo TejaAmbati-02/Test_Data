@@ -50,7 +50,7 @@
       "moq": null,
       "unit_type": "EA",
       "temporary_unavailable": true,
-      "under_agreement": true
+      "under_agreement": false
     },
     {
       "seller_id": "3a7b23e0-0047-4d63-88a9-cd05d1006a39",
@@ -63,7 +63,7 @@
       "moq": null,
       "unit_type": "EA",
       "temporary_unavailable": true,
-      "under_agreement": true
+      "under_agreement": false
     }
   ],
   "supplier_count": 2,
@@ -72,7 +72,7 @@
   "currency": "SAR",
   "sold_by": "Wholesale Warehouse",
   "temporary_unavailable": true,
-  "under_agreement": true,
-  "content": "product_key:9bc4e87a-de21-4b5c-bc80-353fbe61a7b2 | product_name:3810M/2930M 4SFP+ MACsec Module | product_description:Aruba 3810M/2930M 4SFP+ MACsec Module | availability:IN_STOCK | material_type:9COM | category_name:Instrumentation & IT | category_ids:938869fc-bc69-4c1f-bc2d-ef37b479629f | category_slug:buyer-default-instrumentation-and-it | category_description:Instrumentation & IT | category_key:buyer-default-instrumentation-and-it | sub_category_name:Communications | sub_category_id:cd43821c-9213-4a52-ad96-7af05f52a02d | sub_category_slug:buyer-default-instrumentation-and-it-communications | sub_category_description:Communications | sub_category_key:buyer-default-instrumentation-and-it-communications | product_type:LAN and Cable Dist. | product_type_id:754032b4-6866-49ae-9a6b-1d5a43de6d26 | product_type_slug:buyer-default-instrumentation-and-it-communications-078000 | product_type_description:LAN and Cable Dist. | product_type_key:buyer-default-instrumentation-and-it-communications-078000 | purchase_agreements:demo-cont-001, 7f67afea-9853-43b5-bc5b-69904e4e2a6f, 2026-10-01T01:30:00.000Z, 2029-10-31T16:30:00.000Z | sku_key:880003591624_1 | sku_id:880003591624_1 | asmo_material_number:a-880000629776 | aramco_material_number:JL083A | seller_details:3a7b23e0-0047-4d63-88a9-cd05d1006a39, Wholesale Warehouse, Aruba, 4990027170, 100.0, SAR, 3, EA, True, True, 3a7b23e0-0047-4d63-88a9-cd05d1006a39, Wholesale Warehouse, Aruba, 4990027170, 150.0, SAR, 3, EA, True, True | supplier_count:2 | price:100.0 | currency:SAR | sold_by:Wholesale Warehouse",
+  "under_agreement": false,
+  "content": "product_key:9bc4e87a-de21-4b5c-bc80-353fbe61a7b2 | product_name:3810M/2930M 4SFP+ MACsec Module | product_description:Aruba 3810M/2930M 4SFP+ MACsec Module | availability:IN_STOCK | material_type:9COM | category_name:Instrumentation & IT | category_ids:938869fc-bc69-4c1f-bc2d-ef37b479629f | category_slug:buyer-default-instrumentation-and-it | category_description:Instrumentation & IT | category_key:buyer-default-instrumentation-and-it | sub_category_name:Communications | sub_category_id:cd43821c-9213-4a52-ad96-7af05f52a02d | sub_category_slug:buyer-default-instrumentation-and-it-communications | sub_category_description:Communications | sub_category_key:buyer-default-instrumentation-and-it-communications | product_type:LAN and Cable Dist. | product_type_id:754032b4-6866-49ae-9a6b-1d5a43de6d26 | product_type_slug:buyer-default-instrumentation-and-it-communications-078000 | product_type_description:LAN and Cable Dist. | product_type_key:buyer-default-instrumentation-and-it-communications-078000 | purchase_agreements:demo-cont-001, 7f67afea-9853-43b5-bc5b-69904e4e2a6f, 2026-10-01T01:30:00.000Z, 2029-10-31T16:30:00.000Z | sku_key:880003591624_1 | sku_id:880003591624_1 | asmo_material_number:a-880000629776 | aramco_material_number:JL083A | seller_details:3a7b23e0-0047-4d63-88a9-cd05d1006a39, Wholesale Warehouse, Aruba, 4990027170, 100.0, SAR, 3, EA, True, False, 3a7b23e0-0047-4d63-88a9-cd05d1006a39, Wholesale Warehouse, Aruba, 4990027170, 150.0, SAR, 3, EA, True, False | supplier_count:2 | price:100.0 | currency:SAR | sold_by:Wholesale Warehouse",
   "image_content": []
 }

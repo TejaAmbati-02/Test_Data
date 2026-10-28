@@ -290,7 +290,7 @@ def _seller_object(price: Price | None, availability: dict[str, dict[str, bool]]
     else:
         seller = availability.get(price.seller_id) or {}
         temporary_unavailable = not seller.get("available", False)
-        under_agreement = temporary_unavailable and seller.get("unexpired", True)
+        under_agreement = not(temporary_unavailable) and seller.get("unexpired", True)
     return {
         "seller_id": price.seller_id,
         "seller_name": price.seller_name_en,

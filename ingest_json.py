@@ -20,13 +20,13 @@ non-zero exit code rather than erroring mid-run:
      embedder (``ensure_index`` — use ``--recreate`` to drop and rebuild).
 
 Usage:
-    uv run python ingest_json.py [INPUT_DIR] [options]
+    python ingest_json.py [INPUT_DIR] [options]
 
-    uv run python ingest_json.py                      # index out_transformed/
-    uv run python ingest_json.py out_transformed      # explicit directory
-    uv run python ingest_json.py --recreate           # drop + rebuild the index
-    uv run python ingest_json.py --dry-run            # checks only, no indexing
-    uv run python ingest_json.py --limit 50           # index only the first 50
+    python ingest_json.py                      # index out_transformed/
+    python ingest_json.py out_transformed      # explicit directory
+    python ingest_json.py --recreate           # drop + rebuild the index
+    python ingest_json.py --dry-run            # checks only, no indexing
+    python ingest_json.py --limit 50           # index only the first 50
 
 Exit codes:
     0 success (all rows indexed)        3 index dimension mismatch
