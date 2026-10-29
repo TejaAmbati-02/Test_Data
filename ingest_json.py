@@ -187,7 +187,7 @@ def apply_frontend_schema(rows: dict[str, dict]) -> None:
     these keys as-is, so they are indexed alongside the transformer's own fields:
 
       * ``sku_name`` — the product title (copy of ``product_name``);
-      * ``contracted_scope`` — the primary seller's flag
+      * ``temporary_unavailable`` — the primary seller's flag
         (``seller_details[0]``, the cheapest offer, like ``price`` / ``moq`` /
         ``sold_by``); ``None`` when the SKU has no seller offers;
       * ``contract_indicator`` — coerced to a real boolean (the transformer
@@ -196,12 +196,7 @@ def apply_frontend_schema(rows: dict[str, dict]) -> None:
     for row in rows.values():
         row["sku_name"] = row.get("product_name")
         sellers = row.get("seller_details") or []
-        # Files written before the rename carry the flag as temporary_unavailable.
-        for seller in sellers:
-            if "temporary_unavailable" in seller:
-                seller.setdefault("contracted_scope", seller.pop("temporary_unavailable"))
-        row.pop("temporary_unavailable", None)
-        row["contracted_scope"] = sellers[0].get("contracted_scope") if sellers else None
+        row["temporary_unavailable"] = sellers[0].get("temporary_unavailable") if sellers else None
         row["contract_indicator"] = bool(row.get("contract_indicator"))
 
 
