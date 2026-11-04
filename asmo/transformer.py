@@ -409,7 +409,7 @@ async def _parse_variant(
 
             # --- Primary seller (seller_details[0], the cheapest usable offer) ---
             # Flattened to top-level keys for the search response contract.
-            "moq": sellers[0]["moq"] if sellers else None,                  # seller_details[0].moq
+            "moq": sellers[0]["moq"] if sellers else 1,                     # seller_details[0].moq (default 1)
             "price": sellers[0]["price"] if sellers else None,              # seller_details[0].price
             "currency": sellers[0]["currency"] if sellers else None,        # seller_details[0].currency
             "sold_by": sellers[0]["seller_name"] if sellers else None,      # seller_details[0].seller_name

@@ -61,12 +61,46 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     return p.parse_args(argv)
 
 
-def build_text_body(vector: list[float], vector_field: str, size: int) -> dict:
-    """kNN search body over the content (text) vector."""
+# Lexical field weights (boosts) for text search. Higher = a match on that field
+# counts more toward the score. Seller fields live in the nested seller_details.
+FIELD_WEIGHTS: dict[str, float] = {
+    "aramco_material_number": 8,
+    "asmo_material_number":   8,
+    "product_name":           7,
+    "product_description":    3,
+    "content":                1,
+}
+SELLER_FIELD_WEIGHTS: dict[str, float] = {
+    "seller_details.seller_name": 5,
+    "seller_details.seller_id":   5,
+}
+
+
+def _boosted(weights: dict[str, float]) -> list[str]:
+    return [f"{field}^{w:g}" for field, w in weights.items()]
+
+
+def build_text_body(query: str, vector: list[float], vector_field: str, size: int) -> dict:
+    """Hybrid search body: weighted lexical match (see FIELD_WEIGHTS) + kNN over the content vector."""
     return {
         "size": size,
         "_source": ["sku_id", "product_key", "product_name", "category_name", "image_urls"],
-        "query": {"knn": {vector_field: {"vector": vector, "k": size}}},
+        "query": {
+            "bool": {
+                "should": [
+                    {"multi_match": {"query": query, "fields": _boosted(FIELD_WEIGHTS), "type": "best_fields"}},
+                    {
+                        "nested": {
+                            "path": "seller_details",
+                            "score_mode": "max",
+                            "query": {"multi_match": {"query": query, "fields": _boosted(SELLER_FIELD_WEIGHTS)}},
+                        }
+                    },
+                    {"knn": {vector_field: {"vector": vector, "k": size}}},
+                ],
+                "minimum_should_match": 1,
+            }
+        },
     }
 
 
@@ -148,7 +182,7 @@ async def search_text(embedder: OCIEmbedder, client, index: str, vector_field: s
     if not vec:
         print("  (failed to embed query)")
         return
-    resp = await client.search(index=index, body=build_text_body(vec, vector_field, size))
+    resp = await client.search(index=index, body=build_text_body(query, vec, vector_field, size))
     _print_hits(resp)
 
 
@@ -230,8 +264,8 @@ async def emit_query(args: argparse.Namespace) -> int:
     if not vec:
         print("  (failed to embed query)")
         return 1
-    body = build_text_body(vec, cfg.vector_field, args.size)
-    print(f"\n# Text kNN for {args.text!r} — paste into OpenSearch Dashboards → Dev Tools:\n")
+    body = build_text_body(args.text, vec, cfg.vector_field, args.size)
+    print(f"\n# Hybrid text search for {args.text!r} — paste into OpenSearch Dashboards → Dev Tools:\n")
     print(f"POST {cfg.index_name}/_search\n{json.dumps(body)}\n")
     return 0
 

@@ -45,7 +45,7 @@ class Price:
     lead_time_days: int | None
     price_unit: str | None
     unit_type: str | None
-    moq: int | None
+    moq: int
     temporary_unavailable: bool | None
     is_blocked_for_deletion: str | None
     raw: dict = field(repr=False)
@@ -159,7 +159,8 @@ class Price:
             # Spec "unitOfMeasure" — JSON path: custom.fields.priceUnit.
             unit_type=custom_fields.get("priceUnit"),
             # Spec "MOQ" (Minimum Order Quantity) — JSON path: custom.fields.minimumQuantity.
-            moq=custom_fields.get("minimumQuantity"),
+            # Coerced to an int by _moq; defaults to 1 when absent or unparseable.
+            moq=_moq(custom_fields.get("minimumQuantity")),
             # Spec "temporary unavailable" — JSON path: custom.fields.temporarilyUnavailable
             # (the CommerceTools field name; temporaryUnavailable is also accepted), a
             # localized or plain "true"/"false" value (e.g. {"en": "false"}) coerced to a
@@ -204,6 +205,24 @@ class Price:
             },
         )
         return price
+
+
+DEFAULT_MOQ = 1
+
+
+def _moq(value) -> int:
+    """Coerce the ``minimumQuantity`` custom field into an ``int``.
+
+    Accepts ints, floats (e.g. ``10.0``) and numeric strings (e.g. ``"10"``).
+    Returns ``DEFAULT_MOQ`` (1) when the value is absent, not numeric, or < 1.
+    """
+    if isinstance(value, bool):
+        return DEFAULT_MOQ
+    try:
+        moq = int(float(value))
+    except (TypeError, ValueError):
+        return DEFAULT_MOQ
+    return moq if moq >= 1 else DEFAULT_MOQ
 
 
 def _localized_bool(value) -> bool | None:

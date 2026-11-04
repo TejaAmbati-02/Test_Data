@@ -89,7 +89,7 @@ def _agreement_info(assignment: dict) -> dict:
         assignment: One product-selection assignment payload.
 
     Returns:
-        A dict with ``active`` (bool), ``contract_id``, ``supplier_id``,
+        A dict with ``active`` (bool), ``contract_id``, ``supplier_ids`` (list),
         ``valid_from`` / ``valid_until`` (raw strings) and ``valid_from_date`` /
         ``valid_until_date`` (parsed :class:`date` or ``None``).
     """
@@ -129,8 +129,12 @@ def _agreement_info(assignment: dict) -> dict:
     active = pick("active")                                   # custom.fields.active
     valid_from = pick("validFrom")                           # custom.fields.validFrom
     valid_until = pick("validUntil")                         # custom.fields.validUntil
-    supplier = pick("supplier")                              # custom.fields.supplier (channel reference)
-    supplier_id = supplier.get("id") if isinstance(supplier, dict) else supplier
+    supplier = pick("supplier")                              # custom.fields.supplier (channel reference, or a set of them)
+    # Some projects model supplier as a single reference, others as a Set of
+    # references — normalise to a list of channel ids either way.
+    suppliers = supplier if isinstance(supplier, list) else [supplier]
+    supplier_ids = [s.get("id") if isinstance(s, dict) else s for s in suppliers]
+    supplier_ids = [sid for sid in supplier_ids if sid]
     # contractId is the key join to standalone prices. Fall back to the selection
     # key, then its id, so a valid agreement always carries an identifier.
     contract_id = pick("contractId") or selection.get("key") or selection_ref.get("id")
@@ -140,7 +144,7 @@ def _agreement_info(assignment: dict) -> dict:
         # explicit falsy value rejects the agreement.
         "active": True if active is None else bool(active),
         "contract_id": contract_id,                          # from custom.fields.contractId (or key/id)
-        "supplier_id": supplier_id,                          # custom.fields.supplier.id (the seller's channel id)
+        "supplier_ids": supplier_ids,                        # custom.fields.supplier[*].id (the sellers' channel ids)
         "valid_from": valid_from,                            # raw custom.fields.validFrom string
         "valid_from_date": _as_date(valid_from),             # parsed to a date for the start check
         "valid_until": valid_until,                          # raw custom.fields.validUntil string
@@ -148,7 +152,7 @@ def _agreement_info(assignment: dict) -> dict:
     }
     logger.debug(
         f"Agreement fields: selection.id={selection_ref.get('id')!r} key={selection.get('key')!r} "
-        f"→ active={info['active']} contract_id={info['contract_id']!r} supplier_id={info['supplier_id']!r} "
+        f"→ active={info['active']} contract_id={info['contract_id']!r} supplier_ids={info['supplier_ids']!r} "
         f"valid_from={info['valid_from']!r} valid_until={info['valid_until']!r} (parsed {info['valid_until_date']})",
         extra={"function_name": "_agreement_info", "input_data": info | {
             "valid_from_date": str(info["valid_from_date"]), "valid_until_date": str(info["valid_until_date"])}},
@@ -180,14 +184,14 @@ def _unexpired(info: dict, today: date) -> bool:
     return info["valid_until_date"] is not None and info["valid_until_date"] >= today
 
 
-def _agreement(info: dict) -> dict:
-    """The agreement fields attached to a product's rows."""
-    return {
+def _agreements(info: dict) -> list[dict]:
+    """The agreement fields attached to a product's rows — one per supplier."""
+    return [{
         "contract_id": info["contract_id"],
-        "supplier_id": info["supplier_id"],
+        "supplier_id": supplier_id,
         "valid_from": info["valid_from"],
         "valid_until": info["valid_until"],
-    }
+    } for supplier_id in info["supplier_ids"] or [None]]
 
 
 class ProductSelectionsClient:
@@ -256,11 +260,11 @@ class ProductSelectionsClient:
             async with sem:
                 rows = await self._list_all(session, f"products/{pid}/product-selections", expand=self.EXPAND)
             infos = [_agreement_info(r) for r in rows]
-            valid = [_agreement(i) for i in infos if _in_scope(i, today)]
+            valid = [a for i in infos if _in_scope(i, today) for a in _agreements(i)]
             sellers: dict[str, dict[str, bool]] = {}
             for i in infos:
-                if i["supplier_id"]:
-                    seller = sellers.setdefault(i["supplier_id"], {"available": False, "unexpired": False})
+                for supplier_id in i["supplier_ids"]:
+                    seller = sellers.setdefault(supplier_id, {"available": False, "unexpired": False})
                     seller["available"] = seller["available"] or _available(i, today)
                     seller["unexpired"] = seller["unexpired"] or _unexpired(i, today)
             logger.debug(
