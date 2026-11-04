@@ -46,7 +46,7 @@
       "contract_id": "9901007196",
       "price": 35.0,
       "currency": "SAR",
-      "lead_time": "3",
+      "lead_time": 3,
       "moq": 1,
       "unit_type": null,
       "temporary_unavailable": true,

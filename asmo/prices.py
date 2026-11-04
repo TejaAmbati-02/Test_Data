@@ -42,7 +42,7 @@ class Price:
     seller_name_de: str | None
     supplier_id: str | None
     contract_id: str | None
-    lead_time_days: int | None
+    lead_time_days: int
     price_unit: str | None
     unit_type: str | None
     moq: int
@@ -154,7 +154,7 @@ class Price:
             seller_name_de=_channel_name(raw, "de"),        # JSON path: channel.obj.name.de
             supplier_id=custom_fields.get("supplierId"),    # JSON path: custom.fields.supplierId
             contract_id=custom_fields.get("contractId"),    # JSON path: custom.fields.contractId (ties to a purchase agreement)
-            lead_time_days=custom_fields.get("leadTimeDays"),   # JSON path: custom.fields.leadTimeDays
+            lead_time_days=_lead_time(custom_fields.get("leadTimeDays")),   # JSON path: custom.fields.leadTimeDays (int; 1 if empty)
             price_unit=value.get("currencyCode"),           # JSON path: value.currencyCode (kept for back-compat)
             # Spec "unitOfMeasure" — JSON path: custom.fields.priceUnit.
             unit_type=custom_fields.get("priceUnit"),
@@ -223,6 +223,24 @@ def _moq(value) -> int:
     except (TypeError, ValueError):
         return DEFAULT_MOQ
     return moq if moq >= 1 else DEFAULT_MOQ
+
+
+DEFAULT_LEAD_TIME = 1
+
+
+def _lead_time(value) -> int:
+    """Coerce the ``leadTimeDays`` custom field into an ``int``.
+
+    CommerceTools may send it as a string (e.g. ``"3"``). Accepts ints, floats
+    and numeric strings; returns ``DEFAULT_LEAD_TIME`` (1) when absent, blank
+    or not numeric.
+    """
+    if value is None or isinstance(value, bool):
+        return DEFAULT_LEAD_TIME
+    try:
+        return int(float(value))
+    except (TypeError, ValueError):
+        return DEFAULT_LEAD_TIME
 
 
 def _localized_bool(value) -> bool | None:
