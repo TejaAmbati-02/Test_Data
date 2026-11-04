@@ -1,5 +1,5 @@
 {
-  "product_key": "bfc7df30-8a39-4afa-b03b-3e3881d066c2",
+  "product_key": "27955c36-ef7d-4c03-8cc9-acb4c30e51e9",
   "product_name": "HPE 2.5m C19",
   "sku_name": "HPE 2.5m C19",
   "product_description": "HPE 2.5m C19 to NEMA 5-20P Power Cord",
@@ -9,27 +9,27 @@
   "material_type": "9COM",
   "category_name": "Instrumentation & IT",
   "category_ids": [
-    "08537951-b676-4bbd-86d3-912c0e4541be"
+    "938869fc-bc69-4c1f-bc2d-ef37b479629f"
   ],
   "category_slug": "buyer-default-instrumentation-and-it",
   "category_description": "Instrumentation & IT",
   "category_key": "buyer-default-instrumentation-and-it",
   "sub_category_name": "Communications",
-  "sub_category_id": "e7b98a95-573e-4e19-83f0-17930256189a",
+  "sub_category_id": "cd43821c-9213-4a52-ad96-7af05f52a02d",
   "sub_category_slug": "buyer-default-instrumentation-and-it-communications",
   "sub_category_description": "Communications",
   "sub_category_key": "buyer-default-instrumentation-and-it-communications",
   "product_type": "LAN and Cable Dist.",
-  "product_type_id": "d60e2dfb-7f70-4ed1-8947-2c76531d9207",
+  "product_type_id": "754032b4-6866-49ae-9a6b-1d5a43de6d26",
   "product_type_slug": "buyer-default-instrumentation-and-it-communications-078000",
   "product_type_description": "LAN and Cable Dist.",
   "product_type_key": "buyer-default-instrumentation-and-it-communications-078000",
   "purchase_agreements": [
     {
       "contract_id": "demo-cont-001",
-      "supplier_id": "315d6385-93bf-4fc5-91d1-d7d940a785c6",
-      "valid_from": "2026-01-01T00:00:00.000Z",
-      "valid_until": "2029-11-02T06:59:00.000Z"
+      "supplier_id": "7f67afea-9853-43b5-bc5b-69904e4e2a6f",
+      "valid_from": "2026-10-01T01:30:00.000Z",
+      "valid_until": "2028-11-01T06:17:00.000Z"
     }
   ],
   "sku_key": "880007293944_1",
@@ -40,7 +40,7 @@
   "aramco_material_number": "JL349A",
   "seller_details": [
     {
-      "seller_id": "c7afe285-2a70-4a6a-b409-903a76e681c6",
+      "seller_id": "3a7b23e0-0047-4d63-88a9-cd05d1006a39",
       "seller_name": "Wholesale Warehouse",
       "supplier_id": "Aruba",
       "contract_id": "4990027170",
@@ -53,7 +53,7 @@
       "under_agreement": false
     },
     {
-      "seller_id": "c7afe285-2a70-4a6a-b409-903a76e681c6",
+      "seller_id": "3a7b23e0-0047-4d63-88a9-cd05d1006a39",
       "seller_name": "Wholesale Warehouse",
       "supplier_id": "Aruba",
       "contract_id": "4990027170",
@@ -73,6 +73,6 @@
   "sold_by": "Wholesale Warehouse",
   "temporary_unavailable": true,
   "under_agreement": false,
-  "content": "product_key:bfc7df30-8a39-4afa-b03b-3e3881d066c2 | product_name:HPE 2.5m C19 | product_description:HPE 2.5m C19 to NEMA 5-20P Power Cord | availability:IN_STOCK | material_type:9COM | category_name:Instrumentation & IT | category_ids:08537951-b676-4bbd-86d3-912c0e4541be | category_slug:buyer-default-instrumentation-and-it | category_description:Instrumentation & IT | category_key:buyer-default-instrumentation-and-it | sub_category_name:Communications | sub_category_id:e7b98a95-573e-4e19-83f0-17930256189a | sub_category_slug:buyer-default-instrumentation-and-it-communications | sub_category_description:Communications | sub_category_key:buyer-default-instrumentation-and-it-communications | product_type:LAN and Cable Dist. | product_type_id:d60e2dfb-7f70-4ed1-8947-2c76531d9207 | product_type_slug:buyer-default-instrumentation-and-it-communications-078000 | product_type_description:LAN and Cable Dist. | product_type_key:buyer-default-instrumentation-and-it-communications-078000 | purchase_agreements:demo-cont-001, 315d6385-93bf-4fc5-91d1-d7d940a785c6, 2026-01-01T00:00:00.000Z, 2029-11-02T06:59:00.000Z | sku_key:880007293944_1 | sku_id:880007293944_1 | asmo_material_number:a-880000629786 | aramco_material_number:JL349A | seller_details:c7afe285-2a70-4a6a-b409-903a76e681c6, Wholesale Warehouse, Aruba, 4990027170, 100.0, SAR, 3, 1, EA, True, False, c7afe285-2a70-4a6a-b409-903a76e681c6, Wholesale Warehouse, Aruba, 4990027170, 150.0, SAR, 3, 1, EA, True, False | supplier_count:2 | moq:1 | price:100.0 | currency:SAR | sold_by:Wholesale Warehouse",
+  "content": "product_key:27955c36-ef7d-4c03-8cc9-acb4c30e51e9 | product_name:HPE 2.5m C19 | product_description:HPE 2.5m C19 to NEMA 5-20P Power Cord | availability:IN_STOCK | material_type:9COM | category_name:Instrumentation & IT | category_ids:938869fc-bc69-4c1f-bc2d-ef37b479629f | category_slug:buyer-default-instrumentation-and-it | category_description:Instrumentation & IT | category_key:buyer-default-instrumentation-and-it | sub_category_name:Communications | sub_category_id:cd43821c-9213-4a52-ad96-7af05f52a02d | sub_category_slug:buyer-default-instrumentation-and-it-communications | sub_category_description:Communications | sub_category_key:buyer-default-instrumentation-and-it-communications | product_type:LAN and Cable Dist. | product_type_id:754032b4-6866-49ae-9a6b-1d5a43de6d26 | product_type_slug:buyer-default-instrumentation-and-it-communications-078000 | product_type_description:LAN and Cable Dist. | product_type_key:buyer-default-instrumentation-and-it-communications-078000 | purchase_agreements:demo-cont-001, 7f67afea-9853-43b5-bc5b-69904e4e2a6f, 2026-10-01T01:30:00.000Z, 2028-11-01T06:17:00.000Z | sku_key:880007293944_1 | sku_id:880007293944_1 | asmo_material_number:a-880000629786 | aramco_material_number:JL349A | seller_details:3a7b23e0-0047-4d63-88a9-cd05d1006a39, Wholesale Warehouse, Aruba, 4990027170, 100.0, SAR, 3, 1, EA, True, False, 3a7b23e0-0047-4d63-88a9-cd05d1006a39, Wholesale Warehouse, Aruba, 4990027170, 150.0, SAR, 3, 1, EA, True, False | supplier_count:2 | moq:1 | price:100.0 | currency:SAR | sold_by:Wholesale Warehouse",
   "image_content": []
 }
