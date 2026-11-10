@@ -7,17 +7,17 @@ Reads every per-SKU JSON file in ``out_transformed/`` and, using the same OCI
   * embeds ``image_content``  -> nested ``images: [{image_url, image_vector}, ...]``
     (the raw base64 ``image_content`` is removed, it is not in the index mapping)
 
-Outputs (in ``final_json/``):
-  * ``<sku>.json``            one enriched document per SKU
-  * ``index_mapping.json``    body for ``PUT <index>`` (create the index in Dev Tools)
-  * ``bulk_NNN.ndjson``       bodies for ``POST _bulk`` (paste into Dev Tools), split
-                              into chunks of ``--docs-per-bulk`` docs so each paste
-                              stays small enough for the Dashboards console
+Output: ONE file, ``final_json/final.json`` — a JSON array of every document
+(all original fields + ``content_vector`` + ``images``).
+
+With ``--bulk`` it also writes, for pushing via OpenSearch Dashboards Dev Tools:
+  * ``final_json/bulk.ndjson``          body for ``POST _bulk`` (all docs, one file)
+  * ``final_json/index_mapping.json``   body for ``PUT <index>``
 
 Usage:
-    python embed_json.py                                   # out_transformed -> final_json
-    python embed_json.py IN_DIR --out-dir final_json --index asmo-search-api-index
-    python embed_json.py --no-image-embeddings --limit 10
+    python embed_json.py                     # all files in out_transformed -> final_json/final.json
+    python embed_json.py --bulk              # also write bulk.ndjson + index_mapping.json
+    python embed_json.py --out-file other.json --limit 10
 
 Requires the same .env / OCI config as ingest_json.py (OCI_COMPARTMENT_ID, ...).
 """
@@ -40,10 +40,10 @@ from asmo.search_index import build_index_body  # noqa: E402
 def parse_args(argv: list[str]) -> argparse.Namespace:
     p = argparse.ArgumentParser(prog="embed_json.py", description=__doc__.splitlines()[0])
     p.add_argument("input_dir", nargs="?", default="out_transformed", help="Directory of per-SKU *.json files.")
-    p.add_argument("--out-dir", default="final_json", help="Where to write the enriched JSON (default: final_json).")
+    p.add_argument("--out-file", default="final_json/final.json", help="Output JSON file (default: final_json/final.json).")
+    p.add_argument("--bulk", action="store_true", help="Also write bulk.ndjson + index_mapping.json next to the output file.")
     p.add_argument("--pattern", default="*.json", help="Glob for input files (default: *.json).")
     p.add_argument("--index", default=None, help="Index name used in the bulk files (default: $OPENSEARCH_INDEX).")
-    p.add_argument("--docs-per-bulk", type=int, default=25, help="Docs per bulk_NNN.ndjson file (default: 25).")
     p.add_argument("--limit", type=int, default=None, help="Process only the first N files.")
     p.add_argument("--no-image-embeddings", action="store_true", help="Skip image_content embedding (strip it only).")
     p.add_argument("--max-products-per-image", type=int, default=0, metavar="N",
@@ -62,34 +62,25 @@ async def embed_content(rows: dict[str, dict], embedder: OCIEmbedder, vector_fie
     return len(vectors)
 
 
-def write_outputs(rows: dict[str, dict], out_dir: Path, index: str, vector_field: str,
-                  dim: int, image_dim: int, docs_per_bulk: int) -> int:
-    """Write per-SKU JSON, the index mapping and chunked _bulk NDJSON files. Returns bulk file count."""
-    out_dir.mkdir(parents=True, exist_ok=True)
-    for old in out_dir.glob("bulk_*.ndjson"):  # avoid stale chunks from a previous, larger run
-        old.unlink()
-
+def write_outputs(rows: dict[str, dict], out_file: Path, bulk: bool, index: str,
+                  vector_field: str, dim: int, image_dim: int) -> None:
+    """Write all docs to one JSON array file; optionally a single _bulk NDJSON + index mapping."""
+    out_file.parent.mkdir(parents=True, exist_ok=True)
+    out_file.write_text(json.dumps(list(rows.values()), ensure_ascii=False, indent=2), encoding="utf-8")
+    if not bulk:
+        return
+    lines = []
     for sku, row in rows.items():
-        (out_dir / f"{sku}.json").write_text(json.dumps(row, ensure_ascii=False, indent=2), encoding="utf-8")
-
-    (out_dir / "index_mapping.json").write_text(
+        lines.append(json.dumps({"index": {"_index": index, "_id": sku}}))
+        lines.append(json.dumps(row, ensure_ascii=False))
+    # _bulk requires a trailing newline after the last line.
+    (out_file.parent / "bulk.ndjson").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    (out_file.parent / "index_mapping.json").write_text(
         json.dumps(build_index_body(vector_field, dim, image_dim), indent=2), encoding="utf-8")
-
-    items = list(rows.items())
-    step = max(1, docs_per_bulk)
-    n_files = 0
-    for n_files, start in enumerate(range(0, len(items), step), start=1):
-        lines = []
-        for sku, row in items[start:start + step]:
-            lines.append(json.dumps({"index": {"_index": index, "_id": sku}}))
-            lines.append(json.dumps(row, ensure_ascii=False))
-        # _bulk requires a trailing newline after the last line.
-        (out_dir / f"bulk_{n_files:03d}.ndjson").write_text("\n".join(lines) + "\n", encoding="utf-8")
-    return n_files
 
 
 async def run(args: argparse.Namespace) -> int:
-    in_dir, out_dir = Path(args.input_dir), Path(args.out_dir)
+    in_dir, out_file = Path(args.input_dir), Path(args.out_file)
     if not in_dir.is_dir():
         logger.error(f"Input directory not found: {in_dir}")
         return 2
@@ -113,14 +104,14 @@ async def run(args: argparse.Namespace) -> int:
         max_products_per_image=args.max_products_per_image or None,
     )
 
-    n_bulk = write_outputs(rows, out_dir, index, vector_field,
-                           dim, image_dim, args.docs_per_bulk)
+    write_outputs(rows, out_file, args.bulk, index, vector_field, dim, image_dim)
 
-    print(f"\nDone: {len(rows)} doc(s) -> {out_dir}/")
+    print(f"\nDone: {len(rows)} doc(s) -> {out_file}")
     print(f"  content vectors : {n_text}  (field '{vector_field}', dim {dim})")
     print(f"  image vectors   : {img['images_embedded']}  (nested 'images.image_vector')")
-    print(f"  bulk files      : {n_bulk} x bulk_NNN.ndjson for index '{index}'")
-    print(f"  index mapping   : {out_dir / 'index_mapping.json'}")
+    if args.bulk:
+        print(f"  bulk file       : {out_file.parent / 'bulk.ndjson'}  (index '{index}')")
+        print(f"  index mapping   : {out_file.parent / 'index_mapping.json'}")
     return 0
 
 
