@@ -164,10 +164,12 @@ class Price:
             # Spec "temporary unavailable" — JSON path: custom.fields.temporarilyUnavailable
             # (the CommerceTools field name; temporaryUnavailable is also accepted), a
             # localized or plain "true"/"false" value (e.g. {"en": "false"}) coerced to a
-            # bool by _localized_bool. None when absent.
-            temporary_unavailable=_localized_bool(
-                custom_fields.get("temporarilyUnavailable", custom_fields.get("temporaryUnavailable"))
-            ),
+            # bool by _localized_bool. Defaults to False (available) when absent.
+            temporary_unavailable=bool(_localized_bool(
+                custom_fields.get("temporarilyUnavailable")
+                if custom_fields.get("temporarilyUnavailable") is not None
+                else custom_fields.get("temporaryUnavailable")
+            )),
             # Spec "blockingDeletionCode" — a deletion-code string ("L" == blocked).
             # JSON path: custom.fields.purchasingContractDeletionCode. None when absent.
             is_blocked_for_deletion=custom_fields.get("purchasingContractDeletionCode"),

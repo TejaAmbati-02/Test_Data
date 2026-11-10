@@ -1,0 +1,201 @@
+[
+    {
+        "product_key": "7648183c-bd36-4b88-8673-82729a52748d",
+        "product_name": "DEMULSIFIER: PETROLEUM SERVICE",
+        "sku_name": "DEMULSIFIER: PETROLEUM SERVICE",
+        "product_description": "DEMULSIFIER: PETROLEUM SERVICE",
+        "product_url": "",
+        "contract_indicator": false,
+        "availability": "IN_STOCK",
+        "material_type": "9MFR",
+        "category_name": "Misc",
+        "category_ids": [
+            "7b746749-6fd9-4b4f-93a0-bb1a4adf9ce1"
+        ],
+        "category_slug": "all-misc",
+        "category_description": "Misc",
+        "category_key": "all-misc",
+        "sub_category_name": null,
+        "sub_category_id": null,
+        "sub_category_slug": null,
+        "sub_category_description": null,
+        "sub_category_key": null,
+        "product_type": null,
+        "product_type_id": null,
+        "product_type_slug": null,
+        "product_type_description": null,
+        "product_type_key": null,
+        "purchase_agreements": [
+            {
+                "contract_id": "4900001082",
+                "supplier_id": "3c274a70-0ba7-4e4a-bf8c-ca1213eb30e4",
+                "valid_from": "2026-10-20T00:00:00.000Z",
+                "valid_until": "2027-10-31T00:00:00.000Z"
+            }
+        ],
+        "sku_key": "100104880000_5056670000",
+        "sku_id": "5056670000",
+        "image_urls": null,
+        "primary_image_url": null,
+        "asmo_material_number": "5056670000",
+        "aramco_material_number": null,
+        "seller_details": [
+            {
+                "seller_id": "3c274a70-0ba7-4e4a-bf8c-ca1213eb30e4",
+                "seller_name": "DMS_TEST_01 TEST TEST",
+                "supplier_id": "60002113",
+                "contract_id": "4900001082",
+                "price": 10.0,
+                "currency": "USD",
+                "lead_time": 0,
+                "moq": 1,
+                "unit_type": "EA",
+                "temporary_unavailable": false,
+                "under_agreement": true
+            }
+        ],
+        "supplier_count": 1,
+        "moq": 1,
+        "price": 10.0,
+        "currency": "USD",
+        "sold_by": "DMS_TEST_01 TEST TEST",
+        "temporary_unavailable": false,
+        "under_agreement": true,
+        "content": "product_key:7648183c-bd36-4b88-8673-82729a52748d | product_name:DEMULSIFIER: PETROLEUM SERVICE | product_description:DEMULSIFIER: PETROLEUM SERVICE | availability:IN_STOCK | material_type:9MFR | category_name:Misc | category_ids:7b746749-6fd9-4b4f-93a0-bb1a4adf9ce1 | category_slug:all-misc | category_description:Misc | category_key:all-misc | purchase_agreements:4900001082, 3c274a70-0ba7-4e4a-bf8c-ca1213eb30e4, 2026-10-20T00:00:00.000Z, 2027-10-31T00:00:00.000Z | sku_key:100104880000_5056670000 | sku_id:5056670000 | asmo_material_number:5056670000 | seller_details:3c274a70-0ba7-4e4a-bf8c-ca1213eb30e4, DMS_TEST_01 TEST TEST, 60002113, 4900001082, 10.0, USD, 0, 1, EA, False, True | supplier_count:1 | moq:1 | price:10.0 | currency:USD | sold_by:DMS_TEST_01 TEST TEST",
+        "image_content": []
+    },
+    {
+        "product_key": "10915895-7bed-436a-a14f-9f9a7d434bba",
+        "product_name": "Indicator, Local",
+        "sku_name": "Indicator, Local",
+        "product_description": "Indicator, Local",
+        "product_url": "",
+        "contract_indicator": false,
+        "availability": "IN_STOCK",
+        "material_type": "9COM",
+        "category_name": "Misc",
+        "category_ids": [
+            "7b746749-6fd9-4b4f-93a0-bb1a4adf9ce1"
+        ],
+        "category_slug": "all-misc",
+        "category_description": "Misc",
+        "category_key": "all-misc",
+        "sub_category_name": null,
+        "sub_category_id": null,
+        "sub_category_slug": null,
+        "sub_category_description": null,
+        "sub_category_key": null,
+        "product_type": null,
+        "product_type_id": null,
+        "product_type_slug": null,
+        "product_type_description": null,
+        "product_type_key": null,
+        "purchase_agreements": [
+            {
+                "contract_id": "49000178661 ",
+                "supplier_id": null,
+                "valid_from": "2015-02-18T18:30:00Z",
+                "valid_until": "2028-11-24T18:29:00.000Z"
+            }
+        ],
+        "sku_key": "1001048800_960000000001",
+        "sku_id": "960000000001",
+        "image_urls": [
+            "https://fastly.picsum.photos"
+        ],
+        "primary_image_url": "https://fastly.picsum.photos",
+        "asmo_material_number": "960000000001",
+        "aramco_material_number": null,
+        "seller_details": [
+            {
+                "seller_id": "3c274a70-0ba7-4e4a-bf8c-ca1213eb30e4",
+                "seller_name": "DMS_TEST_01 TEST TEST",
+                "supplier_id": null,
+                "contract_id": "30.0",
+                "price": 717.75,
+                "currency": "USD",
+                "lead_time": 30,
+                "moq": 1,
+                "unit_type": "EA",
+                "temporary_unavailable": false,
+                "under_agreement": true
+            }
+        ],
+        "supplier_count": 1,
+        "moq": 1,
+        "price": 717.75,
+        "currency": "USD",
+        "sold_by": "DMS_TEST_01 TEST TEST",
+        "temporary_unavailable": false,
+        "under_agreement": true,
+        "content": "product_key:10915895-7bed-436a-a14f-9f9a7d434bba | product_name:Indicator, Local | product_description:Indicator, Local | availability:IN_STOCK | material_type:9COM | category_name:Misc | category_ids:7b746749-6fd9-4b4f-93a0-bb1a4adf9ce1 | category_slug:all-misc | category_description:Misc | category_key:all-misc | purchase_agreements:49000178661, 2015-02-18T18:30:00Z, 2028-11-24T18:29:00.000Z | sku_key:1001048800_960000000001 | sku_id:960000000001 | image_urls:https://fastly.picsum.photos | primary_image_url:https://fastly.picsum.photos | asmo_material_number:960000000001 | seller_details:3c274a70-0ba7-4e4a-bf8c-ca1213eb30e4, DMS_TEST_01 TEST TEST, 30.0, 717.75, USD, 30, 1, EA, False, True | supplier_count:1 | moq:1 | price:717.75 | currency:USD | sold_by:DMS_TEST_01 TEST TEST",
+        "image_content": []
+    },
+    {
+        "product_key": "0381ca44-e5a9-4c98-ae62-dfdf2a981dca",
+        "product_name": "Indicator, Local 4914-0812 + P/n W9165RH",
+        "sku_name": "Indicator, Local 4914-0812 + P/n W9165RH",
+        "product_description": "Indicator, Local 4914-0812 + P/n W9165RH",
+        "product_url": "",
+        "contract_indicator": false,
+        "availability": "IN_STOCK",
+        "material_type": "9COM",
+        "category_name": "Misc",
+        "category_ids": [
+            "7b746749-6fd9-4b4f-93a0-bb1a4adf9ce1"
+        ],
+        "category_slug": "all-misc",
+        "category_description": "Misc",
+        "category_key": "all-misc",
+        "sub_category_name": null,
+        "sub_category_id": null,
+        "sub_category_slug": null,
+        "sub_category_description": null,
+        "sub_category_key": null,
+        "product_type": null,
+        "product_type_id": null,
+        "product_type_slug": null,
+        "product_type_description": null,
+        "product_type_key": null,
+        "purchase_agreements": [
+            {
+                "contract_id": "49000178662 ",
+                "supplier_id": "3c274a70-0ba7-4e4a-bf8c-ca1213eb30e4",
+                "valid_from": "2022-02-02T18:30:00.000Z",
+                "valid_until": "2027-11-25T18:29:00.000Z"
+            }
+        ],
+        "sku_key": "1001048801_970000000001",
+        "sku_id": "970000000001",
+        "image_urls": [
+            "https://fastly.picsum.photos"
+        ],
+        "primary_image_url": "https://fastly.picsum.photos",
+        "asmo_material_number": "970000000001",
+        "aramco_material_number": null,
+        "seller_details": [
+            {
+                "seller_id": "61070557-0c49-412e-98b2-6e2b01e465fe",
+                "seller_name": "ZMFR_CR5",
+                "supplier_id": null,
+                "contract_id": "30.0",
+                "price": 717.75,
+                "currency": "USD",
+                "lead_time": 30,
+                "moq": 1,
+                "unit_type": "EA",
+                "temporary_unavailable": false,
+                "under_agreement": true
+            }
+        ],
+        "supplier_count": 1,
+        "moq": 1,
+        "price": 717.75,
+        "currency": "USD",
+        "sold_by": "ZMFR_CR5",
+        "temporary_unavailable": false,
+        "under_agreement": true,
+        "content": "product_key:0381ca44-e5a9-4c98-ae62-dfdf2a981dca | product_name:Indicator, Local 4914-0812 + P/n W9165RH | product_description:Indicator, Local 4914-0812 + P/n W9165RH | availability:IN_STOCK | material_type:9COM | category_name:Misc | category_ids:7b746749-6fd9-4b4f-93a0-bb1a4adf9ce1 | category_slug:all-misc | category_description:Misc | category_key:all-misc | purchase_agreements:49000178662, 3c274a70-0ba7-4e4a-bf8c-ca1213eb30e4, 2022-02-02T18:30:00.000Z, 2027-11-25T18:29:00.000Z | sku_key:1001048801_970000000001 | sku_id:970000000001 | image_urls:https://fastly.picsum.photos | primary_image_url:https://fastly.picsum.photos | asmo_material_number:970000000001 | seller_details:61070557-0c49-412e-98b2-6e2b01e465fe, ZMFR_CR5, 30.0, 717.75, USD, 30, 1, EA, False, True | supplier_count:1 | moq:1 | price:717.75 | currency:USD | sold_by:ZMFR_CR5",
+        "image_content": []
+    }
+]

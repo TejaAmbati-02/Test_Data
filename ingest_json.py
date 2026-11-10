@@ -189,14 +189,14 @@ def apply_frontend_schema(rows: dict[str, dict]) -> None:
       * ``sku_name`` — the product title (copy of ``product_name``);
       * ``temporary_unavailable`` — the primary seller's flag
         (``seller_details[0]``, the cheapest offer, like ``price`` / ``moq`` /
-        ``sold_by``); ``None`` when the SKU has no seller offers;
+        ``sold_by``); ``False`` when absent or the SKU has no seller offers;
       * ``contract_indicator`` — coerced to a real boolean (the transformer
         writes ``""`` as a placeholder until a source is agreed).
     """
     for row in rows.values():
         row["sku_name"] = row.get("product_name")
         sellers = row.get("seller_details") or []
-        row["temporary_unavailable"] = sellers[0].get("temporary_unavailable") if sellers else None
+        row["temporary_unavailable"] = bool(sellers[0].get("temporary_unavailable")) if sellers else False
         row["contract_indicator"] = bool(row.get("contract_indicator"))
 
 

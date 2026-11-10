@@ -1,0 +1,69 @@
+{
+  "product_key": "2ced2e5f-f544-4d39-9150-2de41036e0ac",
+  "product_name": "Aruba 40G QSFP",
+  "sku_name": "Aruba 40G QSFP",
+  "product_description": "Aruba 40G QSFP+ LC BiDi 150m MMF 2-strand Transceiver",
+  "product_url": "",
+  "contract_indicator": false,
+  "availability": "IN_STOCK",
+  "material_type": "9COM",
+  "category_name": "Instrumentation & IT",
+  "category_ids": [
+    "08537951-b676-4bbd-86d3-912c0e4541be"
+  ],
+  "category_slug": "buyer-default-instrumentation-and-it",
+  "category_description": "Instrumentation & IT",
+  "category_key": "buyer-default-instrumentation-and-it",
+  "sub_category_name": "Communications",
+  "sub_category_id": "e7b98a95-573e-4e19-83f0-17930256189a",
+  "sub_category_slug": "buyer-default-instrumentation-and-it-communications",
+  "sub_category_description": "Communications",
+  "sub_category_key": "buyer-default-instrumentation-and-it-communications",
+  "product_type": "LAN and Cable Dist.",
+  "product_type_id": "d60e2dfb-7f70-4ed1-8947-2c76531d9207",
+  "product_type_slug": "buyer-default-instrumentation-and-it-communications-078000",
+  "product_type_description": "LAN and Cable Dist.",
+  "product_type_key": "buyer-default-instrumentation-and-it-communications-078000",
+  "purchase_agreements": [
+    {
+      "contract_id": "49000178661 ",
+      "supplier_id": "be65c6eb-85c3-421f-97e1-0261f552b8db",
+      "valid_from": "2026-09-30T18:30:00.000Z",
+      "valid_until": "2028-09-30T18:30:00.000Z"
+    }
+  ],
+  "sku_key": "a-880000629782",
+  "sku_id": "a-880000629782",
+  "image_urls": [
+    "https://images.cdn.europe-west1.gcp.commercetools.com/5b4d09bd-412f-4a5e-9ee8-5c2c3aa625a7/JL308A-dWJ6gY0z.jpg"
+  ],
+  "primary_image_url": "https://images.cdn.europe-west1.gcp.commercetools.com/5b4d09bd-412f-4a5e-9ee8-5c2c3aa625a7/JL308A-dWJ6gY0z.jpg",
+  "asmo_material_number": "a-880000629782",
+  "aramco_material_number": "JL308A",
+  "seller_details": [
+    {
+      "seller_id": "be65c6eb-85c3-421f-97e1-0261f552b8db",
+      "seller_name": null,
+      "supplier_id": null,
+      "contract_id": "30",
+      "price": 45.0,
+      "currency": "SAR",
+      "lead_time": 3,
+      "moq": 3,
+      "unit_type": "EA",
+      "temporary_unavailable": false,
+      "under_agreement": true
+    }
+  ],
+  "supplier_count": 1,
+  "moq": 3,
+  "price": 45.0,
+  "currency": "SAR",
+  "sold_by": null,
+  "temporary_unavailable": false,
+  "under_agreement": true,
+  "content": "product_key:2ced2e5f-f544-4d39-9150-2de41036e0ac | product_name:Aruba 40G QSFP | product_description:Aruba 40G QSFP+ LC BiDi 150m MMF 2-strand Transceiver | availability:IN_STOCK | material_type:9COM | category_name:Instrumentation & IT | category_ids:08537951-b676-4bbd-86d3-912c0e4541be | category_slug:buyer-default-instrumentation-and-it | category_description:Instrumentation & IT | category_key:buyer-default-instrumentation-and-it | sub_category_name:Communications | sub_category_id:e7b98a95-573e-4e19-83f0-17930256189a | sub_category_slug:buyer-default-instrumentation-and-it-communications | sub_category_description:Communications | sub_category_key:buyer-default-instrumentation-and-it-communications | product_type:LAN and Cable Dist. | product_type_id:d60e2dfb-7f70-4ed1-8947-2c76531d9207 | product_type_slug:buyer-default-instrumentation-and-it-communications-078000 | product_type_description:LAN and Cable Dist. | product_type_key:buyer-default-instrumentation-and-it-communications-078000 | purchase_agreements:49000178661, be65c6eb-85c3-421f-97e1-0261f552b8db, 2026-09-30T18:30:00.000Z, 2028-09-30T18:30:00.000Z | sku_key:a-880000629782 | sku_id:a-880000629782 | image_urls:https://images.cdn.europe-west1.gcp.commercetools.com/5b4d09bd-412f-4a5e-9ee8-5c2c3aa625a7/JL308A-dWJ6gY0z.jpg | primary_image_url:https://images.cdn.europe-west1.gcp.commercetools.com/5b4d09bd-412f-4a5e-9ee8-5c2c3aa625a7/JL308A-dWJ6gY0z.jpg | asmo_material_number:a-880000629782 | aramco_material_number:JL308A | seller_details:be65c6eb-85c3-421f-97e1-0261f552b8db, 30, 45.0, SAR, 3, 3, EA, False, True | supplier_count:1 | moq:3 | price:45.0 | currency:SAR",
+  "image_content": [
+    "/9j/4AAQSkZJRgABAgAAAQABAAD/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8KCwkMEQ8SEhEPERATFhwXExQaFRARGCEYGhwdHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCACkAWADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD7LooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAorN17WLPRrM3F2/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5u8UGfTcf8K9wOnWB62Nt/37H+FNOlaYeun2p/7ZD/CmsRNC+rxPFF8Wsw/1cOP98/4U8eLBjmKM+28/4V7MdH0rGP7NtP8AvyP8KadE0c9dLs/+/I/wp/WZh9WgeEa5rH9pxqhMcaoSwAyST+VcDr+l31zcSzxLHMWwAHyQFxggYBIOTnI6nHpX1kdA0M9dJsv+/I/wpreHdBOc6RZc/wDTEf4VnKo5blxp8ux80fDvSprnXY9MuD5VvcyxoChB2kghyBjHoenXPvXsw+FGmZBbVLwj2Cj+ldlbaBoltcJcW+l2kUqHKOsYBB9Qa1Ki/Yvl7nnT/CbRpABJqF8yZG5flGR3HTvXbabpGmaYoFhYW1vhAu6OMKSB2JAyav0UvMdrBRRRQMKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigD//Z"
+  ]
+}

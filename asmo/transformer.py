@@ -38,10 +38,9 @@ async def transform(
             valid_until}``) attached to every row of that product; their
             contract ids steer which seller price is preferred.
         availability_by_product: Optional mapping of product id → {seller id →
-            {"available", "unexpired"}}, from the sellers' product selections. When given, each
-            seller offer's ``temporary_unavailable`` is ``not available`` (a
-            seller with no agreement for the product is unavailable); when
-            ``None``, it comes from the price's own custom field.
+            {"available", "unexpired"}}, from the sellers' product selections, used
+            for each seller offer's ``under_agreement``. ``temporary_unavailable``
+            always comes from the price's own custom field.
     """
     logger.info(
         f"Transforming {len(products)} products and {len(prices)} prices",
@@ -122,8 +121,7 @@ async def _parse_product(
             agreements (``{contract_id, supplier_id, valid_from, valid_until}``)
             to attach to every row.
         availability: Optional {seller id → {"available", "unexpired"}} for this
-            product, used for each seller offer's ``temporary_unavailable`` and
-            ``under_agreement``; ``None`` keeps the price's own value.
+            product, used for each seller offer's ``under_agreement``.
 
     Returns:
         A dict mapping each variant's SKU to its parsed row. Variants without a
@@ -272,25 +270,26 @@ def _seller_object(price: Price | None, availability: dict[str, dict[str, bool]]
     Args:
         price: The selected standalone price, or ``None``.
         availability: Optional {seller id → {"available", "unexpired"}} for the
-            product (from the sellers' product selections). When given,
-            ``temporary_unavailable`` is ``not available`` — ``True`` for a seller
-            with no agreement for the product — and ``under_agreement`` is
-            ``temporary_unavailable and unexpired`` (a selection's ``validUntil`` >=
-            today). When ``None``, ``temporary_unavailable`` is the price's own value
-            and ``under_agreement`` is ``False`` (no ``validUntil`` known).
+            product (from the sellers' product selections), used only for
+            ``under_agreement`` = ``available and unexpired`` (``True`` by default:
+            for a seller with no agreement, or when ``None``). ``temporary_unavailable``
+            is always the price's own ``custom.fields.temporarilyUnavailable``
+            (``False`` when the field is absent).
 
     Returns:
         The seller object, or ``None`` when ``price`` is ``None``.
     """
     if price is None:
         return None
-    if availability is None:
-        temporary_unavailable = price.temporary_unavailable
-        under_agreement = False
-    else:
-        seller = availability.get(price.seller_id) or {}
-        temporary_unavailable = not seller.get("available", False)
-        under_agreement = not(temporary_unavailable) and seller.get("unexpired", True)
+    # Spec: temporary unavailable — standalone price JSON path
+    # custom.fields.temporarilyUnavailable (temporaryUnavailable also accepted).
+    # Defaults to False (available) when the field is absent.
+    temporary_unavailable = price.temporary_unavailable
+    # Defaults to True. Only False when the seller has a product selection for this
+    # product and none of them is active, started (validFrom <= today) and
+    # unexpired (validUntil >= today).
+    seller = (availability or {}).get(price.seller_id)
+    under_agreement = True if seller is None else (seller["available"] and seller["unexpired"])
     return {
         "seller_id": price.seller_id,
         "seller_name": price.seller_name_en,
@@ -302,7 +301,7 @@ def _seller_object(price: Price | None, availability: dict[str, dict[str, bool]]
         "moq": price.moq,
         "unit_type": price.unit_type,
         "temporary_unavailable": temporary_unavailable,
-        "under_agreement": under_agreement,       # temporary_unavailable and validUntil >= today
+        "under_agreement": under_agreement,       # agreement active, started and unexpired
     }
 
 
@@ -334,8 +333,8 @@ async def _parse_variant(
         prices_by_sku: Mapping of SKU to its list of matched prices.
         contract_ids: Contract ids of the product's valid purchase agreements.
         availability: Optional {seller id → {"available", "unexpired"}} for the
-            product, used for each offer's ``temporary_unavailable`` and
-            ``under_agreement`` (see :func:`_seller_object`).
+            product, used for each offer's ``under_agreement`` (see
+            :func:`_seller_object`).
 
     Returns:
         A dict representing the fully flattened SKU row for this variant.
@@ -413,8 +412,8 @@ async def _parse_variant(
             "price": sellers[0]["price"] if sellers else None,              # seller_details[0].price
             "currency": sellers[0]["currency"] if sellers else None,        # seller_details[0].currency
             "sold_by": sellers[0]["seller_name"] if sellers else None,      # seller_details[0].seller_name
-            "temporary_unavailable": sellers[0]["temporary_unavailable"] if sellers else None,  # seller_details[0].temporary_unavailable
-            "under_agreement": sellers[0]["under_agreement"] if sellers else None,              # seller_details[0].under_agreement
+            "temporary_unavailable": sellers[0]["temporary_unavailable"] if sellers else False,  # seller_details[0].temporary_unavailable; False when no sellers
+            "under_agreement": sellers[0]["under_agreement"] if sellers else True,               # seller_details[0].under_agreement
         }
         # Combined free-text blob of every field value, pipe-separated — useful
         # as a single searchable/embeddable field downstream. Built from the row
