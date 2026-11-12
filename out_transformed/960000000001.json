@@ -39,7 +39,7 @@
   ],
   "primary_image_url": "https://fastly.picsum.photos",
   "asmo_material_number": "960000000001",
-  "aramco_material_number": null,
+  "aramco_material_number": "100104880000",
   "seller_details": [
     {
       "seller_id": "3c274a70-0ba7-4e4a-bf8c-ca1213eb30e4",
@@ -62,6 +62,6 @@
   "sold_by": "DMS_01",
   "temporary_unavailable": false,
   "under_agreement": true,
-  "content": "product_key:10915895-7bed-436a-a14f-9f9a7d434bba | product_name:Indicator, Local | product_description:Indicator, Local | availability:IN_STOCK | material_type:9COM | category_name:Miscellaneous | category_ids:7b746749-6fd9-4b4f-93a0-bb1a4adf9ce1 | category_slug:all-misc | category_description:Miscellaneous | category_key:all-misc | purchase_agreements:4900017861, 3c274a70-0ba7-4e4a-bf8c-ca1213eb30e4, 2015-02-18T18:30:00Z, 2028-11-24T18:29:00.000Z | sku_key:1001048800_960000000001 | sku_id:960000000001 | image_urls:https://fastly.picsum.photos | primary_image_url:https://fastly.picsum.photos | asmo_material_number:960000000001 | seller_details:3c274a70-0ba7-4e4a-bf8c-ca1213eb30e4, DMS_01, 60002113, 4900017861, 717.75, SAR, 30, 1, EA, False, True | supplier_count:1 | moq:1 | price:717.75 | currency:SAR | sold_by:DMS_01",
+  "content": "product_key:10915895-7bed-436a-a14f-9f9a7d434bba | product_name:Indicator, Local | product_description:Indicator, Local | availability:IN_STOCK | material_type:9COM | category_name:Miscellaneous | category_ids:7b746749-6fd9-4b4f-93a0-bb1a4adf9ce1 | category_slug:all-misc | category_description:Miscellaneous | category_key:all-misc | purchase_agreements:4900017861, 3c274a70-0ba7-4e4a-bf8c-ca1213eb30e4, 2015-02-18T18:30:00Z, 2028-11-24T18:29:00.000Z | sku_key:1001048800_960000000001 | sku_id:960000000001 | image_urls:https://fastly.picsum.photos | primary_image_url:https://fastly.picsum.photos | asmo_material_number:960000000001 | aramco_material_number:100104880000 | seller_details:3c274a70-0ba7-4e4a-bf8c-ca1213eb30e4, DMS_01, 60002113, 4900017861, 717.75, SAR, 30, 1, EA, False, True | supplier_count:1 | moq:1 | price:717.75 | currency:SAR | sold_by:DMS_01",
   "image_content": []
 }

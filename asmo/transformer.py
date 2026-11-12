@@ -148,9 +148,11 @@ async def _parse_product(
             **await _category_fields(raw),                               # category/sub_category/product_type (see _category_fields)
             "purchase_agreements": purchase_agreements or None,          # from the product-selection step (contract_id, supplier_id, valid_from, valid_until)
         }
-        # The ASMO material number is product-level, so every variant row shares it.
+        # The ASMO and Aramco material numbers are product-level, so every variant
+        # row shares them.
         material_fields = {
             "asmo_material_number": raw.get("key"),                      # JSON path: key
+            "aramco_material_number": _attr(raw.get("attributes"), "customerMaterialNumber"),  # JSON path: attributes[name=customerMaterialNumber].value
         }
 
         logger.info(
@@ -327,7 +329,8 @@ async def _parse_variant(
     Args:
         product_fields: The product-level fields shared by every variant of the
             parent product (produced by :func:`_parse_product`).
-        material_fields: The product-level ``asmo_material_number``
+        material_fields: The product-level ``asmo_material_number`` and
+            ``aramco_material_number``
             (produced by :func:`_parse_product`).
         variant: The raw variant document (master variant or additional variant).
         prices_by_sku: Mapping of SKU to its list of matched prices.
@@ -395,8 +398,7 @@ async def _parse_variant(
             "primary_image_url": image_urls[0] if image_urls else None,  # JSON path: <variant>.images[0].url
 
             # --- Material numbers ---
-            **material_fields,                                 # asmo_material_number (product key)
-            "aramco_material_number": _attr(variant.get("attributes", []), "manufacturerNumber"),  # attr manufacturerNumber
+            **material_fields,                                 # asmo_material_number (key), aramco_material_number (attr customerMaterialNumber)
 
             # --- Seller details ---
             # Every usable seller offer for the SKU, lowest price first. Each entry

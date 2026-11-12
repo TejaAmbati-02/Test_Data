@@ -39,7 +39,7 @@
   ],
   "primary_image_url": "https://fastly.picsum.photos",
   "asmo_material_number": "970000000001",
-  "aramco_material_number": null,
+  "aramco_material_number": "100104880000",
   "seller_details": [
     {
       "seller_id": "61070557-0c49-412e-98b2-6e2b01e465fe",
@@ -62,6 +62,6 @@
   "sold_by": "ZMFR_CR5",
   "temporary_unavailable": false,
   "under_agreement": true,
-  "content": "product_key:0381ca44-e5a9-4c98-ae62-dfdf2a981dca | product_name:Indicator, Local 4914-0812 + P/n W9165RH | product_description:Indicator, Local 4914-0812 + P/n W9165RH | availability:IN_STOCK | material_type:9COM | category_name:Miscellaneous | category_ids:7b746749-6fd9-4b4f-93a0-bb1a4adf9ce1 | category_slug:all-misc | category_description:Miscellaneous | category_key:all-misc | purchase_agreements:4900017862, 61070557-0c49-412e-98b2-6e2b01e465fe, 2022-02-02T18:30:00.000Z, 2027-11-25T18:29:00.000Z | sku_key:1001048801_970000000001 | sku_id:970000000001 | image_urls:https://fastly.picsum.photos | primary_image_url:https://fastly.picsum.photos | asmo_material_number:970000000001 | seller_details:61070557-0c49-412e-98b2-6e2b01e465fe, ZMFR_CR5, 60002113, 4900017862, 717.75, SAR, 30, 1, EA, False, True | supplier_count:1 | moq:1 | price:717.75 | currency:SAR | sold_by:ZMFR_CR5",
+  "content": "product_key:0381ca44-e5a9-4c98-ae62-dfdf2a981dca | product_name:Indicator, Local 4914-0812 + P/n W9165RH | product_description:Indicator, Local 4914-0812 + P/n W9165RH | availability:IN_STOCK | material_type:9COM | category_name:Miscellaneous | category_ids:7b746749-6fd9-4b4f-93a0-bb1a4adf9ce1 | category_slug:all-misc | category_description:Miscellaneous | category_key:all-misc | purchase_agreements:4900017862, 61070557-0c49-412e-98b2-6e2b01e465fe, 2022-02-02T18:30:00.000Z, 2027-11-25T18:29:00.000Z | sku_key:1001048801_970000000001 | sku_id:970000000001 | image_urls:https://fastly.picsum.photos | primary_image_url:https://fastly.picsum.photos | asmo_material_number:970000000001 | aramco_material_number:100104880000 | seller_details:61070557-0c49-412e-98b2-6e2b01e465fe, ZMFR_CR5, 60002113, 4900017862, 717.75, SAR, 30, 1, EA, False, True | supplier_count:1 | moq:1 | price:717.75 | currency:SAR | sold_by:ZMFR_CR5",
   "image_content": []
 }
