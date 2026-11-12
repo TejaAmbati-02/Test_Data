@@ -7,12 +7,12 @@
   "contract_indicator": false,
   "availability": "IN_STOCK",
   "material_type": "9MFR",
-  "category_name": "Misc",
+  "category_name": "Miscellaneous",
   "category_ids": [
     "7b746749-6fd9-4b4f-93a0-bb1a4adf9ce1"
   ],
   "category_slug": "all-misc",
-  "category_description": "Misc",
+  "category_description": "Miscellaneous",
   "category_key": "all-misc",
   "sub_category_name": null,
   "sub_category_id": null,
@@ -41,12 +41,12 @@
   "seller_details": [
     {
       "seller_id": "3c274a70-0ba7-4e4a-bf8c-ca1213eb30e4",
-      "seller_name": "DMS_TEST_01 TEST TEST",
+      "seller_name": "DMS_01",
       "supplier_id": "60002113",
       "contract_id": "4900001082",
       "price": 10.0,
-      "currency": "USD",
-      "lead_time": 0,
+      "currency": "SAR",
+      "lead_time": 2,
       "moq": 1,
       "unit_type": "EA",
       "temporary_unavailable": false,
@@ -56,10 +56,10 @@
   "supplier_count": 1,
   "moq": 1,
   "price": 10.0,
-  "currency": "USD",
-  "sold_by": "DMS_TEST_01 TEST TEST",
+  "currency": "SAR",
+  "sold_by": "DMS_01",
   "temporary_unavailable": false,
   "under_agreement": true,
-  "content": "product_key:7648183c-bd36-4b88-8673-82729a52748d | product_name:DEMULSIFIER: PETROLEUM SERVICE | product_description:DEMULSIFIER: PETROLEUM SERVICE | availability:IN_STOCK | material_type:9MFR | category_name:Misc | category_ids:7b746749-6fd9-4b4f-93a0-bb1a4adf9ce1 | category_slug:all-misc | category_description:Misc | category_key:all-misc | purchase_agreements:4900001082, 3c274a70-0ba7-4e4a-bf8c-ca1213eb30e4, 2026-10-20T00:00:00.000Z, 2027-10-31T00:00:00.000Z | sku_key:100104880000_5056670000 | sku_id:5056670000 | asmo_material_number:5056670000 | seller_details:3c274a70-0ba7-4e4a-bf8c-ca1213eb30e4, DMS_TEST_01 TEST TEST, 60002113, 4900001082, 10.0, USD, 0, 1, EA, False, True | supplier_count:1 | moq:1 | price:10.0 | currency:USD | sold_by:DMS_TEST_01 TEST TEST",
+  "content": "product_key:7648183c-bd36-4b88-8673-82729a52748d | product_name:DEMULSIFIER: PETROLEUM SERVICE | product_description:DEMULSIFIER: PETROLEUM SERVICE | availability:IN_STOCK | material_type:9MFR | category_name:Miscellaneous | category_ids:7b746749-6fd9-4b4f-93a0-bb1a4adf9ce1 | category_slug:all-misc | category_description:Miscellaneous | category_key:all-misc | purchase_agreements:4900001082, 3c274a70-0ba7-4e4a-bf8c-ca1213eb30e4, 2026-10-20T00:00:00.000Z, 2027-10-31T00:00:00.000Z | sku_key:100104880000_5056670000 | sku_id:5056670000 | asmo_material_number:5056670000 | seller_details:3c274a70-0ba7-4e4a-bf8c-ca1213eb30e4, DMS_01, 60002113, 4900001082, 10.0, SAR, 2, 1, EA, False, True | supplier_count:1 | moq:1 | price:10.0 | currency:SAR | sold_by:DMS_01",
   "image_content": []
 }
