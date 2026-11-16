@@ -177,6 +177,21 @@ async def _parse_product(
         rows: dict[str, dict] = {}
         failed_variants = 0
         for v in all_variants:
+            v_sku = v.get("sku")
+            v_prices = prices_by_sku.get(v_sku, []) if v_sku else []
+            # Skip the SKU entirely (no row → no JSON file, not indexed) when it has
+            # prices and every one of them is blocked for deletion
+            # (custom.fields.purchasingContractDeletionCode == "L").
+            if v_prices and all(p.is_blocked_for_deletion == "L" for p in v_prices):
+                logger.info(
+                    f"SKU={v_sku!r} skipped — all {len(v_prices)} price(s) blocked for deletion (\"L\")",
+                    extra={
+                        "request_id": v_sku,
+                        "function_name": "_parse_product",
+                        "input_data": {"sku": v_sku, "blocked_prices": len(v_prices)},
+                    },
+                )
+                continue
             try:
                 row = await _parse_variant(product_fields, material_fields, v, prices_by_sku, contract_ids, availability)
             except Exception:

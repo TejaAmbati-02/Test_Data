@@ -1,0 +1,65 @@
+{
+  "product_key": "dab3d677-c01e-4b01-8e9c-6bdf7d69fd71",
+  "product_name": "ADHESIVE: GASKET, -55 TO +150 DEG C",
+  "sku_name": "ADHESIVE: GASKET, -55 TO +150 DEG C",
+  "product_description": "ADHESIVE: GASKET, -55 TO +150 DEG C",
+  "product_url": "",
+  "contract_indicator": false,
+  "availability": "IN_STOCK",
+  "material_type": "9MFR",
+  "category_name": "Communities, Offices & Others",
+  "category_ids": [
+    "27eff207-758f-4f78-a266-3a5499b43baf"
+  ],
+  "category_slug": "all-communities-offices-and-others",
+  "category_description": "Communities, Offices & Others",
+  "category_key": "all-communities-offices-and-others",
+  "sub_category_name": "General Supply",
+  "sub_category_id": "9271e384-888f-4780-8d31-26414bcd79c2",
+  "sub_category_slug": "all-communities-offices-and-others-gen-sup-and-building-mat",
+  "sub_category_description": "General Supply",
+  "sub_category_key": "all-communities-offices-and-others-gen-sup-and-building-mat",
+  "product_type": "General Building",
+  "product_type_id": "fff4d5be-05da-4359-9e60-9f855ed48921",
+  "product_type_slug": "all-communities-offices-and-others-gen-sup-and-building-mat-120000",
+  "product_type_description": "General Building",
+  "product_type_key": "all-communities-offices-and-others-gen-sup-and-building-mat-120000",
+  "purchase_agreements": [
+    {
+      "contract_id": "4900000027",
+      "supplier_id": "63b95acd-c5db-4dc3-89a5-fd62868161c0",
+      "valid_from": "2025-04-30T00:00:00.000Z",
+      "valid_until": "2029-12-31T00:00:00.000Z"
+    }
+  ],
+  "sku_key": "2000000187_4000000268",
+  "sku_id": "4000000268",
+  "image_urls": null,
+  "primary_image_url": null,
+  "asmo_material_number": "4000000268",
+  "aramco_material_number": "000000001001048768",
+  "seller_details": [
+    {
+      "seller_id": "63b95acd-c5db-4dc3-89a5-fd62868161c0",
+      "seller_name": "GAS AND OIL TECHNOLOGIES LLC",
+      "supplier_id": "60001036",
+      "contract_id": "4900000027",
+      "price": 9.5,
+      "currency": "SAR",
+      "lead_time": 25,
+      "moq": 1,
+      "unit_type": "TU",
+      "temporary_unavailable": false,
+      "under_agreement": true
+    }
+  ],
+  "supplier_count": 1,
+  "moq": 1,
+  "price": 9.5,
+  "currency": "SAR",
+  "sold_by": "GAS AND OIL TECHNOLOGIES LLC",
+  "temporary_unavailable": false,
+  "under_agreement": true,
+  "content": "product_key:dab3d677-c01e-4b01-8e9c-6bdf7d69fd71 | product_name:ADHESIVE: GASKET, -55 TO +150 DEG C | product_description:ADHESIVE: GASKET, -55 TO +150 DEG C | availability:IN_STOCK | material_type:9MFR | category_name:Communities, Offices & Others | category_ids:27eff207-758f-4f78-a266-3a5499b43baf | category_slug:all-communities-offices-and-others | category_description:Communities, Offices & Others | category_key:all-communities-offices-and-others | sub_category_name:General Supply | sub_category_id:9271e384-888f-4780-8d31-26414bcd79c2 | sub_category_slug:all-communities-offices-and-others-gen-sup-and-building-mat | sub_category_description:General Supply | sub_category_key:all-communities-offices-and-others-gen-sup-and-building-mat | product_type:General Building | product_type_id:fff4d5be-05da-4359-9e60-9f855ed48921 | product_type_slug:all-communities-offices-and-others-gen-sup-and-building-mat-120000 | product_type_description:General Building | product_type_key:all-communities-offices-and-others-gen-sup-and-building-mat-120000 | purchase_agreements:4900000027, 63b95acd-c5db-4dc3-89a5-fd62868161c0, 2025-04-30T00:00:00.000Z, 2029-12-31T00:00:00.000Z | sku_key:2000000187_4000000268 | sku_id:4000000268 | asmo_material_number:4000000268 | aramco_material_number:000000001001048768 | seller_details:63b95acd-c5db-4dc3-89a5-fd62868161c0, GAS AND OIL TECHNOLOGIES LLC, 60001036, 4900000027, 9.5, SAR, 25, 1, TU, False, True | supplier_count:1 | moq:1 | price:9.5 | currency:SAR | sold_by:GAS AND OIL TECHNOLOGIES LLC",
+  "image_content": []
+}

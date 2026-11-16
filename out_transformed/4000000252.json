@@ -1,0 +1,65 @@
+{
+  "product_key": "665dd992-cca5-41e8-94a4-9b3eb762d73e",
+  "product_name": "BALLAST, HIGH PRESSURE SODIUM, 150 W",
+  "sku_name": "BALLAST, HIGH PRESSURE SODIUM, 150 W",
+  "product_description": "BALLAST, HIGH PRESSURE SODIUM, 150 W",
+  "product_url": "",
+  "contract_indicator": false,
+  "availability": "IN_STOCK",
+  "material_type": "9MFR",
+  "category_name": "Electrical Goods",
+  "category_ids": [
+    "003d2557-1faa-4e3b-b78c-b481f07be841"
+  ],
+  "category_slug": "all-electrical",
+  "category_description": "Electrical Goods",
+  "category_key": "all-electrical",
+  "sub_category_name": "Electrical Equipment",
+  "sub_category_id": "af4963d2-8ba1-4efa-8e4d-4e3e4a36e2ca",
+  "sub_category_slug": "all-electrical-electrical",
+  "sub_category_description": "Electrical Equipment",
+  "sub_category_key": "all-electrical-electrical",
+  "product_type": "Lighting Fixtures",
+  "product_type_id": "3925b67c-8053-4009-83eb-c97c71edd5d5",
+  "product_type_slug": "all-electrical-electrical-050000",
+  "product_type_description": "Lighting Fixtures",
+  "product_type_key": "all-electrical-electrical-050000",
+  "purchase_agreements": [
+    {
+      "contract_id": "4900000028",
+      "supplier_id": "03847843-2d79-41a6-a1fc-d6c336f85d80",
+      "valid_from": "2025-04-30T00:00:00.000Z",
+      "valid_until": "2030-12-31T00:00:00.000Z"
+    }
+  ],
+  "sku_key": "2000000178_4000000252",
+  "sku_id": "4000000252",
+  "image_urls": null,
+  "primary_image_url": null,
+  "asmo_material_number": "4000000252",
+  "aramco_material_number": "000000001000805431",
+  "seller_details": [
+    {
+      "seller_id": "03847843-2d79-41a6-a1fc-d6c336f85d80",
+      "seller_name": "Fuppuf Corp.",
+      "supplier_id": "60001037",
+      "contract_id": "4900000028",
+      "price": 350.0,
+      "currency": "USD",
+      "lead_time": 0,
+      "moq": 1,
+      "unit_type": "EA",
+      "temporary_unavailable": false,
+      "under_agreement": true
+    }
+  ],
+  "supplier_count": 1,
+  "moq": 1,
+  "price": 350.0,
+  "currency": "USD",
+  "sold_by": "Fuppuf Corp.",
+  "temporary_unavailable": false,
+  "under_agreement": true,
+  "content": "product_key:665dd992-cca5-41e8-94a4-9b3eb762d73e | product_name:BALLAST, HIGH PRESSURE SODIUM, 150 W | product_description:BALLAST, HIGH PRESSURE SODIUM, 150 W | availability:IN_STOCK | material_type:9MFR | category_name:Electrical Goods | category_ids:003d2557-1faa-4e3b-b78c-b481f07be841 | category_slug:all-electrical | category_description:Electrical Goods | category_key:all-electrical | sub_category_name:Electrical Equipment | sub_category_id:af4963d2-8ba1-4efa-8e4d-4e3e4a36e2ca | sub_category_slug:all-electrical-electrical | sub_category_description:Electrical Equipment | sub_category_key:all-electrical-electrical | product_type:Lighting Fixtures | product_type_id:3925b67c-8053-4009-83eb-c97c71edd5d5 | product_type_slug:all-electrical-electrical-050000 | product_type_description:Lighting Fixtures | product_type_key:all-electrical-electrical-050000 | purchase_agreements:4900000028, 03847843-2d79-41a6-a1fc-d6c336f85d80, 2025-04-30T00:00:00.000Z, 2030-12-31T00:00:00.000Z | sku_key:2000000178_4000000252 | sku_id:4000000252 | asmo_material_number:4000000252 | aramco_material_number:000000001000805431 | seller_details:03847843-2d79-41a6-a1fc-d6c336f85d80, Fuppuf Corp., 60001037, 4900000028, 350.0, USD, 0, 1, EA, False, True | supplier_count:1 | moq:1 | price:350.0 | currency:USD | sold_by:Fuppuf Corp.",
+  "image_content": []
+}
