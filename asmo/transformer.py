@@ -239,6 +239,8 @@ ASMO_PREFIXES = ("asmo",)
 ARAMCO_PREFIXES = ("aramco",)
 # "Customer <n>" is how the UI labels the Aramco purchase agreement number only.
 ARAMCO_AGREEMENT_PREFIXES = ("customer",)
+# The ASMO purchase agreement number is labelled by seller.
+ASMO_AGREEMENT_PREFIXES = ("seller",)
 ID_VARIANT_FIELDS = (
     "asmo_material_number_trim_0",
     "aramco_material_number_trim_0",
@@ -517,7 +519,7 @@ async def _parse_variant(
             "aramco_material_number_trim_0": _id_variants(
                 [material_fields.get("aramco_material_number")], ARAMCO_PREFIXES),
             "asmo_purchase_aggrement_number_trim_0": _id_variants(
-                [s.get("asmo_purchase_aggrement_number") for s in sellers], ASMO_PREFIXES),
+                [s.get("asmo_purchase_aggrement_number") for s in sellers], ASMO_AGREEMENT_PREFIXES),
             "aramco_purchase_aggrement_number_trim_0": _id_variants(
                 [s.get("aramco_purchase_aggrement_number") for s in sellers], ARAMCO_AGREEMENT_PREFIXES),
         }
