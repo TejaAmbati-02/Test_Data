@@ -50,7 +50,9 @@
       "moq": 1,
       "unit_type": "EA",
       "temporary_unavailable": false,
-      "under_agreement": true
+      "under_agreement": true,
+      "asmo_purchase_aggrement_number": "4900000028",
+      "aramco_purchase_aggrement_number": "4600005071"
     }
   ],
   "supplier_count": 1,
@@ -60,6 +62,32 @@
   "sold_by": "Fuppuf Corp.",
   "temporary_unavailable": false,
   "under_agreement": true,
-  "content": "product_key:b871965f-6cc1-4285-96af-27761865fbce | product_name:MODULE, RE- STRIKE, FOR 150 W HPS LAMP | product_description:MODULE, RE- STRIKE, FOR 150 W HPS LAMP | availability:IN_STOCK | material_type:9MFR | category_name:Communities, Offices & Others | category_ids:27eff207-758f-4f78-a266-3a5499b43baf | category_slug:all-communities-offices-and-others | category_description:Communities, Offices & Others | category_key:all-communities-offices-and-others | sub_category_name:General Supply | sub_category_id:9271e384-888f-4780-8d31-26414bcd79c2 | sub_category_slug:all-communities-offices-and-others-gen-sup-and-building-mat | sub_category_description:General Supply | sub_category_key:all-communities-offices-and-others-gen-sup-and-building-mat | product_type:General Building | product_type_id:fff4d5be-05da-4359-9e60-9f855ed48921 | product_type_slug:all-communities-offices-and-others-gen-sup-and-building-mat-120000 | product_type_description:General Building | product_type_key:all-communities-offices-and-others-gen-sup-and-building-mat-120000 | purchase_agreements:4900000028, 03847843-2d79-41a6-a1fc-d6c336f85d80, 2025-04-30T00:00:00.000Z, 2030-12-31T00:00:00.000Z | sku_key:2000000177_4000000251 | sku_id:4000000251 | asmo_material_number:4000000251 | aramco_material_number:000000001000805430 | seller_details:03847843-2d79-41a6-a1fc-d6c336f85d80, Fuppuf Corp., 60001037, 4900000028, 1005.25, USD, 0, 1, EA, False, True | supplier_count:1 | moq:1 | price:1005.25 | currency:USD | sold_by:Fuppuf Corp.",
+  "asmo_material_number_trim_0": [
+    "4000000251",
+    "asmo4000000251",
+    "asmo 4000000251"
+  ],
+  "aramco_material_number_trim_0": [
+    "000000001000805430",
+    "1000805430",
+    "00000000 1000805430",
+    "aramco000000001000805430",
+    "aramco 000000001000805430",
+    "aramco1000805430",
+    "aramco 1000805430",
+    "aramco00000000 1000805430",
+    "aramco 00000000 1000805430"
+  ],
+  "asmo_purchase_aggrement_number_trim_0": [
+    "4900000028",
+    "asmo4900000028",
+    "asmo 4900000028"
+  ],
+  "aramco_purchase_aggrement_number_trim_0": [
+    "4600005071",
+    "customer4600005071",
+    "customer 4600005071"
+  ],
+  "content": "product_key:b871965f-6cc1-4285-96af-27761865fbce | product_name:MODULE, RE- STRIKE, FOR 150 W HPS LAMP | product_description:MODULE, RE- STRIKE, FOR 150 W HPS LAMP | availability:IN_STOCK | material_type:9MFR | category_name:Communities, Offices & Others | category_ids:27eff207-758f-4f78-a266-3a5499b43baf | category_slug:all-communities-offices-and-others | category_description:Communities, Offices & Others | category_key:all-communities-offices-and-others | sub_category_name:General Supply | sub_category_id:9271e384-888f-4780-8d31-26414bcd79c2 | sub_category_slug:all-communities-offices-and-others-gen-sup-and-building-mat | sub_category_description:General Supply | sub_category_key:all-communities-offices-and-others-gen-sup-and-building-mat | product_type:General Building | product_type_id:fff4d5be-05da-4359-9e60-9f855ed48921 | product_type_slug:all-communities-offices-and-others-gen-sup-and-building-mat-120000 | product_type_description:General Building | product_type_key:all-communities-offices-and-others-gen-sup-and-building-mat-120000 | purchase_agreements:4900000028, 03847843-2d79-41a6-a1fc-d6c336f85d80, 2025-04-30T00:00:00.000Z, 2030-12-31T00:00:00.000Z | sku_key:2000000177_4000000251 | sku_id:4000000251 | asmo_material_number:4000000251 | aramco_material_number:000000001000805430 | seller_details:03847843-2d79-41a6-a1fc-d6c336f85d80, Fuppuf Corp., 60001037, 4900000028, 1005.25, USD, 0, 1, EA, False, True, 4900000028, 4600005071 | supplier_count:1 | moq:1 | price:1005.25 | currency:USD | sold_by:Fuppuf Corp. | asmo_material_number_trim_0:4000000251, asmo4000000251, asmo 4000000251 | aramco_material_number_trim_0:000000001000805430, 1000805430, 00000000 1000805430, aramco000000001000805430, aramco 000000001000805430, aramco1000805430, aramco 1000805430, aramco00000000 1000805430, aramco 00000000 1000805430 | asmo_purchase_aggrement_number_trim_0:4900000028, asmo4900000028, asmo 4900000028 | aramco_purchase_aggrement_number_trim_0:4600005071, customer4600005071, customer 4600005071",
   "image_content": []
 }

@@ -83,6 +83,15 @@ def build_index_body(vector_field: str, dim: int, image_dim: int | None = None) 
             "fields": {"keyword": {"type": "keyword", "ignore_above": 512}},
         }
 
+    def id_variant_field() -> dict:
+        # Full-text (fuzzy/match queries) on the field itself; case-insensitive
+        # exact/prefix/fuzzy-term matching on the .keyword sub-field.
+        return {
+            "type": "text",
+            "analyzer": "standard",
+            "fields": {"keyword": {"type": "keyword", "normalizer": "id_normalizer"}},
+        }
+
     def keyword_field() -> dict:
         return {
             "type": "keyword",
@@ -118,6 +127,8 @@ def build_index_body(vector_field: str, dim: int, image_dim: int | None = None) 
             "unit_type":               keyword_field(),
             "temporary_unavailable":   {"type": "boolean"},
             "under_agreement":         {"type": "boolean"},
+            "asmo_purchase_aggrement_number":   keyword_field(),  # selection custom.fields.contractId
+            "aramco_purchase_aggrement_number": keyword_field(),  # selection custom.fields.customerPA
         }
 
     return {
@@ -127,7 +138,13 @@ def build_index_body(vector_field: str, dim: int, image_dim: int | None = None) 
                 "knn.algo_param.ef_search": 100,
                 "number_of_shards": 1,
                 "number_of_replicas": 0,
-            }
+            },
+            # Case-insensitive exact matching for the *_trim_0 ID-variant arrays.
+            "analysis": {
+                "normalizer": {
+                    "id_normalizer": {"type": "custom", "filter": ["lowercase", "asciifolding"]},
+                },
+            },
         },
         "mappings": {
             "_source": {"enabled": True},
@@ -223,6 +240,14 @@ def build_index_body(vector_field: str, dim: int, image_dim: int | None = None) 
                 "sold_by":  text_field("english"),
                 "temporary_unavailable": {"type": "boolean"},
                 "under_agreement":       {"type": "boolean"},
+
+                # --- ID search variants (arrays of lowercase strings) ---
+                # Leading-zero-trimmed / prefixed / spaced forms of the material
+                # and purchase-agreement numbers, for exact ID lookups.
+                "asmo_material_number_trim_0":             id_variant_field(),
+                "aramco_material_number_trim_0":           id_variant_field(),
+                "asmo_purchase_aggrement_number_trim_0":   id_variant_field(),
+                "aramco_purchase_aggrement_number_trim_0": id_variant_field(),
             },
         },
     }

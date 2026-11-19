@@ -50,7 +50,9 @@
       "moq": 1,
       "unit_type": "EA",
       "temporary_unavailable": false,
-      "under_agreement": true
+      "under_agreement": true,
+      "asmo_purchase_aggrement_number": "4900000028",
+      "aramco_purchase_aggrement_number": "4600005071"
     }
   ],
   "supplier_count": 1,
@@ -60,6 +62,32 @@
   "sold_by": "Fuppuf Corp.",
   "temporary_unavailable": false,
   "under_agreement": true,
-  "content": "product_key:882b21ba-09b2-4586-ab2b-a9dc980c6825 | product_name:FIXTURE, HID LIGHTING, 100 W, 55 DEG C | product_description:FIXTURE, HID LIGHTING, 100 W, 55 DEG C | availability:IN_STOCK | material_type:9MFR | category_name:Electrical Goods | category_ids:003d2557-1faa-4e3b-b78c-b481f07be841 | category_slug:all-electrical | category_description:Electrical Goods | category_key:all-electrical | sub_category_name:Electrical Equipment | sub_category_id:af4963d2-8ba1-4efa-8e4d-4e3e4a36e2ca | sub_category_slug:all-electrical-electrical | sub_category_description:Electrical Equipment | sub_category_key:all-electrical-electrical | product_type:Lighting Fixtures | product_type_id:3925b67c-8053-4009-83eb-c97c71edd5d5 | product_type_slug:all-electrical-electrical-050000 | product_type_description:Lighting Fixtures | product_type_key:all-electrical-electrical-050000 | purchase_agreements:4900000028, 03847843-2d79-41a6-a1fc-d6c336f85d80, 2025-04-30T00:00:00.000Z, 2030-12-31T00:00:00.000Z | sku_key:2000000181_4000000255 | sku_id:4000000255 | asmo_material_number:4000000255 | aramco_material_number:000000001000809502 | seller_details:03847843-2d79-41a6-a1fc-d6c336f85d80, Fuppuf Corp., 60001037, 4900000028, 125.0, USD, 0, 1, EA, False, True | supplier_count:1 | moq:1 | price:125.0 | currency:USD | sold_by:Fuppuf Corp.",
+  "asmo_material_number_trim_0": [
+    "4000000255",
+    "asmo4000000255",
+    "asmo 4000000255"
+  ],
+  "aramco_material_number_trim_0": [
+    "000000001000809502",
+    "1000809502",
+    "00000000 1000809502",
+    "aramco000000001000809502",
+    "aramco 000000001000809502",
+    "aramco1000809502",
+    "aramco 1000809502",
+    "aramco00000000 1000809502",
+    "aramco 00000000 1000809502"
+  ],
+  "asmo_purchase_aggrement_number_trim_0": [
+    "4900000028",
+    "asmo4900000028",
+    "asmo 4900000028"
+  ],
+  "aramco_purchase_aggrement_number_trim_0": [
+    "4600005071",
+    "customer4600005071",
+    "customer 4600005071"
+  ],
+  "content": "product_key:882b21ba-09b2-4586-ab2b-a9dc980c6825 | product_name:FIXTURE, HID LIGHTING, 100 W, 55 DEG C | product_description:FIXTURE, HID LIGHTING, 100 W, 55 DEG C | availability:IN_STOCK | material_type:9MFR | category_name:Electrical Goods | category_ids:003d2557-1faa-4e3b-b78c-b481f07be841 | category_slug:all-electrical | category_description:Electrical Goods | category_key:all-electrical | sub_category_name:Electrical Equipment | sub_category_id:af4963d2-8ba1-4efa-8e4d-4e3e4a36e2ca | sub_category_slug:all-electrical-electrical | sub_category_description:Electrical Equipment | sub_category_key:all-electrical-electrical | product_type:Lighting Fixtures | product_type_id:3925b67c-8053-4009-83eb-c97c71edd5d5 | product_type_slug:all-electrical-electrical-050000 | product_type_description:Lighting Fixtures | product_type_key:all-electrical-electrical-050000 | purchase_agreements:4900000028, 03847843-2d79-41a6-a1fc-d6c336f85d80, 2025-04-30T00:00:00.000Z, 2030-12-31T00:00:00.000Z | sku_key:2000000181_4000000255 | sku_id:4000000255 | asmo_material_number:4000000255 | aramco_material_number:000000001000809502 | seller_details:03847843-2d79-41a6-a1fc-d6c336f85d80, Fuppuf Corp., 60001037, 4900000028, 125.0, USD, 0, 1, EA, False, True, 4900000028, 4600005071 | supplier_count:1 | moq:1 | price:125.0 | currency:USD | sold_by:Fuppuf Corp. | asmo_material_number_trim_0:4000000255, asmo4000000255, asmo 4000000255 | aramco_material_number_trim_0:000000001000809502, 1000809502, 00000000 1000809502, aramco000000001000809502, aramco 000000001000809502, aramco1000809502, aramco 1000809502, aramco00000000 1000809502, aramco 00000000 1000809502 | asmo_purchase_aggrement_number_trim_0:4900000028, asmo4900000028, asmo 4900000028 | aramco_purchase_aggrement_number_trim_0:4600005071, customer4600005071, customer 4600005071",
   "image_content": []
 }

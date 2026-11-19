@@ -46,6 +46,10 @@ from .ssl_support import SSL_CONTEXT
 from .logging_service import logger, log_function
 
 
+class _TransientHTTPError(Exception):
+    """A retryable HTTP failure (429 or 5xx) from the CommerceTools API."""
+
+
 def _as_date(value) -> date | None:
     """Parse a ``validFrom`` / ``validUntil`` value into a :class:`date`, or ``None``.
 
@@ -140,6 +144,10 @@ def _agreement_info(assignment: dict) -> dict:
     contract_id = pick("contractId") or selection.get("key") or selection_ref.get("id")
 
     info = {
+        # Raw agreement numbers surfaced on each seller offer (no fallbacks).
+        "asmo_purchase_aggrement_number": pick("contractId"),               # custom.fields.contractId
+        # custom.fields.customerPA (customerAgreementRef accepted as an alias).
+        "aramco_purchase_aggrement_number": pick("customerPA") or pick("customerAgreementRef"),
         # No active flag anywhere → cannot disprove it; treat as active. An
         # explicit falsy value rejects the agreement.
         "active": True if active is None else bool(active),
@@ -204,6 +212,10 @@ class ProductSelectionsClient:
     # simultaneous connections.
     MAX_CONCURRENCY = 20
 
+    # Retry policy for transient failures (429, 5xx, connection errors, timeouts).
+    MAX_ATTEMPTS = 4
+    BACKOFF_SECONDS = 1.0
+
     # For /products/{id}/product-selections: expand the referenced product
     # selection so its custom fields (active, validFrom/validUntil, contractId,
     # supplier) are inline. The documented "productSelection.id;obj.custom.supplier"
@@ -219,6 +231,9 @@ class ProductSelectionsClient:
         """
         self._config = config
         self._auth = auth
+        # Filled by get_agreements_and_availability: product id → {contract id →
+        # {asmo_purchase_aggrement_number, aramco_purchase_aggrement_number}}.
+        self.agreement_numbers: dict[str, dict[str, dict]] = {}
 
     @log_function
     @requires_token
@@ -261,24 +276,42 @@ class ProductSelectionsClient:
                 rows = await self._list_all(session, f"products/{pid}/product-selections", expand=self.EXPAND)
             infos = [_agreement_info(r) for r in rows]
             valid = [a for i in infos if _in_scope(i, today) for a in _agreements(i)]
-            sellers: dict[str, dict[str, bool]] = {}
+            sellers: dict[str, dict] = {}
+            # Agreement numbers per seller come from its best selection: one that is
+            # available and unexpired wins over one that is not (first one otherwise).
+            best_rank: dict[str, int] = {}
             for i in infos:
+                rank = int(_available(i, today)) + int(_unexpired(i, today))
                 for supplier_id in i["supplier_ids"]:
                     seller = sellers.setdefault(supplier_id, {"available": False, "unexpired": False})
                     seller["available"] = seller["available"] or _available(i, today)
                     seller["unexpired"] = seller["unexpired"] or _unexpired(i, today)
+                    if rank > best_rank.get(supplier_id, -1):
+                        best_rank[supplier_id] = rank
+                        seller["asmo_purchase_aggrement_number"] = i["asmo_purchase_aggrement_number"]
+                        seller["aramco_purchase_aggrement_number"] = i["aramco_purchase_aggrement_number"]
             logger.debug(
                 f"Product {pid} → {len(valid)} valid of {len(infos)} agreement(s); sellers available={sellers}",
                 extra={"request_id": pid, "function_name": "get_agreements_and_availability",
                        "input_data": {"product_id": pid, "valid": len(valid), "total": len(infos), "sellers": sellers}},
             )
-            return pid, valid, sellers
+            # contract id → agreement numbers, so each seller offer can be matched to
+            # the selection whose contractId equals its price's contract id.
+            by_contract = {
+                i["contract_id"]: {
+                    "asmo_purchase_aggrement_number": i["asmo_purchase_aggrement_number"],
+                    "aramco_purchase_aggrement_number": i["aramco_purchase_aggrement_number"],
+                }
+                for i in infos if i["contract_id"]
+            }
+            return pid, valid, sellers, by_contract
 
         async with aiohttp.ClientSession() as session:
-            triples = await asyncio.gather(*[for_product(session, pid) for pid in product_ids])
+            results = await asyncio.gather(*[for_product(session, pid) for pid in product_ids])
 
-        agreements = {pid: valid for pid, valid, _ in triples if valid}
-        availability = {pid: sellers for pid, _, sellers in triples if sellers}
+        agreements = {pid: valid for pid, valid, _, _ in results if valid}
+        availability = {pid: sellers for pid, _, sellers, _ in results if sellers}
+        self.agreement_numbers = {pid: nums for pid, _, _, nums in results if nums}
         logger.info(
             f"Product-selection check complete — {len(agreements)}/{len(product_ids)} product(s) in scope, "
             f"{len(availability)} with seller availability",
@@ -371,10 +404,39 @@ class ProductSelectionsClient:
             f"(api_base={self._config.api_base!r}, path={path!r}, offset={offset})",
             extra={"function_name": "_fetch_page", "input_data": {"url": url, "params": params, "path": path, "offset": offset}},
         )
+        # Transient gateway/rate-limit errors (e.g. a 502 HTML page) are retried
+        # with exponential backoff so one flaky call does not fail the whole run.
+        for attempt in range(1, self.MAX_ATTEMPTS + 1):
+            try:
+                return await self._fetch_once(session, url, params, path, offset)
+            except (aiohttp.ClientConnectionError, asyncio.TimeoutError, _TransientHTTPError) as exc:
+                if attempt == self.MAX_ATTEMPTS:
+                    raise
+                delay = self.BACKOFF_SECONDS * 2 ** (attempt - 1)
+                logger.warning(
+                    f"Transient error on GET {url} offset={offset} (attempt {attempt}/{self.MAX_ATTEMPTS}): "
+                    f"{exc} — retrying in {delay:.1f}s",
+                    extra={"function_name": "_fetch_page", "status": "retry", "error_details": str(exc),
+                           "input_data": {"url": url, "offset": offset, "attempt": attempt}},
+                )
+                await asyncio.sleep(delay)
+
+    async def _fetch_once(
+        self, session: aiohttp.ClientSession, url: str, params: dict, path: str, offset: int,
+    ) -> dict:
+        """Issue one GET; raise :class:`_TransientHTTPError` on 429/5xx so the caller retries."""
         t0 = datetime.now()
         try:
             async with session.get(url, headers=self._auth.headers, params=params, ssl=SSL_CONTEXT) as resp:
-                body = await resp.json()
+                if resp.status == 429 or resp.status >= 500:
+                    text = await resp.text()
+                    raise _TransientHTTPError(f"HTTP {resp.status}: {text[:200]!r}")
+                if not resp.ok:
+                    text = await resp.text()
+                    logger.error(f"HTTP {resp.status} body: {text[:500]!r}",
+                                 extra={"function_name": "_fetch_page", "status": "error"})
+                    resp.raise_for_status()
+                body = await resp.json(content_type=None)
                 elapsed = (datetime.now() - t0).total_seconds()
                 logger.debug(
                     f"HTTP {resp.status} ← {resp.url} → {len(body.get('results', []))} result(s) in {elapsed:.3f}s",
@@ -385,8 +447,9 @@ class ProductSelectionsClient:
                         "input_data": {"path": path, "http_status": resp.status, "offset": offset, "total": body.get("total")},
                     },
                 )
-                resp.raise_for_status()
                 return body
+        except _TransientHTTPError:
+            raise  # logged as a retry warning by _fetch_page
         except Exception as exc:
             elapsed = (datetime.now() - t0).total_seconds()
             logger.error(

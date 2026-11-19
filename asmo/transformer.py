@@ -27,8 +27,13 @@ async def transform(
     prices: list[Price],
     agreements_by_product: dict[str, list[dict]] | None = None,
     availability_by_product: dict[str, dict[str, dict[str, bool]]] | None = None,
+    agreement_numbers_by_product: dict[str, dict[str, dict]] | None = None,
 ) -> dict[str, dict]:
     """Return a dict of sku → parsed row, one entry per SKU (masterVariant + all variants).
+
+    ``agreement_numbers_by_product`` (product id → {contract id → agreement
+    numbers}) sets each seller offer's ``asmo_purchase_aggrement_number`` /
+    ``aramco_purchase_aggrement_number`` by matching the price's contract id.
 
     Args:
         products: The products to flatten.
@@ -62,7 +67,10 @@ async def transform(
     for product in products:
         availability = None if availability_by_product is None else availability_by_product.get(product.id, {})
         try:
-            rows = await _parse_product(product.raw, prices_by_sku, agreements_by_product.get(product.id), availability)
+            rows = await _parse_product(
+                product.raw, prices_by_sku, agreements_by_product.get(product.id), availability,
+                (agreement_numbers_by_product or {}).get(product.id),
+            )
         except Exception:
             # _parse_product already logged the error with full product context.
             # Skip this product rather than aborting the whole transform so one
@@ -104,6 +112,7 @@ async def _parse_product(
     prices_by_sku: dict[str, list[Price]],
     purchase_agreements: list[dict] | None = None,
     availability: dict[str, dict[str, bool]] | None = None,
+    agreement_numbers: dict[str, dict] | None = None,
 ) -> dict[str, dict]:
     """Flatten a single raw product document into one row per variant SKU.
 
@@ -193,7 +202,9 @@ async def _parse_product(
                 )
                 continue
             try:
-                row = await _parse_variant(product_fields, material_fields, v, prices_by_sku, contract_ids, availability)
+                row = await _parse_variant(
+                    product_fields, material_fields, v, prices_by_sku, contract_ids, availability, agreement_numbers,
+                )
             except Exception:
                 # _parse_variant already logged the error with sku context. Skip
                 # the single bad variant rather than failing the whole product.
@@ -222,6 +233,61 @@ async def _parse_product(
             },
         )
         raise
+
+
+ASMO_PREFIXES = ("asmo",)
+ARAMCO_PREFIXES = ("aramco",)
+# "Customer <n>" is how the UI labels the Aramco purchase agreement number only.
+ARAMCO_AGREEMENT_PREFIXES = ("customer",)
+ID_VARIANT_FIELDS = (
+    "asmo_material_number_trim_0",
+    "aramco_material_number_trim_0",
+    "asmo_purchase_aggrement_number_trim_0",
+    "aramco_purchase_aggrement_number_trim_0",
+)
+
+
+def _id_variants(values: list, prefixes: tuple[str, ...]) -> list[str]:
+    """Expand ID values into the lowercase forms users search with.
+
+    For ``000000001000805430`` and prefix ``aramco`` this yields::
+
+        000000001000805430, 1000805430, 00000000 1000805430,
+        aramco000000001000805430, aramco 000000001000805430,
+        aramco1000805430, aramco 1000805430,
+        aramco00000000 1000805430, aramco 00000000 1000805430
+
+    Spaces/whitespace inside the source value are also collapsed to a compact
+    form. ``None``/blank values are skipped; the result is de-duplicated in
+    order, and empty (``[]``) when there is nothing to expand.
+
+    Args:
+        values: Raw ID values (strings/numbers/None).
+        prefixes: Lowercase prefixes to prepend (e.g. ``("aramco", "customer")``).
+
+    Returns:
+        The ordered, de-duplicated list of variants.
+    """
+    out: dict[str, None] = {}
+    for value in values:
+        if value is None:
+            continue
+        raw = str(value).strip().lower()
+        if not raw:
+            continue
+        compact = "".join(raw.split())
+        trimmed = compact.lstrip("0") or compact          # all zeros → keep as-is
+        zeros = compact[: len(compact) - len(trimmed)]
+        bases = [raw, compact, trimmed]
+        if zeros:
+            bases.append(f"{zeros} {trimmed}")             # "00000000 1000805430"
+        for base in bases:
+            out[base] = None
+        for prefix in prefixes:
+            for base in bases:
+                out[f"{prefix}{base}"] = None              # "aramco1000805430"
+                out[f"{prefix} {base}"] = None             # "aramco 1000805430"
+    return list(out)
 
 
 def _attr(attributes: list, name: str):
@@ -275,7 +341,11 @@ def _rank_sellers(sku_prices: list[Price], contract_ids: set[str]) -> tuple[list
     return sorted(pool, key=lambda p: p.amount), matched
 
 
-def _seller_object(price: Price | None, availability: dict[str, dict[str, bool]] | None = None) -> dict | None:
+def _seller_object(
+    price: Price | None,
+    availability: dict[str, dict[str, bool]] | None = None,
+    agreement_numbers: dict[str, dict] | None = None,
+) -> dict | None:
     """Build the complete seller object from the selected standalone price.
 
     Groups every seller/commercial detail (id, name, contract, price, currency,
@@ -307,6 +377,9 @@ def _seller_object(price: Price | None, availability: dict[str, dict[str, bool]]
     # unexpired (validUntil >= today).
     seller = (availability or {}).get(price.seller_id)
     under_agreement = True if seller is None else (seller["available"] and seller["unexpired"])
+    # Agreement numbers: the product selection whose contractId equals this
+    # price's contract id; else the seller's own selection; else None.
+    numbers = (agreement_numbers or {}).get(price.contract_id) or seller or {}
     return {
         "seller_id": price.seller_id,
         "seller_name": price.seller_name_en,
@@ -319,6 +392,8 @@ def _seller_object(price: Price | None, availability: dict[str, dict[str, bool]]
         "unit_type": price.unit_type,
         "temporary_unavailable": temporary_unavailable,
         "under_agreement": under_agreement,       # agreement active, started and unexpired
+        "asmo_purchase_aggrement_number": numbers.get("asmo_purchase_aggrement_number"),      # selection custom.fields.contractId
+        "aramco_purchase_aggrement_number": numbers.get("aramco_purchase_aggrement_number"),  # selection custom.fields.customerPA
     }
 
 
@@ -329,6 +404,7 @@ async def _parse_variant(
     prices_by_sku: dict[str, list[Price]],
     contract_ids: set[str],
     availability: dict[str, dict[str, bool]] | None = None,
+    agreement_numbers: dict[str, dict] | None = None,
 ) -> dict:
     """Build a single flat SKU row for one product variant.
 
@@ -371,7 +447,7 @@ async def _parse_variant(
         # ``sellers`` holds every usable offer, lowest price first; ``min_price``
         # (the first/cheapest) is the primary used for the flat fields + singular
         # ``seller``.
-        sellers = [_seller_object(p, availability) for p in ranked_prices]
+        sellers = [_seller_object(p, availability, agreement_numbers) for p in ranked_prices]
         min_price = ranked_prices[0] if ranked_prices else None
 
         logger.info(
@@ -431,6 +507,19 @@ async def _parse_variant(
             "sold_by": sellers[0]["seller_name"] if sellers else None,      # seller_details[0].seller_name
             "temporary_unavailable": sellers[0]["temporary_unavailable"] if sellers else False,  # seller_details[0].temporary_unavailable; False when no sellers
             "under_agreement": sellers[0]["under_agreement"] if sellers else True,               # seller_details[0].under_agreement
+
+            # --- ID search variants (lowercase; see _id_variants) ---
+            # Leading-zero-trimmed, prefixed ("asmo"/"aramco"/"customer") and
+            # spaced forms so ID searches match however the user types them.
+            # Agreement arrays cover every seller offer in seller_details.
+            "asmo_material_number_trim_0": _id_variants(
+                [material_fields.get("asmo_material_number")], ASMO_PREFIXES),
+            "aramco_material_number_trim_0": _id_variants(
+                [material_fields.get("aramco_material_number")], ARAMCO_PREFIXES),
+            "asmo_purchase_aggrement_number_trim_0": _id_variants(
+                [s.get("asmo_purchase_aggrement_number") for s in sellers], ASMO_PREFIXES),
+            "aramco_purchase_aggrement_number_trim_0": _id_variants(
+                [s.get("aramco_purchase_aggrement_number") for s in sellers], ARAMCO_AGREEMENT_PREFIXES),
         }
         # Combined free-text blob of every field value, pipe-separated — useful
         # as a single searchable/embeddable field downstream. Built from the row
@@ -637,6 +726,7 @@ def _combine_content(row: dict) -> str:
         A single ``" | "``-separated string of ``key:value`` pairs for every
         meaningful field.
     """
+    # The *_trim_0 ID-variant arrays are included so ID forms are searchable in content.
     skip = {"content", "sku_name", "temporary_unavailable", "under_agreement", "contract_indicator"}
     parts = [
         f"{key}:{text}"

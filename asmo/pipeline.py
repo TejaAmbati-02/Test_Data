@@ -80,7 +80,10 @@ class Pipeline:
         )
 
         logger.info("Step 3/5 — transforming", extra={"function_name": "run"})
-        transformed = await transform(products, prices, agreements_by_product, availability_by_product)
+        transformed = await transform(
+            products, prices, agreements_by_product, availability_by_product,
+            self._selections.agreement_numbers,
+        )
 
         # Per-SKU storage callbacks — only wired up when uploads are enabled.
         # When enabled, each SKU's JSON and image are uploaded to object storage
